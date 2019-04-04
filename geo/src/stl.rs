@@ -40,6 +40,81 @@ pub fn load_binary_stl<R: BufRead>(mut r: R) -> Result<([u8; 80], BinaryStlIter<
     ))
 }
 
+/// Load a [ASCII STL][0] from a given string. Return a tuple composed of the
+/// solid name and the triangles of the STL.
+///
+/// [0]: https://en.wikipedia.org/wiki/STL_(file_format)#ASCII_STL
+pub fn load_ascii_stl(stl: &str) -> Option<(&str, Vec<StlTriangle>)> {
+    let mut tokens = stl.split_whitespace().peekable();
+
+    if tokens.next()? != "solid" {
+        return None;
+    }
+
+    let name = if *tokens.peek()? != "facet" {
+        tokens.next().unwrap()
+    } else {
+        ""
+    };
+
+    let mut tris = vec![];
+
+    loop {
+        match tokens.next()? {
+            "endsolid" => break,
+            "facet" => (),
+            _ => return None,
+        };
+
+        if tokens.next()? != "normal" {
+            return None;
+        }
+
+        let nx: f64 = tokens.next()?.parse().ok()?;
+        let ny: f64 = tokens.next()?.parse().ok()?;
+        let nz: f64 = tokens.next()?.parse().ok()?;
+
+        if tokens.next()? != "outer" {
+            return None;
+        }
+
+        if tokens.next()? != "loop" {
+            return None;
+        }
+
+        let mut vs = Vec::with_capacity(3);
+        loop {
+            match tokens.next()? {
+                "endloop" => break,
+                "vertex" => (),
+                _ => return None,
+            }
+
+            let vx: f64 = tokens.next()?.parse().ok()?;
+            let vy: f64 = tokens.next()?.parse().ok()?;
+            let vz: f64 = tokens.next()?.parse().ok()?;
+
+            vs.push(Vec3::new(vx, vy, vz));
+        }
+
+        if vs.len() != 3 {
+            return None;
+        }
+
+        tris.push(StlTriangle {
+            normal: Vec3::new(nx, ny, nz),
+            positions: [vs[0], vs[1], vs[2]],
+            attributes: vec![],
+        });
+
+        if tokens.next()? != "endfacet" {
+            return None;
+        }
+    }
+
+    Some((name, tris))
+}
+
 impl<R> Iterator for BinaryStlIter<R>
 where
     R: BufRead,
@@ -98,7 +173,7 @@ where
 
 #[cfg(test)]
 mod tests {
-    use super::{load_binary_stl, Result, StlTriangle, Vec3};
+    use super::{load_ascii_stl, load_binary_stl, Result, StlTriangle, Vec3};
 
     use std::io::{BufReader, Cursor};
 
@@ -235,5 +310,86 @@ mod tests {
                 },
             ]
         );
+    }
+
+    #[test]
+    fn test_load_ascii_stl() {
+        let stl = r"
+            solid cube_corner
+            facet normal 0.0 -1.0 0.0
+                outer loop
+                    vertex 0.0 0.0 0.0
+                    vertex 1.0 0.0 0.0
+                    vertex 0.0 0.0 1.0
+                endloop
+            endfacet
+            facet normal 0.0 0.0 -1.0e0
+                outer loop
+                    vertex 0.0 0.0 0.0
+                    vertex 0.0 1.0 0.0
+                    vertex 1.0 0.0 0.0
+                endloop
+            endfacet
+            facet normal -1.0 0.0 0.0
+                outer loop
+                    vertex 0.0 0.0 0.0
+                    vertex 0.0 0.0 1.0
+                    vertex 0.0 1.0 0.0
+                endloop
+            endfacet
+            facet normal 0.577 0.577 5.77e-1
+                outer loop
+                    vertex 1.0 0.0 0.0
+                    vertex 0.0 1.0 0.0
+                    vertex 0.0 0.0 1.0
+                endloop
+            endfacet
+            endsolid
+        ";
+
+        let (name, tris) = load_ascii_stl(stl).unwrap();
+
+        assert_eq!(name, "cube_corner");
+        assert_eq!(
+            tris,
+            vec![
+                StlTriangle {
+                    attributes: vec![],
+                    normal: Vec3::new(0.0, -1.0, 0.0),
+                    positions: [
+                        Vec3::zero(),
+                        Vec3::new(1.0, 0.0, 0.0),
+                        Vec3::new(0.0, 0.0, 1.0)
+                    ]
+                },
+                StlTriangle {
+                    attributes: vec![],
+                    normal: Vec3::new(0.0, 0.0, -1.0),
+                    positions: [
+                        Vec3::zero(),
+                        Vec3::new(0.0, 1.0, 0.0),
+                        Vec3::new(1.0, 0.0, 0.0)
+                    ]
+                },
+                StlTriangle {
+                    attributes: vec![],
+                    normal: Vec3::new(-1.0, 0.0, 0.0),
+                    positions: [
+                        Vec3::zero(),
+                        Vec3::new(0.0, 0.0, 1.0),
+                        Vec3::new(0.0, 1.0, 0.0)
+                    ]
+                },
+                StlTriangle {
+                    attributes: vec![],
+                    normal: Vec3::new(0.577, 0.577, 0.577),
+                    positions: [
+                        Vec3::new(1.0, 0.0, 0.0),
+                        Vec3::new(0.0, 1.0, 0.0),
+                        Vec3::new(0.0, 0.0, 1.0)
+                    ]
+                }
+            ]
+        )
     }
 }
