@@ -1,10 +1,17 @@
 //! This module contains functions to load [binary and ascii STL].
 
-use std::io::{BufRead, Result};
+use std::io::{BufRead, Result, Seek, SeekFrom};
 
 use byteorder::{LittleEndian, ReadBytesExt};
 
 use crate::vec3::Vec3;
+
+/// A STL format type.
+#[derive(Debug, PartialEq, Eq, Clone, Copy)]
+pub enum StlFormat {
+    Ascii,
+    Binary,
+}
 
 /// A STL triangle.
 #[derive(Debug, PartialEq)]
@@ -19,6 +26,23 @@ pub struct StlTriangle {
 pub struct BinaryStlIter<R> {
     ntriangles: u32,
     input: R,
+}
+
+/// Try to guess the format of a STL by looking at the first bytes. If they're
+/// "solid" then it's probably an ASCII STL, binary otherwise. The reader's
+/// position is reset to the beginning of the buffer.
+pub fn guess_stl_format<R: BufRead + Seek>(r: &mut R) -> Result<StlFormat> {
+    let mut header = [0; 5];
+    r.read_exact(&mut header)?;
+
+    let format = match &header {
+        b"solid" => StlFormat::Ascii,
+        _ => StlFormat::Binary,
+    };
+
+    r.seek(SeekFrom::Start(0))?;
+
+    Ok(format)
 }
 
 /// Load a [binary STL][0] from a given reader. Returns a tuple composed of the
@@ -173,14 +197,18 @@ where
 
 #[cfg(test)]
 mod tests {
-    use super::{load_ascii_stl, load_binary_stl, Result, StlTriangle, Vec3};
+    use super::{
+        guess_stl_format, load_ascii_stl, load_binary_stl, Result, StlFormat, StlTriangle, Vec3,
+    };
 
     use std::io::{BufReader, Cursor};
 
     #[test]
     fn test_load_binary_stl() {
         let cube_stl = include_bytes!("../../data/cube.stl");
-        let r = BufReader::new(Cursor::new(&cube_stl[..]));
+        let mut r = BufReader::new(Cursor::new(&cube_stl[..]));
+
+        assert_eq!(guess_stl_format(&mut r).unwrap(), StlFormat::Binary);
 
         let (header, tris) = load_binary_stl(r).unwrap();
 
@@ -314,8 +342,7 @@ mod tests {
 
     #[test]
     fn test_load_ascii_stl() {
-        let stl = r"
-            solid cube_corner
+        let stl = r"solid cube_corner
             facet normal 0.0 -1.0 0.0
                 outer loop
                     vertex 0.0 0.0 0.0
@@ -346,6 +373,11 @@ mod tests {
             endfacet
             endsolid
         ";
+
+        assert_eq!(
+            guess_stl_format(&mut BufReader::new(Cursor::new(&stl[..]))).unwrap(),
+            StlFormat::Ascii
+        );
 
         let (name, tris) = load_ascii_stl(stl).unwrap();
 
