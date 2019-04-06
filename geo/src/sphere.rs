@@ -29,9 +29,16 @@ pub fn ray_intersection(center: Vec3, radius: f64, ray: &Ray) -> Option<f64> {
     None
 }
 
+/// Calculate the normal of point `p` among all the possible spheres centered at
+/// `centered`. Since the normal is simply defined as the direction from
+/// `center` to `p`, the radius is not taken into account.
+pub fn normal(center: Vec3, p: Vec3) -> Vec3 {
+    (p - center).normalized()
+}
+
 #[cfg(test)]
 mod tests {
-    use super::{ray_intersection, Ray, Vec3};
+    use super::{normal, ray_intersection, Ray, Vec3};
 
     #[test]
     fn test_ray_intersection() {
@@ -72,6 +79,19 @@ mod tests {
                 &Ray::new(Vec3::new(-20.0, 0.0, 2.0), Vec3::new(0.0, 0.0, -1.0))
             ),
             None
+        );
+    }
+
+    #[test]
+    fn test_normal() {
+        assert_eq!(
+            normal(Vec3::zero(), Vec3::new(3.0, 0.0, 0.0)),
+            Vec3::new(1.0, 0.0, 0.0)
+        );
+
+        assert_eq!(
+            normal(Vec3::new(2.0, 1.0, 0.0), Vec3::new(2.0, 0.0, 0.0)),
+            Vec3::new(0.0, -1.0, 0.0)
         );
     }
 }
