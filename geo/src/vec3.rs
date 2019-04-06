@@ -70,6 +70,22 @@ impl Vec3 {
     }
 }
 
+/// [Linear interpolation][0] between two `Vec3`.
+///
+/// ```rust
+/// # use geo::vec3::{lerp, Vec3};
+///
+/// let o = Vec3::zero();
+/// let p = Vec3::new(2.0, 0.0, -6.0);
+///
+/// assert_eq!(lerp(o, p, 0.0), o);
+/// assert_eq!(lerp(o, p, 1.0), p);
+/// assert_eq!(lerp(o, p, 0.5), Vec3::new(1.0, 0.0, -3.0));
+/// ```
+pub fn lerp(a: Vec3, b: Vec3, t: f64) -> Vec3 {
+    a * (1.0 - t) + b * t
+}
+
 macro_rules! impl_num_op {
     ($tr:ident, $fn:ident, $op:tt, $assign_tr:ident, $assign_fn:ident) => {
         impl $tr for Vec3 {
