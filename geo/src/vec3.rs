@@ -1,3 +1,4 @@
+use std::iter::{Product, Sum};
 use std::ops::{Add, AddAssign, Div, DivAssign, Mul, MulAssign, Neg, Sub, SubAssign};
 
 /// A simple 3D vector.
@@ -139,6 +140,18 @@ impl Neg for Vec3 {
     }
 }
 
+impl Sum for Vec3 {
+    fn sum<I: Iterator<Item = Vec3>>(iter: I) -> Vec3 {
+        iter.fold(Vec3::zero(), Add::add)
+    }
+}
+
+impl Product for Vec3 {
+    fn product<I: Iterator<Item = Vec3>>(iter: I) -> Vec3 {
+        iter.fold(Vec3::new(1.0, 1.0, 1.0), Mul::mul)
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -206,5 +219,27 @@ mod tests {
 
         assert_eq!(right.cross(&up), forward);
         assert_eq!(up.cross(&right), -forward);
+    }
+
+    #[test]
+    fn test_sum() {
+        assert_eq!(Vec::<Vec3>::new().into_iter().sum::<Vec3>(), Vec3::zero());
+
+        assert_eq!(
+            vec![Vec3::new(-10.0, 5.0, 0.0), Vec3::new(8.0, 2.0, -1.0)]
+                .into_iter()
+                .sum::<Vec3>(),
+            Vec3::new(-2.0, 7.0, -1.0)
+        );
+    }
+
+    #[test]
+    fn test_product() {
+        assert_eq!(
+            vec![Vec3::new(-10.0, 5.0, 0.0), Vec3::new(8.0, 2.0, -1.0)]
+                .into_iter()
+                .product::<Vec3>(),
+            Vec3::new(-80.0, 10.0, 0.0)
+        );
     }
 }
