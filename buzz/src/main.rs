@@ -1,3 +1,5 @@
+pub mod camera;
+
 use image::{Rgb, RgbImage};
 use rand::Rng;
 
@@ -6,18 +8,22 @@ use geo::sphere;
 use geo::vec3;
 use geo::vec3::Vec3;
 
+use camera::Camera;
+
 type Sphere = (Vec3, f64);
 type Scene = Vec<Sphere>;
 
 fn main() {
-    let eye = Vec3::zero();
-    let viewport_low_left = Vec3::new(-2.0, -1.0, -1.0);
-    let viewport_width = Vec3::new(4.0, 0.0, 0.0);
-    let viewport_height = Vec3::new(0.0, 2.0, 0.0);
-
     // try to avoid aliasing by shooting multiple slightly different rays per
     // pixel and average the colors.
     let num_samples = 10;
+
+    let camera = Camera::look_at(
+        Vec3::zero(),
+        Vec3::new(0.0, 0.0, -1.0),
+        Vec3::new(0.0, 1.0, 0.0),
+        90.0,
+    );
 
     let scene = vec![
         (Vec3::new(0.0, 0.0, -1.0), 0.5),
@@ -26,22 +32,14 @@ fn main() {
 
     let mut img = RgbImage::new(400, 200);
 
-    let w = f64::from(img.width());
-    let h = f64::from(img.height());
+    let (w, h) = img.dimensions();
 
     let mut rng = rand::thread_rng();
 
     for (x, y, pix) in img.enumerate_pixels_mut() {
         let c = (0..num_samples)
             .map(|_| {
-                // convert canvas space y to world y since they're inverted.
-                let v = 1.0 - f64::from(y + rng.gen_range(0, 2)) / h;
-                let u = f64::from(x + rng.gen_range(0, 2)) / w;
-
-                let r = Ray::new(
-                    eye,
-                    (viewport_low_left + viewport_width * u + viewport_height * v) - eye,
-                );
+                let r = camera.cast_ray((x + rng.gen_range(0, 2), y + rng.gen_range(0, 2)), (w, h));
                 color(&scene, &r)
             })
             .sum::<Vec3>()
