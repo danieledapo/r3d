@@ -1,17 +1,33 @@
 pub mod camera;
+pub mod sphere;
 
 use image::{Rgb, RgbImage};
 use rand::Rng;
 
 use geo::ray::Ray;
-use geo::sphere;
 use geo::vec3;
 use geo::vec3::Vec3;
 
 use camera::Camera;
+use sphere::Sphere;
 
-type Sphere = (Vec3, f64);
-type Scene = Vec<Sphere>;
+#[derive(Debug, PartialEq, Clone)]
+pub struct Scene {
+    objects: Vec<Sphere>,
+}
+
+impl Scene {
+    pub fn new(objects: Vec<Sphere>) -> Self {
+        Scene { objects }
+    }
+
+    pub fn intersection<'s>(&'s self, ray: &Ray) -> Option<(&'s Sphere, f64)> {
+        self.objects
+            .iter()
+            .flat_map(|s| s.intersection(ray).map(|t| (s, t)))
+            .min_by(|(_, t0), (_, t1)| t0.partial_cmp(t1).unwrap())
+    }
+}
 
 fn main() {
     // try to avoid aliasing by shooting multiple slightly different rays per
@@ -25,10 +41,10 @@ fn main() {
         90.0,
     );
 
-    let scene = vec![
-        (Vec3::new(0.0, 0.0, -1.0), 0.5),
-        (Vec3::new(0.0, -100.5, -1.0), 100.0),
-    ];
+    let scene = Scene::new(vec![
+        Sphere::new(Vec3::new(0.0, 0.0, -1.0), 0.5),
+        Sphere::new(Vec3::new(0.0, -100.5, -1.0), 100.0),
+    ]);
 
     let mut img = RgbImage::new(400, 200);
 
@@ -58,8 +74,8 @@ fn main() {
 }
 
 fn color(scene: &Scene, ray: &Ray) -> Vec3 {
-    if let Some(((sphere_c, _), t)) = scene_ray_intersection(scene, ray) {
-        let n = sphere::normal(sphere_c, ray.point_at(t));
+    if let Some((s, t)) = scene.intersection(ray) {
+        let n = s.normal_at(ray.point_at(t));
 
         return (n + 1.0) * 0.5;
     }
@@ -67,11 +83,4 @@ fn color(scene: &Scene, ray: &Ray) -> Vec3 {
     let t = 0.5 * (ray.dir.y / ray.dir.norm() + 1.0);
 
     vec3::lerp(Vec3::new(1.0, 1.0, 1.0), Vec3::new(0.5, 0.7, 1.0), t)
-}
-
-fn scene_ray_intersection(scene: &Scene, ray: &Ray) -> Option<(Sphere, f64)> {
-    scene
-        .iter()
-        .flat_map(|(c, r)| sphere::ray_intersection(*c, *r, ray).map(|t| ((*c, *r), t)))
-        .min_by(|(_, t0): &(Sphere, f64), (_, t1): &(Sphere, f64)| t0.partial_cmp(t1).unwrap())
 }
