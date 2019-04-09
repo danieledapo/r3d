@@ -110,7 +110,7 @@ fn color(scene: &Scene, ray: &Ray, depth: u32, rng: &mut impl Rng) -> Vec3 {
                             scene,
                             &Ray::new(
                                 intersection,
-                                s.normal_at(intersection) + random_in_circle(rng),
+                                s.normal_at(intersection) + random_in_unit_circle(rng),
                             ),
                             depth + 1,
                             rng,
@@ -125,7 +125,7 @@ fn color(scene: &Scene, ray: &Ray, depth: u32, rng: &mut impl Rng) -> Vec3 {
     vec3::lerp(Vec3::new(1.0, 1.0, 1.0), Vec3::new(0.5, 0.7, 1.0), t)
 }
 
-fn random_in_circle(rng: &mut impl Rng) -> Vec3 {
+fn random_in_unit_circle(rng: &mut impl Rng) -> Vec3 {
     loop {
         let x = rng.gen();
         let y = rng.gen();
@@ -133,7 +133,7 @@ fn random_in_circle(rng: &mut impl Rng) -> Vec3 {
 
         let v = Vec3::new(x, y, z) * 2.0 - 1.0;
 
-        if v.norm2() >= 1.0 {
+        if v.norm2() < 1.0 {
             break v;
         }
     }
