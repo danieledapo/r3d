@@ -24,7 +24,7 @@ impl Camera {
     /// `vup` that represents the up axis to properly orient the camera.
     ///
     /// These paremeters define the [viewing frustrum][0] of the camera.
-    /// 
+    ///
     /// [0]: https://en.wikipedia.org/wiki/Viewing_frustum
     pub fn look_at(position: Vec3, target: Vec3, vup: Vec3, fovy: f64) -> Self {
         let w = (target - position).normalized();
@@ -46,8 +46,14 @@ impl Camera {
 
     /// Create a `Ray` that starts from the `Camera`'s position to the 3D space
     /// with a direction that makes it pass through a given 2D point inside the
-    /// viewport.
-    pub fn cast_ray(&self, (x, y): (u32, u32), (width, height): (u32, u32)) -> Ray {
+    /// viewport. `u` and `v` are offsets to `x` and `y` respectively and can be
+    /// usefuly to slightly change the ray direction.
+    pub fn cast_ray(
+        &self,
+        (x, y): (u32, u32),
+        (width, height): (u32, u32),
+        (u, v): (f64, f64),
+    ) -> Ray {
         let x = f64::from(x);
 
         // invert y coordinate because in world space (0, 0) lies at the center
@@ -59,8 +65,8 @@ impl Camera {
         let height = f64::from(height);
 
         let aspect = width / height;
-        let ndcx = (x - 0.5) / (width - 1.0) * 2.0 - 1.0;
-        let ndcy = (y - 0.5) / (height - 1.0) * 2.0 - 1.0;
+        let ndcx = (x + u - 0.5) / (width - 1.0) * 2.0 - 1.0;
+        let ndcy = (y + v - 0.5) / (height - 1.0) * 2.0 - 1.0;
 
         let mut rd = Vec3::zero();
         rd += self.u * ndcx * aspect;
@@ -104,27 +110,27 @@ mod tests {
         );
 
         assert_eq!(
-            c.cast_ray((200, 100), (400, 200)),
+            c.cast_ray((200, 100), (400, 200), (0.0, 0.0)),
             Ray::new(c.position, Vec3::new(0.0, 0.0, -1.0))
         );
 
         assert_eq!(
-            c.cast_ray((0, 0), (400, 200)),
+            c.cast_ray((0, 0), (400, 200), (0.1, 0.3)),
             Ray::new(
                 c.position,
-                Vec3::new(-0.6084580146846051, 0.3049934018331124, -0.7326376111041081)
+                Vec3::new(
+                    -0.6080963736185712,
+                    0.30587950310963447,
+                    -0.7325684472930473
+                )
             )
         );
 
         assert_eq!(
-            c.cast_ray((300, 150), (400, 200)),
+            c.cast_ray((300, 150), (400, 200), (0.7, 0.8)),
             Ray::new(
                 c.position,
-                Vec3::new(
-                    0.3766063166138127,
-                    -0.18877628182024028,
-                    -0.9069350570513314
-                )
+                Vec3::new(0.37907933452636, -0.18567591183873863, -0.9065447114720293)
             )
         );
     }
