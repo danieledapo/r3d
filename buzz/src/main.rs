@@ -35,6 +35,7 @@ fn main() {
     // try to avoid aliasing by shooting multiple slightly different rays per
     // pixel and average the colors.
     let num_samples = 10;
+    // let num_samples = 100;
 
     let camera = Camera::look_at(
         Vec3::zero(),
@@ -83,7 +84,10 @@ fn main() {
     for (x, y, pix) in img.enumerate_pixels_mut() {
         let mut c = (0..num_samples)
             .map(|_| {
-                let r = camera.cast_ray((x + rng.gen_range(0, 2), y + rng.gen_range(0, 2)), (w, h));
+                let u = rng.gen();
+                let v = rng.gen();
+
+                let r = camera.cast_ray((x, y), (w.into(), h.into()), (u, v));
                 color(&scene, &r, 0, &mut rng)
             })
             .sum::<Vec3>()
