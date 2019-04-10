@@ -19,6 +19,7 @@ impl Ray {
         self.origin + self.dir * t
     }
 
+    /// Reflect this `Ray` and return the reflected direction.
     pub fn reflect(&self) -> Vec3 {
         self.origin - self.dir * self.origin.dot(&self.dir) * 2.0
     }
@@ -35,5 +36,18 @@ mod tests {
         assert_eq!(ray.point_at(0.0), ray.origin);
         assert_eq!(ray.point_at(1.0), Vec3::new(0.0, 1.0, 0.0));
         assert_eq!(ray.point_at(0.5), Vec3::new(0.0, 0.5, 0.0));
+    }
+
+    #[test]
+    fn test_reflect() {
+        assert_eq!(
+            Ray::new(Vec3::new(5.0, 1.0, 3.0), Vec3::new(0.0, 1.0, 0.0)).reflect(),
+            Vec3::new(5.0, -1.0, 3.0)
+        );
+
+        assert_eq!(
+            Ray::new(Vec3::zero(), Vec3::new(0.0, 1.0, 0.0)).reflect(),
+            Vec3::zero()
+        );
     }
 }
