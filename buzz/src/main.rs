@@ -64,6 +64,7 @@ fn main() {
             0.5,
             Material::Metal {
                 albedo: Vec3::new(0.8, 0.6, 0.2),
+                fuzziness: 0.3,
             },
         ),
         Sphere::new(
@@ -71,6 +72,7 @@ fn main() {
             0.5,
             Material::Metal {
                 albedo: Vec3::new(0.8, 0.8, 0.8),
+                fuzziness: 0.8,
             },
         ),
     ]);
@@ -129,8 +131,12 @@ fn color(scene: &Scene, ray: &Ray, depth: u32, rng: &mut impl Rng) -> Vec3 {
                     let r = Ray::new(intersection, n + random_in_unit_circle(rng));
                     return albedo * color(scene, &r, depth + 1, rng);
                 }
-                Material::Metal { albedo } => {
-                    let r = Ray::new(intersection, Ray::new(ray.dir.normalized(), n).reflect());
+                Material::Metal { albedo, fuzziness } => {
+                    let r = Ray::new(
+                        intersection,
+                        Ray::new(ray.dir.normalized(), n).reflect()
+                            + random_in_unit_circle(rng) * fuzziness,
+                    );
 
                     if r.dir.dot(&n) < 0.0 {
                         return Vec3::zero();

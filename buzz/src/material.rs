@@ -11,6 +11,10 @@ pub enum Material {
     /// [0]: https://en.wikipedia.org/wiki/Lambertian_reflectance
     Lambertian { albedo: Vec3 },
 
-    /// A metallic material that perfectly reflects light as it comes in.
-    Metal { albedo: Vec3 },
+    /// A metallic material that reflects light as it comes in. The `fuzziness`
+    /// attribute is how much to perturbate each reflected ray. A low value of
+    /// `fuzziness` makes it reflect more accurately because the reflected rays
+    /// will change less. On the other hand, an high value will make it a bit
+    /// opaque while still reflecting its surroundings.
+    Metal { albedo: Vec3, fuzziness: f64 },
 }
