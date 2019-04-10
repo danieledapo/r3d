@@ -18,6 +18,10 @@ impl Ray {
     pub fn point_at(&self, t: f64) -> Vec3 {
         self.origin + self.dir * t
     }
+
+    pub fn reflect(&self) -> Vec3 {
+        self.origin - self.dir * self.origin.dot(&self.dir) * 2.0
+    }
 }
 
 #[cfg(test)]

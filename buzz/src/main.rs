@@ -58,6 +58,20 @@ fn main() {
                 albedo: Vec3::new(0.8, 0.8, 0.0),
             },
         ),
+        Sphere::new(
+            Vec3::new(1.0, 0.0, -1.0),
+            0.5,
+            Material::Metal {
+                albedo: Vec3::new(0.8, 0.6, 0.2),
+            },
+        ),
+        Sphere::new(
+            Vec3::new(-1.0, 0.0, -1.0),
+            0.5,
+            Material::Metal {
+                albedo: Vec3::new(0.8, 0.8, 0.8),
+            },
+        ),
     ]);
 
     let mut img = RgbImage::new(400, 200);
@@ -96,15 +110,15 @@ fn color(scene: &Scene, ray: &Ray, depth: u32, rng: &mut impl Rng) -> Vec3 {
     if let Some((s, t)) = scene.intersection(ray) {
         // intersections too close to the ray's origin are caused by floating
         // point errors, consider them as not intersections...
-        if t > 0.0001 {
+        if t > 0.01 {
             if depth >= 50 {
                 return Vec3::zero();
             }
 
+            let intersection = ray.point_at(t);
+
             match s.material {
                 Material::Lambertian { albedo } => {
-                    let intersection = ray.point_at(t);
-
                     return albedo
                         * color(
                             scene,
@@ -115,6 +129,18 @@ fn color(scene: &Scene, ray: &Ray, depth: u32, rng: &mut impl Rng) -> Vec3 {
                             depth + 1,
                             rng,
                         );
+                }
+                Material::Metal { albedo } => {
+                    let n = s.normal_at(intersection);
+
+                    let reflected_dir = Ray::new(ray.dir.normalized(), n).reflect();
+                    let r = Ray::new(intersection, reflected_dir);
+
+                    if r.dir.dot(&n) < 0.0 {
+                        return Vec3::zero();
+                    }
+
+                    return albedo * color(scene, &r, depth + 1, rng);
                 }
             }
         }
