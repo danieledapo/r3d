@@ -87,7 +87,7 @@ fn main() {
                 let u = rng.gen();
                 let v = rng.gen();
 
-                let r = camera.cast_ray((x, y), (w.into(), h.into()), (u, v));
+                let r = camera.cast_ray((x, y), (w, h), (u, v));
                 color(&scene, &r, 0, &mut rng)
             })
             .sum::<Vec3>()
@@ -114,31 +114,23 @@ fn color(scene: &Scene, ray: &Ray, depth: u32, rng: &mut impl Rng) -> Vec3 {
     if let Some((s, t)) = scene.intersection(ray) {
         // intersections too close to the ray's origin are caused by floating
         // point errors, consider them as not intersections...
-        if t > 0.01 {
+        // TODO: instead of this, consider slightly changing the ray's position
+        // towards its direction.
+        if t > 0.001 {
             if depth >= 50 {
                 return Vec3::zero();
             }
 
             let intersection = ray.point_at(t);
+            let n = s.normal_at(intersection);
 
             match s.material {
                 Material::Lambertian { albedo } => {
-                    return albedo
-                        * color(
-                            scene,
-                            &Ray::new(
-                                intersection,
-                                s.normal_at(intersection) + random_in_unit_circle(rng),
-                            ),
-                            depth + 1,
-                            rng,
-                        );
+                    let r = Ray::new(intersection, n + random_in_unit_circle(rng));
+                    return albedo * color(scene, &r, depth + 1, rng);
                 }
                 Material::Metal { albedo } => {
-                    let n = s.normal_at(intersection);
-
-                    let reflected_dir = Ray::new(ray.dir.normalized(), n).reflect();
-                    let r = Ray::new(intersection, reflected_dir);
+                    let r = Ray::new(intersection, Ray::new(ray.dir.normalized(), n).reflect());
 
                     if r.dir.dot(&n) < 0.0 {
                         return Vec3::zero();
