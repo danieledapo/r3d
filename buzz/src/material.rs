@@ -17,4 +17,9 @@ pub enum Material {
     /// will change less. On the other hand, an high value will make it a bit
     /// opaque while still reflecting its surroundings.
     Metal { albedo: Vec3, fuzziness: f64 },
+
+    /// Clear materials like glass and diamond are of type Dielectric and are
+    /// identified by a refracion index. For example, glass has a refraction
+    /// index in [1.3, 1.7] while diamond is 2.4.
+    Dielectric { refraction_index: f64 },
 }

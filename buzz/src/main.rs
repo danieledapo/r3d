@@ -67,12 +67,19 @@ fn main() {
                 fuzziness: 0.3,
             },
         ),
+        // Sphere::new(
+        //     Vec3::new(-1.0, 0.0, -1.0),
+        //     0.5,
+        //     Material::Metal {
+        //         albedo: Vec3::new(0.8, 0.8, 0.8),
+        //         fuzziness: 0.8,
+        //     },
+        // ),
         Sphere::new(
             Vec3::new(-1.0, 0.0, -1.0),
             0.5,
-            Material::Metal {
-                albedo: Vec3::new(0.8, 0.8, 0.8),
-                fuzziness: 0.8,
+            Material::Dielectric {
+                refraction_index: 1.5,
             },
         ),
     ]);
@@ -144,6 +151,40 @@ fn color(scene: &Scene, ray: &Ray, depth: u32, rng: &mut impl Rng) -> Vec3 {
 
                     return albedo * color(scene, &r, depth + 1, rng);
                 }
+                Material::Dielectric { refraction_index } => {
+                    let outward_normal;
+                    let ref_ix;
+                    let cos;
+
+                    if ray.dir.dot(&n) > 0.0 {
+                        outward_normal = -n;
+                        ref_ix = refraction_index;
+
+                        // cos = ref_ix * ray.dir.dot(&n) / ray.dir.norm();
+                        cos = (1.0
+                            - ref_ix.powi(2) * (1.0 - (ray.dir.dot(&n) / ray.dir.norm()).powi(2)))
+                        .sqrt();
+                    } else {
+                        outward_normal = n;
+                        ref_ix = 1.0 / refraction_index;
+                        cos = -ray.dir.dot(&n) / ray.dir.norm();
+                    }
+
+                    let dir = match Ray::new(ray.dir, outward_normal).refract(ref_ix) {
+                        Some(refracted) => {
+                            let reflect_prob = schlick(cos, ref_ix);
+
+                            if rng.gen::<f64>() < reflect_prob {
+                                Ray::new(ray.dir, n).reflect()
+                            } else {
+                                refracted
+                            }
+                        }
+                        None => Ray::new(ray.dir, n).reflect(),
+                    };
+
+                    return color(scene, &Ray::new(intersection, dir), depth + 1, rng);
+                }
             }
         }
     }
@@ -165,4 +206,15 @@ fn random_in_unit_circle(rng: &mut impl Rng) -> Vec3 {
             break v;
         }
     }
+}
+
+/// Approximate the [Fresnel factor][1] that is the factor or refracted light
+/// between different optical media using [Schlick equations].
+///
+/// [0]: https://en.wikipedia.org/wiki/Schlick's_approximation
+/// [1]: https://en.wikipedia.org/wiki/Fresnel_equations
+fn schlick(cos: f64, refraction_index: f64) -> f64 {
+    let r0 = (1.0 - refraction_index) / (1.0 + refraction_index).powi(2);
+
+    r0 + (1.0 - r0) * (1.0 - cos).powi(5)
 }
