@@ -23,6 +23,21 @@ impl Ray {
     pub fn reflect(&self) -> Vec3 {
         self.origin - self.dir * self.origin.dot(&self.dir) * 2.0
     }
+
+    /// Try to refract this ray using [Snell's law][0] given a refractive index.
+    ///
+    /// [0]: https://en.wikipedia.org/wiki/Snell%27s_law
+    pub fn refract(&self, refraction_index: f64) -> Option<Vec3> {
+        let uv = self.origin.normalized();
+        let dt = uv.dot(&self.dir);
+        let discriminant = 1.0 - refraction_index.powi(2) * (1.0 - dt.powi(2));
+
+        if discriminant >= 0.0 {
+            Some((uv - self.dir * dt) * refraction_index - self.dir * discriminant.sqrt())
+        } else {
+            None
+        }
+    }
 }
 
 #[cfg(test)]
@@ -48,6 +63,19 @@ mod tests {
         assert_eq!(
             Ray::new(Vec3::zero(), Vec3::new(0.0, 1.0, 0.0)).reflect(),
             Vec3::zero()
+        );
+    }
+
+    #[test]
+    fn test_refract() {
+        assert_eq!(
+            Ray::new(Vec3::new(5.0, 1.0, 3.0), Vec3::new(0.0, 1.0, 0.0)).refract(1.5),
+            None
+        );
+
+        assert_eq!(
+            Ray::new(Vec3::new(3.0, 0.0, 1.0), Vec3::new(1.0, 0.0, 0.0)).refract(1.5),
+            Some(Vec3::new(-0.8803408430829504, 0.0, 0.4743416490252569))
         );
     }
 }
