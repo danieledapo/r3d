@@ -42,7 +42,8 @@ fn main() {
         Vec3::new(0.0, 0.0, -1.0),
         Vec3::new(0.0, 1.0, 0.0),
         90.0,
-    );
+    )
+    .with_focus(Vec3::new(0.0, 0.0, -1.0), 2.0);
 
     let scene = Scene::new(vec![
         Sphere::new(
@@ -93,10 +94,7 @@ fn main() {
     for (x, y, pix) in img.enumerate_pixels_mut() {
         let mut c = (0..num_samples)
             .map(|_| {
-                let u = rng.gen();
-                let v = rng.gen();
-
-                let r = camera.cast_ray((x, y), (w, h), (u, v));
+                let r = camera.cast_ray((x, y), (w, h), &mut rng);
                 color(&scene, &r, 0, &mut rng)
             })
             .sum::<Vec3>()
