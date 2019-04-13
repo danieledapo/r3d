@@ -1,5 +1,7 @@
 use std::f64::consts::PI;
 
+use rand::Rng;
+
 use geo::ray::Ray;
 use geo::vec3::Vec3;
 
@@ -10,11 +12,21 @@ pub struct Camera {
     position: Vec3,
     target: Vec3,
 
+    // x,y,z unit vectors
     u: Vec3,
     v: Vec3,
     w: Vec3,
 
+    // fovy factor
     m: f64,
+
+    lens: Option<Lens>,
+}
+
+#[derive(Debug, Clone, PartialEq)]
+struct Lens {
+    aperture_radius: f64,
+    focal_distance: f64,
 }
 
 impl Camera {
@@ -41,18 +53,31 @@ impl Camera {
             v,
             w,
             m,
+
+            lens: None,
         }
+    }
+
+    /// Change the camera focal point and aperture radius to change the depth of
+    /// view of the scene.
+    pub fn with_focus(mut self, focal_point: Vec3, aperture_radius: f64) -> Camera {
+        self.lens = Some(Lens {
+            focal_distance: (focal_point - self.position).norm(),
+            aperture_radius,
+        });
+
+        self
     }
 
     /// Create a `Ray` that starts from the `Camera`'s position to the 3D space
     /// with a direction that makes it pass through a given 2D point inside the
-    /// viewport. `u` and `v` are offsets to `x` and `y` respectively and can be
-    /// usefuly to slightly change the ray direction.
+    /// viewport. A `Rng` is needed to slightly perturb the generated rays to
+    /// improve the quality of the rendering.
     pub fn cast_ray(
         &self,
         (x, y): (u32, u32),
         (width, height): (u32, u32),
-        (u, v): (f64, f64),
+        rng: &mut impl Rng,
     ) -> Ray {
         let x = f64::from(x);
 
@@ -64,6 +89,9 @@ impl Camera {
         let width = f64::from(width);
         let height = f64::from(height);
 
+        let u: f64 = rng.gen();
+        let v: f64 = rng.gen();
+
         let aspect = width / height;
         let ndcx = (x + u - 0.5) / (width - 1.0) * 2.0 - 1.0;
         let ndcy = (y + v - 0.5) / (height - 1.0) * 2.0 - 1.0;
@@ -74,12 +102,31 @@ impl Camera {
         rd += self.w * self.m;
         rd.normalize();
 
-        Ray::new(self.position, rd)
+        match self.lens {
+            Some(Lens {
+                aperture_radius,
+                focal_distance,
+            }) => {
+                let focal_point = self.position + rd * focal_distance;
+                let angle = rng.gen::<f64>() * 2.0 * std::f64::consts::PI;
+                let radius = rng.gen::<f64>() * aperture_radius;
+
+                let p = self.position
+                    + self.u * (angle.cos() * radius)
+                    + self.v * (angle.sin() * radius);
+
+                Ray::new(p, (focal_point - p).normalized())
+            }
+            None => Ray::new(self.position, rd),
+        }
     }
 }
 
 #[cfg(test)]
 mod tests {
+    use rand::SeedableRng;
+    use rand_xorshift::XorShiftRng;
+
     use super::{Camera, Ray, Vec3};
 
     #[test]
@@ -102,6 +149,8 @@ mod tests {
 
     #[test]
     fn test_cast_ray() {
+        let mut rng = XorShiftRng::seed_from_u64(0);
+
         let c = Camera::look_at(
             Vec3::new(0.0, 0.0, 5.0),
             Vec3::new(0.0, 0.0, 0.0),
@@ -110,27 +159,51 @@ mod tests {
         );
 
         assert_eq!(
-            c.cast_ray((200, 100), (400, 200), (0.0, 0.0)),
-            Ray::new(c.position, Vec3::new(0.0, 0.0, -1.0))
-        );
-
-        assert_eq!(
-            c.cast_ray((0, 0), (400, 200), (0.1, 0.3)),
+            c.cast_ray((200, 100), (400, 200), &mut rng),
             Ray::new(
                 c.position,
                 Vec3::new(
-                    -0.6080963736185712,
-                    0.30587950310963447,
-                    -0.7325684472930473
+                    0.0036926676998767344,
+                    0.0018201043881227754,
+                    -0.9999915256767302
                 )
             )
         );
 
         assert_eq!(
-            c.cast_ray((300, 150), (400, 200), (0.7, 0.8)),
+            c.cast_ray((0, 0), (400, 200), &mut rng),
             Ray::new(
                 c.position,
-                Vec3::new(0.37907933452636, -0.18567591183873863, -0.9065447114720293)
+                Vec3::new(
+                    -0.6080162292347211,
+                    0.30680626952501405,
+                    -0.7322473475317856
+                )
+            )
+        );
+    }
+
+    #[test]
+    fn test_cast_ray_with_focus() {
+        let mut rng = XorShiftRng::seed_from_u64(0);
+
+        let c = Camera::look_at(
+            Vec3::new(0.0, 0.0, 5.0),
+            Vec3::new(0.0, 0.0, 0.0),
+            Vec3::new(0.0, 1.0, 0.0),
+            45.0,
+        )
+        .with_focus(Vec3::new(0.0, 0.0, 0.0), 1.0);
+
+        assert_eq!(
+            c.cast_ray((300, 150), (400, 200), &mut rng),
+            Ray::new(
+                Vec3::new(0.6289473439268372, 0.15601649433924777, 5.0),
+                Vec3::new(
+                    0.26276272257151023,
+                    -0.22585126579607048,
+                    -0.9380548797192626
+                )
             )
         );
     }
