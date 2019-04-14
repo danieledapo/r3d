@@ -1,6 +1,9 @@
 use std::iter::{Product, Sum};
 use std::ops::{Add, AddAssign, Div, DivAssign, Mul, MulAssign, Neg, Sub, SubAssign};
 
+use rand::distributions::{Distribution, Standard};
+use rand::Rng;
+
 /// A simple 3D vector.
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub struct Vec3 {
@@ -13,6 +16,17 @@ impl Vec3 {
     /// Create a new `Vec3` with the given coordinates.
     pub fn new(x: f64, y: f64, z: f64) -> Self {
         Vec3 { x, y, z }
+    }
+
+    /// Generate a random unit `Vec3` inside the unit circle.
+    pub fn random_unit(rng: &mut impl Rng) -> Self {
+        loop {
+            let v = rng.gen::<Vec3>() * 2.0 - 1.0;
+
+            if v.norm2() < 1.0 {
+                break v;
+            }
+        }
     }
 
     /// `Vec3` with everything set to 0.
@@ -149,6 +163,13 @@ impl Sum for Vec3 {
 impl Product for Vec3 {
     fn product<I: Iterator<Item = Vec3>>(iter: I) -> Vec3 {
         iter.fold(Vec3::new(1.0, 1.0, 1.0), Mul::mul)
+    }
+}
+
+impl Distribution<Vec3> for Standard {
+    fn sample<R: Rng + ?Sized>(&self, rng: &mut R) -> Vec3 {
+        let (x, y, z) = rng.gen();
+        Vec3::new(x, y, z)
     }
 }
 

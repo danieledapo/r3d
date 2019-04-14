@@ -1,3 +1,5 @@
+use rand::Rng;
+
 use geo::vec3::Vec3;
 
 use buzz::camera::Camera;

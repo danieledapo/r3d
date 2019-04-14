@@ -1,7 +1,6 @@
 pub mod camera;
 pub mod material;
 pub mod sphere;
-pub mod util;
 
 use image::{Rgb, RgbImage};
 use rand::Rng;

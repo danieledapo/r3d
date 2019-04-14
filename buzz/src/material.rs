@@ -3,8 +3,6 @@ use rand::Rng;
 use geo::ray::Ray;
 use geo::vec3::Vec3;
 
-use crate::util::random_in_unit_circle;
-
 /// Enum over all the supported `Material`s. Each variant dictates how light
 /// interacts(reflects, refracts, etc..) with them. They're mainly composed of
 /// an `albedo` field which is the intrinsic color of the material.
@@ -30,7 +28,7 @@ pub enum Material {
 }
 
 pub fn lambertian_bounce(intersection: Vec3, n: Vec3, rng: &mut impl Rng) -> Ray {
-    Ray::new(intersection, n + random_in_unit_circle(rng))
+    Ray::new(intersection, n + Vec3::random_unit(rng))
 }
 
 pub fn metal_bounce(
@@ -42,7 +40,7 @@ pub fn metal_bounce(
 ) -> Ray {
     Ray::new(
         intersection,
-        Ray::new(ray.dir.normalized(), n).reflect() + random_in_unit_circle(rng) * fuzziness,
+        Ray::new(ray.dir.normalized(), n).reflect() + Vec3::random_unit(rng) * fuzziness,
     )
 }
 
