@@ -12,17 +12,17 @@ pub fn ray_intersection(center: Vec3, radius: f64, ray: &Ray) -> Option<f64> {
 
     let discr = b.powi(2) - a * c;
 
-    if discr.is_sign_negative() {
+    if discr < 0.0 {
         return None;
     }
 
     let t0 = (-b - discr.sqrt()) / a;
-    if t0 > 0.0 {
+    if t0 > 1e-9 {
         return Some(t0);
     }
 
     let t1 = (-b + discr.sqrt()) / a;
-    if t1 > 0.0 {
+    if t1 > 1e-9 {
         return Some(t1);
     }
 
