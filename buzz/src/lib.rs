@@ -3,17 +3,16 @@ pub mod material;
 pub mod sphere;
 pub mod util;
 
-use rand::Rng;
 use image::{Rgb, RgbImage};
+use rand::Rng;
 
 use geo::ray::Ray;
 use geo::vec3;
 use geo::vec3::Vec3;
 
 use camera::Camera;
-use material::Material;
+use material::{dielectric_bounce, lambertian_bounce, metal_bounce, Material};
 use sphere::Sphere;
-use util::random_in_unit_circle;
 
 /// A `Scene` is a collection of objects that can be rendered.
 #[derive(Debug, PartialEq, Clone)]
@@ -38,20 +37,41 @@ impl Scene {
     }
 }
 
+/// Simple struct to hold rendering params together.
+#[derive(Debug, PartialEq, Clone)]
+pub struct RenderConfig {
+    /// how many samples to take for each pixel to find out its color. This can
+    /// help reduce aliasing since the final color is the average of all the
+    /// samples.
+    pub samples: u32,
+
+    /// the maximum number of bounces a ray can do. An higher value will give
+    /// better results in scenes with a lot of reflective objects.
+    pub max_bounces: u32,
+
+    /// width and height of the rendered image.
+    pub width: u32,
+    pub height: u32,
+}
+
 /// Render a `Scene` from a `Camera` to a new `RgbImage` of the given
-/// dimensions. `num_samples` determines how many rays to cast per pixel to find
-/// its color, the higher the better, but clearly it will be slower.
-pub fn render(camera: &Camera, scene: &Scene, (width, height): (u32, u32), num_samples: u32, rng: &mut impl Rng) -> image::RgbImage {
-    let mut img = RgbImage::new(width, height);
+/// dimensions.
+pub fn render(
+    camera: &Camera,
+    scene: &Scene,
+    rng: &mut impl Rng,
+    config: &RenderConfig,
+) -> image::RgbImage {
+    let mut img = RgbImage::new(config.width, config.height);
 
     for (x, y, pix) in img.enumerate_pixels_mut() {
-        let mut c = (0..num_samples)
+        let mut c = (0..config.samples)
             .map(|_| {
-                let r = camera.cast_ray((x, y), (width, height), rng);
-                color(&scene, &r, 0, rng)
+                let r = camera.cast_ray((x, y), (config.width, config.height), rng);
+                sample(&scene, &r, 0, rng, config)
             })
             .sum::<Vec3>()
-            / f64::from(num_samples);
+            / f64::from(config.samples);
 
         // gamma correct pixels
         c.x = c.x.sqrt();
@@ -70,89 +90,50 @@ pub fn render(camera: &Camera, scene: &Scene, (width, height): (u32, u32), num_s
     img
 }
 
+fn sample(scene: &Scene, ray: &Ray, depth: u32, rng: &mut impl Rng, config: &RenderConfig) -> Vec3 {
+    let mut sample_bounce = |material, intersection, n| match material {
+        &Material::Lambertian { albedo } => {
+            albedo
+                * sample(
+                    scene,
+                    &lambertian_bounce(intersection, n, rng),
+                    depth + 1,
+                    rng,
+                    config,
+                )
+        }
+        &Material::Metal { albedo, fuzziness } => {
+            let r = metal_bounce(ray, intersection, n, fuzziness, rng);
 
-fn color(scene: &Scene, ray: &Ray, depth: u32, rng: &mut impl Rng) -> Vec3 {
-    if let Some((s, t)) = scene.intersection(ray) {
-        // intersections too close to the ray's origin are caused by floating
-        // point errors, consider them as not intersections...
-        // TODO: instead of this, consider slightly changing the ray's position
-        // towards its direction.
-        if t > 0.001 {
-            if depth >= 50 {
+            if r.dir.dot(&n) < 0.0 {
                 return Vec3::zero();
             }
 
+            albedo * sample(scene, &r, depth + 1, rng, config)
+        }
+        &Material::Dielectric { refraction_index } => sample(
+            scene,
+            &dielectric_bounce(ray, intersection, n, refraction_index, rng),
+            depth + 1,
+            rng,
+            config,
+        ),
+    };
+
+    match scene.intersection(ray) {
+        Some(_) if depth >= config.max_bounces => Vec3::zero(),
+        Some((s, t)) => {
             let intersection = ray.point_at(t);
             let n = s.normal_at(intersection);
 
-            match s.material {
-                Material::Lambertian { albedo } => {
-                    let r = Ray::new(intersection, n + random_in_unit_circle(rng));
-                    return albedo * color(scene, &r, depth + 1, rng);
-                }
-                Material::Metal { albedo, fuzziness } => {
-                    let r = Ray::new(
-                        intersection,
-                        Ray::new(ray.dir.normalized(), n).reflect()
-                            + random_in_unit_circle(rng) * fuzziness,
-                    );
-
-                    if r.dir.dot(&n) < 0.0 {
-                        return Vec3::zero();
-                    }
-
-                    return albedo * color(scene, &r, depth + 1, rng);
-                }
-                Material::Dielectric { refraction_index } => {
-                    let outward_normal;
-                    let ref_ix;
-                    let cos;
-
-                    if ray.dir.dot(&n) > 0.0 {
-                        outward_normal = -n;
-                        ref_ix = refraction_index;
-
-                        // cos = ref_ix * ray.dir.dot(&n) / ray.dir.norm();
-                        cos = (1.0
-                            - ref_ix.powi(2) * (1.0 - (ray.dir.dot(&n) / ray.dir.norm()).powi(2)))
-                        .sqrt();
-                    } else {
-                        outward_normal = n;
-                        ref_ix = 1.0 / refraction_index;
-                        cos = -ray.dir.dot(&n) / ray.dir.norm();
-                    }
-
-                    let dir = match Ray::new(ray.dir, outward_normal).refract(ref_ix) {
-                        Some(refracted) => {
-                            let reflect_prob = schlick(cos, ref_ix);
-
-                            if rng.gen::<f64>() < reflect_prob {
-                                Ray::new(ray.dir, n).reflect()
-                            } else {
-                                refracted
-                            }
-                        }
-                        None => Ray::new(ray.dir, n).reflect(),
-                    };
-
-                    return color(scene, &Ray::new(intersection, dir), depth + 1, rng);
-                }
-            }
+            sample_bounce(&s.material, intersection, n)
         }
-    }
 
-    // background
-    let t = 0.5 * (ray.dir.y / ray.dir.norm() + 1.0);
-    vec3::lerp(Vec3::new(1.0, 1.0, 1.0), Vec3::new(0.5, 0.7, 1.0), t)
+        None => sample_environment(ray),
+    }
 }
 
-/// Approximate the [Fresnel factor][1] that is the factor or refracted light
-/// between different optical media using [Schlick equations].
-///
-/// [0]: https://en.wikipedia.org/wiki/Schlick's_approximation
-/// [1]: https://en.wikipedia.org/wiki/Fresnel_equations
-fn schlick(cos: f64, refraction_index: f64) -> f64 {
-    let r0 = (1.0 - refraction_index) / (1.0 + refraction_index).powi(2);
-
-    r0 + (1.0 - r0) * (1.0 - cos).powi(5)
+fn sample_environment(ray: &Ray) -> Vec3 {
+    let t = 0.5 * (ray.dir.y / ray.dir.norm() + 1.0);
+    vec3::lerp(Vec3::new(1.0, 1.0, 1.0), Vec3::new(0.5, 0.7, 1.0), t)
 }
