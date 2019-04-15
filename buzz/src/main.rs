@@ -7,7 +7,7 @@ use geo::vec3::Vec3;
 use buzz::camera::Camera;
 use buzz::material::Material;
 use buzz::sphere::Sphere;
-use buzz::{render, RenderConfig, Scene};
+use buzz::{parallel_render, render, RenderConfig, Scene};
 
 fn main() {
     let s = env::args().nth(1).unwrap_or_else(|| "debug".to_string());
@@ -145,15 +145,14 @@ pub fn cover() {
     )
     .with_focus(target, 0.1);
 
-    let img = render(
+    let img = parallel_render(
         &camera,
         &Scene::new(scene),
-        &mut rng,
         &RenderConfig {
             width: 1200,
             height: 800,
             max_bounces: 50,
-            samples: 10,
+            samples: 50,
         },
     );
     img.save("cover.ppm").unwrap();
