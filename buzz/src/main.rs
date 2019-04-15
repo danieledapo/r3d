@@ -1,3 +1,5 @@
+use std::env;
+
 use rand::Rng;
 
 use geo::vec3::Vec3;
@@ -8,8 +10,13 @@ use buzz::sphere::Sphere;
 use buzz::{render, RenderConfig, Scene};
 
 fn main() {
-    debug();
-    // cover();
+    let s = env::args().nth(1).unwrap_or_else(|| "debug".to_string());
+
+    match &s[..] {
+        "debug" => debug(),
+        "cover" => cover(),
+        s => println!("unknown scene {}", s),
+    }
 }
 
 pub fn debug() {
@@ -143,8 +150,8 @@ pub fn cover() {
         &Scene::new(scene),
         &mut rng,
         &RenderConfig {
-            width: 400,
-            height: 200,
+            width: 1200,
+            height: 800,
             max_bounces: 50,
             samples: 10,
         },
