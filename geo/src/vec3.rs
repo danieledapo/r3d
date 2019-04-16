@@ -1,8 +1,10 @@
 use std::iter::{Product, Sum};
-use std::ops::{Add, AddAssign, Div, DivAssign, Mul, MulAssign, Neg, Sub, SubAssign};
+use std::ops::{Add, AddAssign, Div, DivAssign, Index, Mul, MulAssign, Neg, Sub, SubAssign};
 
 use rand::distributions::{Distribution, Standard};
 use rand::Rng;
+
+use crate::Axis;
 
 /// A simple 3D vector.
 #[derive(Debug, Clone, Copy, PartialEq)]
@@ -173,6 +175,18 @@ impl Distribution<Vec3> for Standard {
     }
 }
 
+impl Index<Axis> for Vec3 {
+    type Output = f64;
+
+    fn index(&self, axis: Axis) -> &Self::Output {
+        match axis {
+            Axis::X => &self.x,
+            Axis::Y => &self.y,
+            Axis::Z => &self.z,
+        }
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -262,5 +276,14 @@ mod tests {
                 .product::<Vec3>(),
             Vec3::new(-80.0, 10.0, 0.0)
         );
+    }
+
+    #[test]
+    fn test_index() {
+        let v = Vec3::new(1.0, 2.0, 3.0);
+
+        assert_eq!(v[Axis::X], 1.0);
+        assert_eq!(v[Axis::Y], 2.0);
+        assert_eq!(v[Axis::Z], 3.0);
     }
 }
