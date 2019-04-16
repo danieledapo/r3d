@@ -1,3 +1,4 @@
+pub mod aabb;
 pub mod ray;
 pub mod sphere;
 pub mod stl;
