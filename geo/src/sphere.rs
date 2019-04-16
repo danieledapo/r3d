@@ -1,3 +1,4 @@
+use crate::aabb::Aabb;
 use crate::ray::Ray;
 use crate::vec3::Vec3;
 
@@ -36,9 +37,17 @@ pub fn normal(center: Vec3, p: Vec3) -> Vec3 {
     (p - center).normalized()
 }
 
+/// Calculate the bounding box of a sphere.
+pub fn bounding_box(center: Vec3, radius: f64) -> Aabb {
+    let mut aabb = Aabb::new(center - radius);
+    aabb.expand(&(center + radius));
+
+    aabb
+}
+
 #[cfg(test)]
 mod tests {
-    use super::{normal, ray_intersection, Ray, Vec3};
+    use super::*;
 
     #[test]
     fn test_ray_intersection() {
@@ -93,5 +102,16 @@ mod tests {
             normal(Vec3::new(2.0, 1.0, 0.0), Vec3::new(2.0, 0.0, 0.0)),
             Vec3::new(0.0, -1.0, 0.0)
         );
+    }
+
+    #[test]
+    fn test_bounding_box() {
+        let bbox = bounding_box(Vec3::zero(), 5.0);
+        assert_eq!(bbox.min(), &Vec3::new(-5.0, -5.0, -5.0));
+        assert_eq!(bbox.max(), &Vec3::new(5.0, 5.0, 5.0));
+
+        let bbox = bounding_box(Vec3::new(1.0, -2.0, 3.0), 10.0);
+        assert_eq!(bbox.min(), &Vec3::new(-9.0, -12.0, -7.0));
+        assert_eq!(bbox.max(), &Vec3::new(11.0, 8.0, 13.0));
     }
 }
