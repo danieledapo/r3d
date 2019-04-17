@@ -1,3 +1,5 @@
+#![allow(clippy::useless_let_if_seq)]
+
 pub mod camera;
 pub mod material;
 pub mod sphere;
@@ -129,8 +131,8 @@ pub fn render_pixel(
 }
 
 fn sample(scene: &Scene, ray: &Ray, depth: u32, rng: &mut impl Rng, config: &RenderConfig) -> Vec3 {
-    let mut sample_bounce = |material, intersection, n| match material {
-        &Material::Lambertian { albedo } => {
+    let mut sample_bounce = |material: &Material, intersection, n| match *material {
+        Material::Lambertian { albedo } => {
             albedo
                 * sample(
                     scene,
@@ -140,7 +142,7 @@ fn sample(scene: &Scene, ray: &Ray, depth: u32, rng: &mut impl Rng, config: &Ren
                     config,
                 )
         }
-        &Material::Metal { albedo, fuzziness } => {
+        Material::Metal { albedo, fuzziness } => {
             let r = metal_bounce(ray, intersection, n, fuzziness, rng);
 
             if r.dir.dot(&n) < 0.0 {
@@ -149,7 +151,7 @@ fn sample(scene: &Scene, ray: &Ray, depth: u32, rng: &mut impl Rng, config: &Ren
 
             albedo * sample(scene, &r, depth + 1, rng, config)
         }
-        &Material::Dielectric { refraction_index } => sample(
+        Material::Dielectric { refraction_index } => sample(
             scene,
             &dielectric_bounce(ray, intersection, n, refraction_index, rng),
             depth + 1,
