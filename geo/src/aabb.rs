@@ -78,6 +78,16 @@ impl Aabb {
         self.expand(&aabb.min);
         self.expand(&aabb.max);
     }
+
+    /// Check if the bounding box contains the given point.
+    pub fn contains(&self, pt: &Vec3) -> bool {
+        self.min.x <= pt.x
+            && self.max.x >= pt.x
+            && self.min.y <= pt.y
+            && self.max.y >= pt.y
+            && self.min.z <= pt.z
+            && self.max.z >= pt.z
+    }
 }
 
 #[cfg(test)]
@@ -157,5 +167,18 @@ mod tests {
             .dimensions(),
             Vec3::new(2.0, 2.0, 3.0)
         );
+    }
+
+    #[test]
+    fn test_contains() {
+        let aabb = Aabb::from_iter(vec![Vec3::zero(), Vec3::new(-10.0, 2.0, 3.0)]).unwrap();
+
+        assert!(aabb.contains(&Vec3::zero()));
+        assert!(aabb.contains(&Vec3::new(-10.0, 2.0, 3.0)));
+        assert!(aabb.contains(&Vec3::new(-8.0, 1.0, 2.0)));
+
+        assert!(!aabb.contains(&Vec3::new(-20.0, 0.0, 0.0)));
+        assert!(!aabb.contains(&Vec3::new(0.0, -5.0, 0.0)));
+        assert!(!aabb.contains(&Vec3::new(0.0, 1.0, 4.0)));
     }
 }
