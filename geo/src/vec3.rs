@@ -4,6 +4,9 @@ use std::ops::{Add, AddAssign, Div, DivAssign, Index, Mul, MulAssign, Neg, Sub, 
 use rand::distributions::{Distribution, Standard};
 use rand::Rng;
 
+#[cfg(test)]
+use proptest::prelude::*;
+
 use crate::Axis;
 
 /// A simple 3D vector.
@@ -185,6 +188,11 @@ impl Index<Axis> for Vec3 {
             Axis::Z => &self.z,
         }
     }
+}
+
+#[cfg(test)]
+pub fn vec3() -> impl Strategy<Value = Vec3> {
+    any::<(f64, f64, f64)>().prop_map(|(x, y, z)| Vec3::new(x, y, z))
 }
 
 #[cfg(test)]
