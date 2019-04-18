@@ -1,4 +1,5 @@
 pub mod aabb;
+pub mod bvh;
 pub mod ray;
 pub mod sphere;
 pub mod stl;
