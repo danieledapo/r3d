@@ -1,4 +1,6 @@
+use crate::ray::Ray;
 use crate::vec3::Vec3;
+use crate::Axis;
 
 /// An [Axis aligned bounding box][0] useful for approximating the boundary of
 /// shapes.
@@ -87,6 +89,34 @@ impl Aabb {
             && self.max.y >= pt.y
             && self.min.z <= pt.z
             && self.max.z >= pt.z
+    }
+
+    /// Check whether a `Ray` intersects a `Aabb`.
+    pub fn intersect(&self, ray: &Ray) -> bool {
+        use std::f64::INFINITY;
+
+        let mut tmax = INFINITY;
+        let mut tmin = 1e-9_f64;
+
+        for axis in &[Axis::X, Axis::Y, Axis::Z] {
+            let mut t0 = (self.min[*axis] - ray.origin[*axis]) / ray.dir[*axis];
+            let mut t1 = (self.max[*axis] - ray.origin[*axis]) / ray.dir[*axis];
+
+            if ray.dir[*axis] < 0.0 {
+                std::mem::swap(&mut t0, &mut t1);
+            }
+
+            // cap tmin and tmax to essentially ignore INFINITY, -INFINITY and
+            // NaN.
+            tmin = tmin.max(t0);
+            tmax = tmax.min(t1);
+
+            if tmax <= tmin {
+                return false;
+            }
+        }
+
+        true
     }
 }
 
@@ -180,5 +210,29 @@ mod tests {
         assert!(!aabb.contains(&Vec3::new(-20.0, 0.0, 0.0)));
         assert!(!aabb.contains(&Vec3::new(0.0, -5.0, 0.0)));
         assert!(!aabb.contains(&Vec3::new(0.0, 1.0, 4.0)));
+    }
+
+    #[test]
+    fn test_intersect() {
+        let aabb = Aabb::from_iter(vec![Vec3::zero(), Vec3::new(-10.0, 2.0, 3.0)]).unwrap();
+
+        assert!(aabb.intersect(&Ray::new(Vec3::zero(), Vec3::new(-1.0, 0.0, 1.0))));
+        assert!(aabb.intersect(&Ray::new(
+            Vec3::new(1.0, 1.0, 2.0),
+            Vec3::new(-2.0, -1.0, 0.0)
+        )));
+        assert!(aabb.intersect(&Ray::new(
+            Vec3::new(1.0, 1.0, 1.0),
+            Vec3::new(-1.0, 0.0, 1.0)
+        )));
+
+        assert!(!aabb.intersect(&Ray::new(
+            Vec3::new(1.0, 1.0, 1.0),
+            Vec3::new(1.0, 0.0, 1.0)
+        )));
+        assert!(!aabb.intersect(&Ray::new(
+            Vec3::new(-11.0, 6.0, 1.0),
+            Vec3::new(-1.0, 0.0, 1.0)
+        )));
     }
 }
