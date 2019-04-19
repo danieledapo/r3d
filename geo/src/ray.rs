@@ -1,4 +1,5 @@
 use crate::vec3::Vec3;
+use crate::Axis;
 
 /// A `Ray` is a line starting from a given point and going towards a given
 /// direction.
@@ -9,7 +10,8 @@ pub struct Ray {
 }
 
 impl Ray {
-    /// Create a new `Ray` with the given origin and direction.
+    /// Create a new `Ray` with the given origin and direction. The direction
+    /// doesn't have to be normalized.
     pub fn new(origin: Vec3, dir: Vec3) -> Self {
         Ray { origin, dir }
     }
@@ -17,6 +19,40 @@ impl Ray {
     /// Get the point on a `Ray` at the given parameter `t`.
     pub fn point_at(&self, t: f64) -> Vec3 {
         self.origin + self.dir * t
+    }
+
+    /// Get the parameter `t` of the given point `p`. If `p` does not lie on the
+    /// `Ray` then `None` is returned. This function can return a negative value
+    /// if point is on opposite ray.
+    pub fn t_of(&self, p: Vec3) -> Option<f64> {
+        // if p lies on self then `d / self.dir = t` where t must be the same
+        // (or INFINITY, -INFINITY, Nan) among all the coordinates.
+        let d = p - self.origin;
+
+        let mut pv = None;
+
+        for axis in &[Axis::X, Axis::Y, Axis::Z] {
+            let t = d[*axis] / self.dir[*axis];
+
+            // if t is not finite then self.dir[*axis] must be 0.0 in which case
+            // the coordinate is fixed and we can just check that it matches
+            // between `p` and `self.origin`
+            if !t.is_finite() {
+                if p[*axis] != self.origin[*axis] {
+                    return None;
+                }
+
+                continue;
+            }
+
+            match pv {
+                None => pv = Some(t),
+                Some(pt) if pt != t => return None,
+                Some(_pt) => {}
+            }
+        }
+
+        pv
     }
 
     /// Reflect this `Ray` and return the reflected direction.
@@ -76,6 +112,27 @@ mod tests {
         assert_eq!(
             Ray::new(Vec3::new(3.0, 0.0, 1.0), Vec3::new(1.0, 0.0, 0.0)).refract(1.5),
             Some(Vec3::new(-0.8803408430829504, 0.0, 0.4743416490252569))
+        );
+    }
+
+    #[test]
+    fn test_t_of() {
+        let r = Ray::new(Vec3::new(1.0, -1.0, 0.0), Vec3::new(2.0, 1.0, 5.0));
+
+        assert_eq!(r.t_of(Vec3::new(1.0, -1.0, 0.0)), Some(0.0));
+        assert_eq!(r.t_of(Vec3::new(3.0, 0.0, 5.0)), Some(1.0));
+        assert_eq!(r.t_of(Vec3::new(0.0, -1.5, -2.5)), Some(-0.5));
+        assert_eq!(r.t_of(Vec3::new(10.0, -1.5, -2.5)), None);
+
+        assert_eq!(
+            Ray::new(Vec3::new(1.0, -1.0, 3.0), Vec3::new(0.0, 1.0, 0.0))
+                .t_of(Vec3::new(1.0, 0.0, 3.0)),
+            Some(1.0)
+        );
+        assert_eq!(
+            Ray::new(Vec3::new(1.0, -1.0, 3.0), Vec3::new(0.0, 1.0, 0.0))
+                .t_of(Vec3::new(8.0, 0.0, 3.0)),
+            None
         );
     }
 }
