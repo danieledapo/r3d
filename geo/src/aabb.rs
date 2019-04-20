@@ -111,7 +111,7 @@ impl Aabb {
             tmin = tmin.max(t0);
             tmax = tmax.min(t1);
 
-            if tmax <= tmin {
+            if tmax < tmin {
                 return false;
             }
         }
@@ -233,6 +233,13 @@ mod tests {
         assert!(!aabb.intersect(&Ray::new(
             Vec3::new(-11.0, 6.0, 1.0),
             Vec3::new(-1.0, 0.0, 1.0)
+        )));
+
+        let aabb =
+            Aabb::from_iter(vec![Vec3::new(-10.0, -1.0, -7.0), Vec3::new(0.0, 1.0, 1.0)]).unwrap();
+        assert!(aabb.intersect(&Ray::new(
+            Vec3::new(1.0, 0.0, 2.0),
+            Vec3::new(-1.0, 1.0, -1.0)
         )));
     }
 }
