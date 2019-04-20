@@ -21,6 +21,7 @@ impl Elem for Vec3 {
     fn intersection(&self, ray: &Ray) -> Option<f64> {
         let t = ray.t_of(*self)?;
 
+        // we're only interested in intersection on the ray and not its opposite
         if t >= 0.0 {
             Some(t)
         } else {
@@ -76,7 +77,7 @@ where
                         let intersection = data.intersection(ray);
 
                         match intersection {
-                            Some(t) if t >= 1e-9 => return Some((data, t)),
+                            Some(t) if t >= 0.0 => return Some((data, t)),
                             _ => {}
                         }
                     }
@@ -239,6 +240,48 @@ mod tests {
                     })
                 })
             }
+        );
+    }
+
+    #[test]
+    fn test_intersections() {
+        let bvh: Bvh<Vec3> = vec![
+            Vec3::new(-10.0, -1.0, -7.0),
+            Vec3::zero(),
+            Vec3::new(0.0, 1.0, 1.0),
+            Vec3::new(10.0, 1.0, 7.0),
+        ]
+        .into_iter()
+        .collect();
+
+        assert_eq!(
+            bvh.intersections(&Ray::new(Vec3::zero(), Vec3::new(1.0, 1.0, 1.0)))
+                .collect::<Vec<_>>(),
+            vec![(&Vec3::zero(), 0.0)]
+        );
+
+        assert_eq!(
+            bvh.intersections(&Ray::new(
+                Vec3::new(1.0, 0.0, 2.0),
+                Vec3::new(-1.0, 1.0, -1.0)
+            ))
+            .collect::<Vec<_>>(),
+            vec![(&Vec3::new(0.0, 1.0, 1.0), 1.0)]
+        );
+
+        assert_eq!(
+            bvh.intersections(&Ray::new(Vec3::zero(), Vec3::new(0.0, 1.0, 1.0)))
+                .collect::<Vec<_>>(),
+            vec![(&Vec3::new(0.0, 1.0, 1.0), 1.0), (&Vec3::zero(), 0.0)]
+        );
+
+        assert_eq!(
+            bvh.intersections(&Ray::new(
+                Vec3::new(-11.0, -20.0, 100.0),
+                Vec3::new(-1.0, -1.0, 1.0)
+            ))
+            .collect::<Vec<_>>(),
+            vec![]
         );
     }
 }
