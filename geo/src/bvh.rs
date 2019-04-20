@@ -3,17 +3,29 @@ use std::f64::EPSILON;
 use std::iter::FromIterator;
 
 use crate::aabb::Aabb;
+use crate::ray::Ray;
 use crate::util::ksmallest_by;
 use crate::vec3::Vec3;
 use crate::Axis;
 
 pub trait Elem: std::fmt::Debug {
     fn bbox(&self) -> Aabb;
+    fn intersection(&self, ray: &Ray) -> Option<f64>;
 }
 
 impl Elem for Vec3 {
     fn bbox(&self) -> Aabb {
         Aabb::new(*self)
+    }
+
+    fn intersection(&self, ray: &Ray) -> Option<f64> {
+        let t = ray.t_of(*self)?;
+
+        if t >= 0.0 {
+            Some(t)
+        } else {
+            None
+        }
     }
 }
 
@@ -43,6 +55,44 @@ enum Node<T> {
     Leaf {
         data: T,
     },
+}
+
+impl<T> Bvh<T>
+where
+    T: Elem,
+{
+    /// Return all the objects that intersect the given ray along with their t
+    /// parameter.
+    pub fn intersections<'s>(&'s self, ray: &'s Ray) -> impl Iterator<Item = (&'s T, f64)> {
+        let mut stack = vec![];
+        if self.root.is_some() {
+            stack.push(self.root.as_ref().unwrap());
+        }
+
+        std::iter::from_fn(move || {
+            while let Some(n) = stack.pop() {
+                match n {
+                    Node::Leaf { data } => {
+                        let intersection = data.intersection(ray);
+
+                        match intersection {
+                            Some(t) if t >= 1e-9 => return Some((data, t)),
+                            _ => {}
+                        }
+                    }
+
+                    Node::Branch { bbox, left, right } => {
+                        if bbox.intersect(ray) {
+                            stack.push(&right);
+                            stack.push(&left);
+                        }
+                    }
+                }
+            }
+
+            None
+        })
+    }
 }
 
 impl<T> FromIterator<T> for Bvh<T>
