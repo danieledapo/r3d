@@ -8,6 +8,7 @@ use image::{Rgb, RgbImage};
 use rand::Rng;
 use rayon::prelude::*;
 
+use geo::bvh::Bvh;
 use geo::ray::Ray;
 use geo::vec3;
 use geo::vec3::Vec3;
@@ -19,22 +20,23 @@ use sphere::Sphere;
 /// A `Scene` is a collection of objects that can be rendered.
 #[derive(Debug, PartialEq, Clone)]
 pub struct Scene {
-    objects: Vec<Sphere>,
+    objects: Bvh<Sphere>,
 }
 
 impl Scene {
     /// Create a new `Scene` with the given objects.
-    pub fn new(objects: Vec<Sphere>) -> Self {
-        Scene { objects }
+    pub fn new(objects: impl IntoIterator<Item = Sphere>) -> Self {
+        Scene {
+            objects: objects.into_iter().collect(),
+        }
     }
 
     /// Calculate the intersection between a `Ray` and all the objects in the
     /// scene returning the closest object (along with its intersection result)
     /// to the ray.
-    pub fn intersection<'s>(&'s self, ray: &Ray) -> Option<(&'s Sphere, f64)> {
+    pub fn intersection<'s>(&'s self, ray: &'s Ray) -> Option<(&'s Sphere, f64)> {
         self.objects
-            .iter()
-            .flat_map(|s| s.intersection(ray).map(|t| (s, t)))
+            .intersections(ray)
             .min_by(|(_, t0), (_, t1)| t0.partial_cmp(t1).unwrap())
     }
 }

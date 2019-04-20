@@ -1,3 +1,5 @@
+use geo::aabb::Aabb;
+use geo::bvh;
 use geo::ray::Ray;
 use geo::sphere;
 use geo::vec3::Vec3;
@@ -26,5 +28,15 @@ impl Sphere {
 
     pub fn normal_at(&self, pt: Vec3) -> Vec3 {
         sphere::normal(self.center, pt)
+    }
+}
+
+impl bvh::Elem for Sphere {
+    fn bbox(&self) -> Aabb {
+        sphere::bounding_box(self.center, self.radius)
+    }
+
+    fn intersection(&self, ray: &Ray) -> Option<f64> {
+        sphere::ray_intersection(self.center, self.radius, ray)
     }
 }
