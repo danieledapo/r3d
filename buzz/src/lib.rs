@@ -147,7 +147,7 @@ pub fn render_pixel(
 }
 
 fn sample(scene: &Scene, ray: &Ray, depth: u32, rng: &mut impl Rng, config: &RenderConfig) -> Vec3 {
-    let mut sample_bounce = |material: &Material, intersection, n| match *material {
+    let mut sample_material = |material: &Material, intersection, n| match *material {
         Material::Lambertian { albedo } => {
             albedo
                 * sample(
@@ -174,6 +174,7 @@ fn sample(scene: &Scene, ray: &Ray, depth: u32, rng: &mut impl Rng, config: &Ren
             rng,
             config,
         ),
+        Material::Light { emittance } => emittance,
     };
 
     match scene.intersection(ray) {
@@ -182,7 +183,7 @@ fn sample(scene: &Scene, ray: &Ray, depth: u32, rng: &mut impl Rng, config: &Ren
             let intersection = ray.point_at(t);
             let n = s.normal_at(intersection);
 
-            sample_bounce(&s.material, intersection, n)
+            sample_material(&s.material, intersection, n)
         }
 
         None => sample_environment(scene, ray),

@@ -25,6 +25,10 @@ pub enum Material {
     /// identified by a refracion index. For example, glass has a refraction
     /// index in [1.3, 1.7] while diamond is 2.4.
     Dielectric { refraction_index: f64 },
+
+    /// A light material is a material that does not reflect rays, but always
+    /// emits the given light.
+    Light { emittance: Vec3 },
 }
 
 pub fn lambertian_bounce(intersection: Vec3, n: Vec3, rng: &mut impl Rng) -> Ray {
