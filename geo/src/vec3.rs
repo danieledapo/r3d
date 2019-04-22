@@ -19,7 +19,7 @@ pub struct Vec3 {
 
 impl Vec3 {
     /// Create a new `Vec3` with the given coordinates.
-    pub fn new(x: f64, y: f64, z: f64) -> Self {
+    pub const fn new(x: f64, y: f64, z: f64) -> Self {
         Vec3 { x, y, z }
     }
 
@@ -35,7 +35,7 @@ impl Vec3 {
     }
 
     /// `Vec3` with everything set to 0.
-    pub fn zero() -> Self {
+    pub const fn zero() -> Self {
         Vec3::new(0.0, 0.0, 0.0)
     }
 
