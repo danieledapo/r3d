@@ -7,7 +7,10 @@ use geo::vec3::Vec3;
 use buzz::camera::Camera;
 use buzz::material::Material;
 use buzz::sphere::Sphere;
-use buzz::{parallel_render, render, RenderConfig, Scene};
+use buzz::{parallel_render, render, Environment, RenderConfig, Scene};
+
+const SKY_ENVIRONMENT: Environment =
+    Environment::LinearGradient(Vec3::new(1.0, 1.0, 1.0), Vec3::new(0.5, 0.7, 1.0));
 
 fn main() {
     let s = env::args().nth(1).unwrap_or_else(|| "debug".to_string());
@@ -24,37 +27,40 @@ pub fn debug() {
     let camera = Camera::look_at(Vec3::zero(), target, Vec3::new(0.0, 1.0, 0.0), 90.0)
         .with_focus(target, 0.25);
 
-    let scene = Scene::new(vec![
-        Sphere::new(
-            Vec3::new(0.0, 0.0, -1.0),
-            0.5,
-            Material::Lambertian {
-                albedo: Vec3::new(0.8, 0.3, 0.3),
-            },
-        ),
-        Sphere::new(
-            Vec3::new(0.0, -100.5, -1.0),
-            100.0,
-            Material::Lambertian {
-                albedo: Vec3::new(0.8, 0.8, 0.0),
-            },
-        ),
-        Sphere::new(
-            Vec3::new(1.0, 0.0, -1.0),
-            0.5,
-            Material::Metal {
-                albedo: Vec3::new(0.8, 0.6, 0.2),
-                fuzziness: 0.3,
-            },
-        ),
-        Sphere::new(
-            Vec3::new(-1.0, 0.0, -1.0),
-            0.5,
-            Material::Dielectric {
-                refraction_index: 1.5,
-            },
-        ),
-    ]);
+    let scene = Scene::new(
+        vec![
+            Sphere::new(
+                Vec3::new(0.0, 0.0, -1.0),
+                0.5,
+                Material::Lambertian {
+                    albedo: Vec3::new(0.8, 0.3, 0.3),
+                },
+            ),
+            Sphere::new(
+                Vec3::new(0.0, -100.5, -1.0),
+                100.0,
+                Material::Lambertian {
+                    albedo: Vec3::new(0.8, 0.8, 0.0),
+                },
+            ),
+            Sphere::new(
+                Vec3::new(1.0, 0.0, -1.0),
+                0.5,
+                Material::Metal {
+                    albedo: Vec3::new(0.8, 0.6, 0.2),
+                    fuzziness: 0.3,
+                },
+            ),
+            Sphere::new(
+                Vec3::new(-1.0, 0.0, -1.0),
+                0.5,
+                Material::Dielectric {
+                    refraction_index: 1.5,
+                },
+            ),
+        ],
+        Environment::Color(Vec3::new(0.2, 0.2, 0.8)),
+    );
 
     let mut rng = rand::thread_rng();
 
@@ -147,7 +153,7 @@ pub fn cover() {
 
     let img = parallel_render(
         &camera,
-        &Scene::new(scene),
+        &Scene::new(scene, SKY_ENVIRONMENT),
         &RenderConfig {
             width: 1200,
             height: 800,

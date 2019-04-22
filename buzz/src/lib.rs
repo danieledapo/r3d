@@ -21,13 +21,27 @@ use sphere::Sphere;
 #[derive(Debug, PartialEq, Clone)]
 pub struct Scene {
     objects: Bvh<Sphere>,
+    environment: Environment,
+}
+
+/// The `Environment` surrounding the objects in a `Scene`. All the rays that
+/// don't hit any objects will hit the environment.
+#[derive(Debug, PartialEq, Clone)]
+pub enum Environment {
+    /// The `Environment` is a simple RGB color where each channel is in [0, 1].
+    Color(Vec3),
+
+    /// The `Environment` is a simple linear gradient between two RGB colors.
+    LinearGradient(Vec3, Vec3),
 }
 
 impl Scene {
-    /// Create a new `Scene` with the given objects.
-    pub fn new(objects: impl IntoIterator<Item = Sphere>) -> Self {
+    /// Create a new `Scene` with the given objects inside the given
+    /// `Environment`.
+    pub fn new(objects: impl IntoIterator<Item = Sphere>, environment: Environment) -> Self {
         Scene {
             objects: objects.into_iter().collect(),
+            environment,
         }
     }
 
@@ -171,11 +185,15 @@ fn sample(scene: &Scene, ray: &Ray, depth: u32, rng: &mut impl Rng, config: &Ren
             sample_bounce(&s.material, intersection, n)
         }
 
-        None => sample_environment(ray),
+        None => sample_environment(scene, ray),
     }
 }
 
-fn sample_environment(ray: &Ray) -> Vec3 {
+fn sample_environment(scene: &Scene, ray: &Ray) -> Vec3 {
     let t = 0.5 * (ray.dir.y / ray.dir.norm() + 1.0);
-    vec3::lerp(Vec3::new(1.0, 1.0, 1.0), Vec3::new(0.5, 0.7, 1.0), t)
+
+    match scene.environment {
+        Environment::Color(c) => c,
+        Environment::LinearGradient(a, b) => vec3::lerp(a, b, t),
+    }
 }
