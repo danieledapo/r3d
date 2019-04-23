@@ -4,7 +4,7 @@ use std::io::{BufRead, Result, Seek, SeekFrom};
 
 use byteorder::{LittleEndian, ReadBytesExt};
 
-use crate::vec3::Vec3;
+use crate::Vec3;
 
 /// A STL format type.
 #[derive(Debug, PartialEq, Eq, Clone, Copy)]
@@ -205,7 +205,7 @@ mod tests {
 
     #[test]
     fn test_load_binary_stl() {
-        let cube_stl = include_bytes!("../../data/cube.stl");
+        let cube_stl = include_bytes!("../../../data/cube.stl");
         let mut r = BufReader::new(Cursor::new(&cube_stl[..]));
 
         assert_eq!(guess_stl_format(&mut r).unwrap(), StlFormat::Binary);

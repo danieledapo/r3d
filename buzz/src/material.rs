@@ -1,7 +1,7 @@
 use rand::Rng;
 
 use geo::ray::Ray;
-use geo::vec3::Vec3;
+use geo::Vec3;
 
 /// Enum over all the supported `Material`s. Each variant dictates how light
 /// interacts(reflects, refracts, etc..) with them. They're mainly composed of

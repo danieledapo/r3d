@@ -2,33 +2,10 @@ use std::cmp::Ordering;
 use std::f64::EPSILON;
 use std::iter::FromIterator;
 
-use crate::aabb::Aabb;
 use crate::ray::Ray;
+use crate::spatial_index::Shape;
 use crate::util::ksmallest_by;
-use crate::vec3::Vec3;
-use crate::Axis;
-
-pub trait Elem: std::fmt::Debug {
-    fn bbox(&self) -> Aabb;
-    fn intersection(&self, ray: &Ray) -> Option<f64>;
-}
-
-impl Elem for Vec3 {
-    fn bbox(&self) -> Aabb {
-        Aabb::new(*self)
-    }
-
-    fn intersection(&self, ray: &Ray) -> Option<f64> {
-        let t = ray.t_of(*self)?;
-
-        // we're only interested in intersection on the ray and not its opposite
-        if t >= 0.0 {
-            Some(t)
-        } else {
-            None
-        }
-    }
-}
+use crate::{Aabb, Axis, Vec3};
 
 /// A [Bounding volume hierarchy][0] is a tree data structure for collecting a
 /// set of shapes that allows for quick intersection checking by pruning the
@@ -60,7 +37,7 @@ enum Node<T> {
 
 impl<T> Bvh<T>
 where
-    T: Elem,
+    T: Shape,
 {
     /// Return all the objects that intersect the given ray along with their t
     /// parameter.
@@ -98,7 +75,7 @@ where
 
 impl<T> FromIterator<T> for Bvh<T>
 where
-    T: Elem,
+    T: Shape,
 {
     fn from_iter<I: IntoIterator<Item = T>>(it: I) -> Self {
         let elems = it
@@ -121,7 +98,7 @@ where
 
 impl<T> Node<T>
 where
-    T: Elem,
+    T: Shape,
 {
     fn new(mut elems: Vec<(T, Aabb)>) -> Self {
         assert!(!elems.is_empty());

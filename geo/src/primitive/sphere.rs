@@ -1,6 +1,5 @@
-use crate::aabb::Aabb;
 use crate::ray::Ray;
-use crate::vec3::Vec3;
+use crate::{Aabb, Vec3};
 
 /// Check if a sphere defined by `center` and `radius` intersects a `Ray`. If so
 /// return the parameter of the intersection point closest to `ray.origin`.

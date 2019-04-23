@@ -1,4 +1,4 @@
-use crate::vec3::Vec3;
+use crate::Vec3;
 
 /// Calculate the area of a triangle. If it is made up by 3
 /// collinear points then the area is 0.

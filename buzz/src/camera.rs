@@ -5,7 +5,7 @@ use std::f64::consts::PI;
 use rand::Rng;
 
 use geo::ray::Ray;
-use geo::vec3::Vec3;
+use geo::Vec3;
 
 /// A `Camera` is an object that allows to cast rays towards a 3D point in world
 /// space that is calculated from a 2D point in screen space.
