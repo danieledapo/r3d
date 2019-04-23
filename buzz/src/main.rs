@@ -2,7 +2,7 @@ use std::env;
 
 use rand::Rng;
 
-use geo::vec3::Vec3;
+use geo::Vec3;
 
 use buzz::camera::Camera;
 use buzz::material::Material;

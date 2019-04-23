@@ -1,5 +1,4 @@
-use crate::vec3::Vec3;
-use crate::Axis;
+use crate::{Axis, Vec3};
 
 /// A `Ray` is a line starting from a given point and going towards a given
 /// direction.

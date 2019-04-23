@@ -8,10 +8,9 @@ use image::{Rgb, RgbImage};
 use rand::Rng;
 use rayon::prelude::*;
 
-use geo::bvh::Bvh;
 use geo::ray::Ray;
-use geo::vec3;
-use geo::vec3::Vec3;
+use geo::spatial_index::bvh::Bvh;
+use geo::{vec3, Vec3};
 
 use camera::Camera;
 use material::{dielectric_bounce, lambertian_bounce, metal_bounce, Material};

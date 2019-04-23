@@ -1,5 +1,5 @@
 use crate::ray::Ray;
-use crate::vec3::Vec3;
+use crate::Vec3;
 use crate::Axis;
 
 /// An [Axis aligned bounding box][0] useful for approximating the boundary of

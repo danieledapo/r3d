@@ -1,8 +1,7 @@
-use geo::aabb::Aabb;
-use geo::bvh;
 use geo::ray::Ray;
+use geo::spatial_index::Shape;
 use geo::sphere;
-use geo::vec3::Vec3;
+use geo::{Aabb, Vec3};
 
 use crate::material::Material;
 
@@ -31,7 +30,7 @@ impl Sphere {
     }
 }
 
-impl bvh::Elem for Sphere {
+impl Shape for Sphere {
     fn bbox(&self) -> Aabb {
         sphere::bounding_box(self.center, self.radius)
     }

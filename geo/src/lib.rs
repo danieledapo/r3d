@@ -1,16 +1,10 @@
-pub mod aabb;
-pub mod bvh;
-pub mod ray;
-pub mod sphere;
-pub mod stl;
-pub mod triangle;
-pub mod util;
-pub mod vec3;
+pub mod mesh;
+pub mod primitive;
+pub mod spatial_index;
 
-/// An enum over the X, Y and Z axis.
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub enum Axis {
-    X,
-    Y,
-    Z,
-}
+pub mod util;
+
+pub use primitive::aabb::Aabb;
+pub use primitive::vec3::Vec3;
+pub use primitive::Axis;
+pub use primitive::{ray, sphere, triangle, vec3};
