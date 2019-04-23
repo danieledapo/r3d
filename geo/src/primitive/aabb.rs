@@ -1,6 +1,6 @@
 use crate::ray::Ray;
-use crate::Vec3;
 use crate::Axis;
+use crate::Vec3;
 
 /// An [Axis aligned bounding box][0] useful for approximating the boundary of
 /// shapes.
@@ -73,6 +73,13 @@ impl Aabb {
         } else if p.z > self.max.z {
             self.max.z = p.z;
         }
+    }
+
+    /// Consume the bounding box and return a new one that also covers the
+    /// passed point.
+    pub fn expanded(mut self, p: &Vec3) -> Self {
+        self.expand(p);
+        self
     }
 
     /// Expand the bounding box so that it covers another bounding box too.
