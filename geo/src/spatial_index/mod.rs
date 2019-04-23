@@ -1,6 +1,8 @@
 pub mod bvh;
+pub mod kdtree;
 
 pub use bvh::Bvh;
+pub use kdtree::KdTree;
 
 use crate::ray::Ray;
 use crate::{Aabb, Vec3};
