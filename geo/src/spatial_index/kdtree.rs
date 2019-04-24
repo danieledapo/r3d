@@ -1,6 +1,6 @@
 use crate::spatial_index::Shape;
 use crate::util::ksmallest_by;
-use crate::{Aabb, Axis, Vec3};
+use crate::{Aabb, Axis};
 
 /// maximum number of elements each leaf can contain.
 const LEAF_SIZE: usize = 8;
@@ -78,39 +78,42 @@ fn bbox_in_left(bbox: &Aabb, axis: Axis, c: f64) -> bool {
 /// collection of `Aabb` such that the shapes are well distributed over the
 /// resulting two partitions.
 fn best_partitioning(bboxes: &[Aabb]) -> (Axis, f64) {
-    let mut bbox = bboxes[0].clone();
+    // the idea here is to find the median X,Y,Z values for the centers which
+    // partition the space almost equally by definition.
+    //
+    // However, it's still possible to have the same median value multiple times
+    // which can result in a non ideal partitioning. To mitigate this issue,
+    // iterate over all the median values and find the one that best partitions
+    // the input.
+    //
 
-    let mut centers = Vec::with_capacity(bboxes.len());
-    centers.push(bboxes[1].center());
+    let mut centers = bboxes.iter().map(|b| b.center()).collect::<Vec<_>>();
 
-    if bboxes.len() > 1 {
-        for b in &bboxes[1..] {
-            centers.push(b.center());
-            bbox.union(&b);
-        }
-    }
+    let (split_axis, split_value, _) = [Axis::X, Axis::Y, Axis::Z]
+        .iter()
+        .map(|axis| {
+            let p = centers.len() / 2;
+            let mid = *ksmallest_by(&mut centers, p, |a, b| {
+                a[*axis].partial_cmp(&b[*axis]).unwrap()
+            })
+            .unwrap();
 
-    let Vec3 {
-        x: range_x,
-        y: range_y,
-        z: range_z,
-    } = bbox.dimensions();
+            let value = mid[*axis];
 
-    let axis = if range_x > range_y && range_x > range_z {
-        Axis::X
-    } else if range_y > range_x && range_y > range_z {
-        Axis::Y
-    } else {
-        Axis::Z
-    };
+            let lefties = bboxes
+                .iter()
+                .filter(|b| bbox_in_left(b, *axis, value))
+                .count();
 
-    let p = centers.len() / 2;
-    let mid = *ksmallest_by(&mut centers, p, |a, b| {
-        a[axis].partial_cmp(&b[axis]).unwrap()
-    })
-    .unwrap();
+            // the higher the score is the more unbalanced the partitioning is
+            let score = lefties.max(centers.len() - lefties);
 
-    (axis, mid[axis])
+            (axis, value, score)
+        })
+        .min_by(|(_, _, s1), (_, _, s2)| s1.partial_cmp(s2).unwrap())
+        .unwrap();
+
+    (*split_axis, split_value)
 }
 
 /// Partition the given `Shape`s and their `Aabb`s using the given `split_axis`
@@ -146,6 +149,8 @@ fn partition<T: Shape>(
 mod tests {
     use super::*;
 
+    use crate::Vec3;
+
     #[test]
     fn test_new() {
         let kd = KdTree::new(vec![
@@ -177,30 +182,34 @@ mod tests {
             Vec3::new(-9.0, -3.0, -3.0),
             Vec3::new(0.0, -6.0, 2.0),
             Vec3::new(-3.0, -3.0, 6.0),
+            Vec3::new(0.0, 5.0, -1.0),
+            Vec3::new(1.0, -3.0, 6.0),
         ]);
 
         assert_eq!(
             kd,
             KdTree {
                 root: Node::Branch {
-                    split_value: -1.0,
-                    split_axis: Axis::X,
+                    split_value: 0.0,
+                    split_axis: Axis::Z,
 
                     left: Box::new(Node::Leaf {
                         data: vec![
-                            Vec3::new(-3.0, -3.0, 6.0),
+                            Vec3::new(0.0, 5.0, -1.0),
                             Vec3::new(-9.0, -3.0, -3.0),
-                            Vec3::new(-1.0, -3.0, 2.0),
-                            Vec3::new(-1.0, 2.0, 0.0)
+                            Vec3::new(10.0, 1.0, -4.0),
+                            Vec3::new(8.0, 6.0, -1.0),
+                            Vec3::new(-1.0, 2.0, 0.0),
+                            Vec3::new(0.0, 0.0, 0.0)
                         ]
                     }),
                     right: Box::new(Node::Leaf {
                         data: vec![
+                            Vec3::new(1.0, -3.0, 6.0),
+                            Vec3::new(-3.0, -3.0, 6.0),
                             Vec3::new(0.0, -6.0, 2.0),
-                            Vec3::new(10.0, 1.0, -4.0),
                             Vec3::new(0.0, 0.0, 1.0),
-                            Vec3::new(8.0, 6.0, -1.0),
-                            Vec3::new(0.0, 0.0, 0.0)
+                            Vec3::new(-1.0, -3.0, 2.0)
                         ]
                     }),
                 }
@@ -216,18 +225,20 @@ mod tests {
                 Aabb::new(Vec3::new(1.0, 2.0, 3.0)).expanded(&Vec3::new(7.0, 2.0, 7.0)),
                 Aabb::new(Vec3::new(-1.0, -2.0, 3.0)).expanded(&Vec3::new(1.0, 1.0, 3.0)),
             ]),
-            (Axis::Y, 2.0)
+            (Axis::X, 4.0)
         );
 
         assert_eq!(
             best_partitioning(&[
-                Aabb::new(Vec3::zero()).expanded(&Vec3::new(10.0, 10.0, 10.0)),
-                Aabb::new(Vec3::new(1.0, 2.0, 3.0)).expanded(&Vec3::new(7.0, 2.0, 7.0)),
-                Aabb::new(Vec3::new(-1.0, -2.0, 3.0)).expanded(&Vec3::new(1.0, 1.0, 3.0)),
-                Aabb::new(Vec3::new(3.0, 3.0, 3.0)),
-                Aabb::new(Vec3::new(-3.0, -5.0, -10.0)).expanded(&Vec3::new(-1.0, -3.0, 2.0)),
+                Aabb::new(Vec3::new(-2.0, -1.0, 0.0)),
+                Aabb::new(Vec3::zero()),
+                Aabb::new(Vec3::new(3.0, 1.0, 2.0)),
+                Aabb::new(Vec3::new(3.0, 2.0, 2.0)),
+                Aabb::new(Vec3::new(3.0, 3.0, 2.0)),
+                Aabb::new(Vec3::new(4.0, 4.0, 2.0)),
+                Aabb::new(Vec3::new(5.0, 5.0, 2.0)),
             ]),
-            (Axis::Z, 3.0)
+            (Axis::Y, 2.0)
         );
     }
 
