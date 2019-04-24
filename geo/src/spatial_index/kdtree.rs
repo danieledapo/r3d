@@ -1,3 +1,6 @@
+use std::ops::Deref;
+use std::sync::Arc;
+
 use crate::ray::Ray;
 use crate::spatial_index::Shape;
 use crate::util::ksmallest_by;
@@ -23,7 +26,9 @@ pub struct KdTree<T> {
 #[derive(Debug, Clone, PartialEq)]
 enum Node<T> {
     Leaf {
-        data: Vec<T>,
+        // Arc is needed because T might be shared between left and right if
+        // T.bbox()[split_axis] contains the split_value
+        data: Vec<Arc<T>>,
     },
     Branch {
         left: Box<Node<T>>,
@@ -42,7 +47,7 @@ where
         let bboxes = shapes.iter().map(|s| s.bbox()).collect();
 
         KdTree {
-            root: Node::new(shapes, bboxes),
+            root: Node::new(shapes.into_iter().map(Arc::new).collect(), bboxes),
         }
     }
 
@@ -57,7 +62,7 @@ impl<T> Node<T>
 where
     T: Shape,
 {
-    fn new(shapes: Vec<T>, bboxes: Vec<Aabb>) -> Self {
+    fn new(shapes: Vec<Arc<T>>, bboxes: Vec<Aabb>) -> Self {
         if shapes.len() <= LEAF_SIZE {
             return Node::Leaf { data: shapes };
         }
@@ -80,8 +85,9 @@ where
             Node::Leaf { data } => data
                 .iter()
                 .flat_map(|s| s.intersection(ray).map(|t| (s, t)))
-                // .filter(|(_, t)| tmin <= *t && tmax >= *t)
-                .min_by(|(_, t1), (_, t2)| t1.partial_cmp(t2).unwrap()),
+                .filter(|(_, t)| tmin <= *t && tmax >= *t)
+                .min_by(|(_, t1), (_, t2)| t1.partial_cmp(t2).unwrap())
+                .map(|(s, t)| (s.deref(), t)),
 
             Node::Branch {
                 left,
@@ -117,33 +123,22 @@ where
                 // in the general case find the intersection in the first node
                 // first and then in second. The result is simply the first
                 // intersection with the smaller t.
-                let i1 = first.intersection(ray, tmin, tsplit);
-                if let Some((o, t)) = i1 {
-                    if t < tsplit {
-                        return Some((o, t));
-                    }
-                }
-
-                let i2 = second.intersection(ray, tsplit, tmax);
-                match (i1, i2) {
-                    (None, None) => None,
-                    (Some(i), None) | (None, Some(i)) => Some(i),
-                    (Some((s1, t1)), Some((s2, t2))) => {
-                        if t1 < t2 {
-                            Some((s1, t1))
-                        } else {
-                            Some((s2, t2))
-                        }
-                    }
-                }
+                first
+                    .intersection(ray, tmin, tsplit)
+                    .or_else(|| second.intersection(ray, tsplit, tmax))
             }
         }
     }
 }
 
-/// Check if a `Aabb` semantically lies on the left of the given split_axis and split_value.
-fn bbox_in_left(bbox: &Aabb, axis: Axis, c: f64) -> bool {
-    (bbox.min()[axis] + bbox.max()[axis]) / 2.0 <= c
+/// Check where the bounding box lies wrt to the given axis and value. In
+/// particular, it returns:
+/// - (true, false) when the bbox is completely to the left
+/// - (false, true) when the bbox is completely to the right
+/// - (true, true) when the value is inside the bbox
+/// - (false, true) when there's no intersection
+fn partition_bbox(bbox: &Aabb, axis: Axis, c: f64) -> (bool, bool) {
+    (bbox.min()[axis] <= c, bbox.max()[axis] >= c)
 }
 
 /// Find the best best partitioning (split_axis and split_value) for a given
@@ -159,6 +154,25 @@ fn best_partitioning(bboxes: &[Aabb]) -> (Axis, f64) {
     // the input.
     //
 
+    let partion_score = |bboxes, axis, value| {
+        let mut lefties = 0;
+        let mut rightists = 0;
+
+        for b in bboxes {
+            let (l, r) = partition_bbox(b, axis, value);
+            if l {
+                lefties += 1;
+            }
+
+            if r {
+                rightists += 1;
+            }
+        }
+
+        // the higher the score is the more unbalanced the partitioning is
+        lefties.max(rightists)
+    };
+
     let mut centers = bboxes.iter().map(|b| b.center()).collect::<Vec<_>>();
 
     let (split_axis, split_value, _) = [Axis::X, Axis::Y, Axis::Z]
@@ -172,15 +186,7 @@ fn best_partitioning(bboxes: &[Aabb]) -> (Axis, f64) {
 
             let value = mid[*axis];
 
-            let lefties = bboxes
-                .iter()
-                .filter(|b| bbox_in_left(b, *axis, value))
-                .count();
-
-            // the higher the score is the more unbalanced the partitioning is
-            let score = lefties.max(centers.len() - lefties);
-
-            (axis, value, score)
+            (axis, value, partion_score(bboxes, *axis, value))
         })
         .min_by(|(_, _, s1), (_, _, s2)| s1.partial_cmp(s2).unwrap())
         .unwrap();
@@ -191,11 +197,11 @@ fn best_partitioning(bboxes: &[Aabb]) -> (Axis, f64) {
 /// Partition the given `Shape`s and their `Aabb`s using the given `split_axis`
 /// and `split_value`.
 fn partition<T: Shape>(
-    mut shapes: Vec<T>,
+    mut shapes: Vec<Arc<T>>,
     mut bboxes: Vec<Aabb>,
     split_axis: Axis,
     split_value: f64,
-) -> ((Vec<T>, Vec<Aabb>), (Vec<T>, Vec<Aabb>)) {
+) -> ((Vec<Arc<T>>, Vec<Aabb>), (Vec<Arc<T>>, Vec<Aabb>)) {
     let mut left = vec![];
     let mut left_bboxes = vec![];
 
@@ -205,10 +211,14 @@ fn partition<T: Shape>(
     while let Some(obj) = shapes.pop() {
         let bbox = bboxes.pop().unwrap();
 
-        if bbox_in_left(&bbox, split_axis, split_value) {
-            left.push(obj);
-            left_bboxes.push(bbox);
-        } else {
+        let (l, r) = partition_bbox(&bbox, split_axis, split_value);
+
+        if l {
+            left.push(obj.clone());
+            left_bboxes.push(bbox.clone());
+        }
+
+        if r {
             right.push(obj);
             right_bboxes.push(bbox);
         }
@@ -236,9 +246,9 @@ mod tests {
             KdTree {
                 root: Node::Leaf {
                     data: vec![
-                        Vec3::zero(),
-                        Vec3::new(-1.0, 2.0, 0.0),
-                        Vec3::new(8.0, 6.0, -1.0),
+                        Arc::new(Vec3::zero()),
+                        Arc::new(Vec3::new(-1.0, 2.0, 0.0)),
+                        Arc::new(Vec3::new(8.0, 6.0, -1.0)),
                     ]
                 }
             }
@@ -263,25 +273,27 @@ mod tests {
             KdTree {
                 root: Node::Branch {
                     split_value: 0.0,
-                    split_axis: Axis::Z,
+                    split_axis: Axis::Y,
 
                     left: Box::new(Node::Leaf {
                         data: vec![
-                            Vec3::new(0.0, 5.0, -1.0),
-                            Vec3::new(-9.0, -3.0, -3.0),
-                            Vec3::new(10.0, 1.0, -4.0),
-                            Vec3::new(8.0, 6.0, -1.0),
-                            Vec3::new(-1.0, 2.0, 0.0),
-                            Vec3::new(0.0, 0.0, 0.0)
+                            Arc::new(Vec3::new(1.0, -3.0, 6.0)),
+                            Arc::new(Vec3::new(-3.0, -3.0, 6.0)),
+                            Arc::new(Vec3::new(0.0, -6.0, 2.0)),
+                            Arc::new(Vec3::new(-9.0, -3.0, -3.0)),
+                            Arc::new(Vec3::new(0.0, 0.0, 1.0)),
+                            Arc::new(Vec3::new(-1.0, -3.0, 2.0)),
+                            Arc::new(Vec3::new(0.0, 0.0, 0.0))
                         ]
                     }),
                     right: Box::new(Node::Leaf {
                         data: vec![
-                            Vec3::new(1.0, -3.0, 6.0),
-                            Vec3::new(-3.0, -3.0, 6.0),
-                            Vec3::new(0.0, -6.0, 2.0),
-                            Vec3::new(0.0, 0.0, 1.0),
-                            Vec3::new(-1.0, -3.0, 2.0)
+                            Arc::new(Vec3::new(0.0, 5.0, -1.0)),
+                            Arc::new(Vec3::new(10.0, 1.0, -4.0)),
+                            Arc::new(Vec3::new(0.0, 0.0, 1.0)),
+                            Arc::new(Vec3::new(8.0, 6.0, -1.0)),
+                            Arc::new(Vec3::new(-1.0, 2.0, 0.0)),
+                            Arc::new(Vec3::new(0.0, 0.0, 0.0)),
                         ]
                     }),
                 }
