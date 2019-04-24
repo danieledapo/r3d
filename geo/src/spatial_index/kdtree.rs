@@ -1,3 +1,4 @@
+use crate::ray::Ray;
 use crate::spatial_index::Shape;
 use crate::util::ksmallest_by;
 use crate::{Aabb, Axis};
@@ -44,6 +45,12 @@ where
             root: Node::new(shapes, bboxes),
         }
     }
+
+    /// Find the intersection, if any, between the objects in the `KdTree` and a
+    /// given `Ray`. The parameter
+    pub fn intersection<'s>(&'s self, ray: &Ray) -> Option<(&'s T, f64)> {
+        self.root.intersection(ray, 0.0, std::f64::INFINITY)
+    }
 }
 
 impl<T> Node<T>
@@ -65,6 +72,71 @@ where
 
             split_value,
             split_axis,
+        }
+    }
+
+    fn intersection<'s>(&'s self, ray: &Ray, tmin: f64, tmax: f64) -> Option<(&'s T, f64)> {
+        match self {
+            Node::Leaf { data } => data
+                .iter()
+                .flat_map(|s| s.intersection(ray).map(|t| (s, t)))
+                // .filter(|(_, t)| tmin <= *t && tmax >= *t)
+                .min_by(|(_, t1), (_, t2)| t1.partial_cmp(t2).unwrap()),
+
+            Node::Branch {
+                left,
+                right,
+                split_axis,
+                split_value,
+            } => {
+                // virtually split the ray into two, one from tmin to tsplit and
+                // another one from tsplit to tmax.
+                let tsplit = (split_value - ray.origin[*split_axis]) / ray.dir[*split_axis];
+
+                let left_first = (ray.origin[*split_axis] < *split_value)
+                    || (ray.origin[*split_axis] == *split_value && ray.dir[*split_axis] <= 0.0);
+
+                let (first, second) = if left_first {
+                    (&left, &right)
+                } else {
+                    (&right, &left)
+                };
+
+                // if tsplit > tmax or tsplit < 0 then the ray does not span
+                // both first and second, but only first
+                if tsplit > tmax || tsplit <= 0.0 {
+                    return first.intersection(ray, tmin, tmax);
+                }
+
+                // when tsplit < tmin then the ray actually only spans the
+                // second node
+                if tsplit < tmin {
+                    return second.intersection(ray, tmin, tmax);
+                }
+
+                // in the general case find the intersection in the first node
+                // first and then in second. The result is simply the first
+                // intersection with the smaller t.
+                let i1 = first.intersection(ray, tmin, tsplit);
+                if let Some((o, t)) = i1 {
+                    if t < tsplit {
+                        return Some((o, t));
+                    }
+                }
+
+                let i2 = second.intersection(ray, tsplit, tmax);
+                match (i1, i2) {
+                    (None, None) => None,
+                    (Some(i), None) | (None, Some(i)) => Some(i),
+                    (Some((s1, t1)), Some((s2, t2))) => {
+                        if t1 < t2 {
+                            Some((s1, t1))
+                        } else {
+                            Some((s2, t2))
+                        }
+                    }
+                }
+            }
         }
     }
 }
