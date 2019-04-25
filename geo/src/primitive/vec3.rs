@@ -196,6 +196,17 @@ pub fn vec3() -> impl Strategy<Value = Vec3> {
 }
 
 #[cfg(test)]
+pub fn distinct_vec3(
+    range: impl Into<proptest::collection::SizeRange>,
+) -> impl Strategy<Value = Vec<Vec3>> {
+    proptest::collection::hash_set(any::<(i16, i16, i16)>(), range).prop_map(|cs| {
+        cs.into_iter()
+            .map(|(x, y, z)| Vec3::new(f64::from(x), f64::from(y), f64::from(z)))
+            .collect()
+    })
+}
+
+#[cfg(test)]
 mod tests {
     use super::*;
 
