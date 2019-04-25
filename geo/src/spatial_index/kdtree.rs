@@ -99,6 +99,15 @@ where
                 // another one from tsplit to tmax.
                 let tsplit = (split_value - ray.origin[*split_axis]) / ray.dir[*split_axis];
 
+                // if tsplit is not finite then there's not much sense in
+                // splitting the ray, just try to find the intersection in left
+                // and right with current tmin and tmax
+                if !tsplit.is_finite() {
+                    return left
+                        .intersection(ray, tmin, tmax)
+                        .or_else(|| right.intersection(ray, tmin, tmax));
+                }
+
                 let left_first = (ray.origin[*split_axis] < *split_value)
                     || (ray.origin[*split_axis] == *split_value && ray.dir[*split_axis] <= 0.0);
 
@@ -375,5 +384,39 @@ mod tests {
                 }
             }
         }
+    }
+
+    #[test]
+    fn test_intersection_with_stall_ray() {
+        let tree = KdTree::new(vec![
+            Vec3::new(0.0, 0.0, 0.0),
+            Vec3::new(0.0, 0.0, 1.0),
+            Vec3::new(0.0, 0.0, 3.0),
+            Vec3::new(0.0, 0.0, 5.0),
+            Vec3::new(1.0, 0.0, 0.0),
+            Vec3::new(0.0, 0.0, -1.0),
+            Vec3::new(0.0, 0.0, 4.0),
+            Vec3::new(0.0, 0.0, 2.0),
+            Vec3::new(1.0, 0.0, 1.0),
+        ]);
+
+        match tree.root {
+            Node::Branch {
+                split_axis,
+                split_value,
+                ..
+            } if split_axis == Axis::Z && split_value == 1.0 => {}
+            _ => {
+                unreachable!(
+                    "this test does not make sense anymore, it's meant to test what happens when tsplit is not finite"
+                );
+            }
+        }
+
+        let ray = Ray::new(Vec3::new(0.0, 0.0, 1.0), Vec3::new(0.0, 1.0, 0.0));
+        assert_eq!(
+            tree.intersection(&ray),
+            Some((&Vec3::new(0.0, 0.0, 1.0), 0.0))
+        );
     }
 }
