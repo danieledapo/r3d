@@ -52,9 +52,18 @@ where
     }
 
     /// Find the intersection, if any, between the objects in the `KdTree` and a
-    /// given `Ray`. The parameter
-    pub fn intersection<'s>(&'s self, ray: &Ray) -> Option<(&'s T, f64)> {
-        self.root.intersection(ray, 0.0, std::f64::INFINITY)
+    /// given `Ray`. The intersection is defined by the shape and its t
+    /// parameter with respect to the ray.
+    pub fn intersection<'s>(&'s self, ray: &'s Ray) -> Option<(&'s T, f64)> {
+        self.intersections(ray).next()
+    }
+
+    /// Find all the intersections between the objects in the `KdTree` and a
+    /// given ray. Each intersection is defined by the shape and its t parameter
+    /// with respect to the ray. The intersections are sorted by their t
+    /// parameter.
+    fn intersections<'s>(&'s self, ray: &'s Ray) -> impl Iterator<Item = (&'s T, f64)> + 's {
+        self.root.intersections(ray, 0.0, std::f64::INFINITY)
     }
 }
 
@@ -80,63 +89,100 @@ where
         }
     }
 
-    fn intersection<'s>(&'s self, ray: &Ray, tmin: f64, tmax: f64) -> Option<(&'s T, f64)> {
-        match self {
-            Node::Leaf { data } => data
-                .iter()
-                .flat_map(|s| s.intersection(ray).map(|t| (s, t)))
-                .filter(|(_, t)| tmin <= *t && tmax >= *t)
-                .min_by(|(_, t1), (_, t2)| t1.partial_cmp(t2).unwrap())
-                .map(|(s, t)| (s.deref(), t)),
+    fn intersections<'s>(
+        &'s self,
+        ray: &'s Ray,
+        tmin: f64,
+        tmax: f64,
+    ) -> impl Iterator<Item = (&'s T, f64)> + 's {
+        let mut node_stack = vec![(self, tmin, tmax)];
 
-            Node::Branch {
-                left,
-                right,
-                split_axis,
-                split_value,
-            } => {
-                // virtually split the ray into two, one from tmin to tsplit and
-                // another one from tsplit to tmax.
-                let tsplit = (split_value - ray.origin[*split_axis]) / ray.dir[*split_axis];
+        let mut current_intersections: Vec<(&'s T, f64)> = Vec::with_capacity(LEAF_SIZE);
 
-                // if tsplit is not finite then there's not much sense in
-                // splitting the ray, just try to find the intersection in left
-                // and right with current tmin and tmax
-                if !tsplit.is_finite() {
-                    return left
-                        .intersection(ray, tmin, tmax)
-                        .or_else(|| right.intersection(ray, tmin, tmax));
+        let mut tmin = tmin;
+        let mut tmax = tmax;
+
+        std::iter::from_fn(move || {
+            loop {
+                if let Some(r) = current_intersections.pop() {
+                    return Some(r);
                 }
 
-                let left_first = (ray.origin[*split_axis] < *split_value)
-                    || (ray.origin[*split_axis] == *split_value && ray.dir[*split_axis] <= 0.0);
+                let (node, tmi, tma) = node_stack.pop()?;
 
-                let (first, second) = if left_first {
-                    (&left, &right)
-                } else {
-                    (&right, &left)
-                };
+                tmin = tmi;
+                tmax = tma;
 
-                // if tsplit > tmax or tsplit < 0 then the ray does not span
-                // both first and second, but only first
-                if tsplit > tmax || tsplit <= 0.0 {
-                    return first.intersection(ray, tmin, tmax);
+                match node {
+                    Node::Leaf { data } => {
+                        current_intersections.clear();
+                        current_intersections.extend(data.iter().flat_map(|s| {
+                            let t = s.intersection(ray)?;
+
+                            if tmin <= t && tmax >= t {
+                                Some((s.deref(), t))
+                            } else {
+                                None
+                            }
+                        }));
+
+                        // sort in reverse order so that we can pop the sorted
+                        // elements quickly
+                        current_intersections
+                            .sort_by(|(_, t1), (_, t2)| t2.partial_cmp(t1).unwrap());
+                    }
+                    Node::Branch {
+                        left,
+                        right,
+                        split_axis,
+                        split_value,
+                    } => {
+                        // virtually split the ray into two, one from tmin to tsplit and
+                        // another one from tsplit to tmax.
+                        let tsplit = (split_value - ray.origin[*split_axis]) / ray.dir[*split_axis];
+
+                        // if tsplit is not finite then there's not much sense in
+                        // splitting the ray, just try to find the intersection in left
+                        // and right with current tmin and tmax
+                        if !tsplit.is_finite() {
+                            node_stack.push((right, tmin, tmax));
+                            node_stack.push((left, tmin, tmax));
+                            continue;
+                        }
+
+                        let left_first = (ray.origin[*split_axis] < *split_value)
+                            || (ray.origin[*split_axis] == *split_value
+                                && ray.dir[*split_axis] <= 0.0);
+
+                        let (first, second) = if left_first {
+                            (&left, &right)
+                        } else {
+                            (&right, &left)
+                        };
+
+                        // if tsplit > tmax or tsplit < 0 then the ray does not span
+                        // both first and second, but only first
+                        if tsplit > tmax || tsplit <= 0.0 {
+                            node_stack.push((first, tmin, tmax));
+                            continue;
+                        }
+
+                        // when tsplit < tmin then the ray actually only spans the
+                        // second node
+                        if tsplit < tmin {
+                            node_stack.push((second, tmin, tmax));
+                            continue;
+                        }
+
+                        // in the general case find the intersection in the first node
+                        // first and then in second. The result is simply the first
+                        // intersection with the smaller t.
+                        node_stack.push((second, tsplit, tmax));
+                        node_stack.push((first, tmin, tsplit));
+                    }
                 }
-
-                // when tsplit < tmin then the ray actually only spans the
-                // second node
-                if tsplit < tmin {
-                    return second.intersection(ray, tmin, tmax);
-                }
-
-                // in the general case find the intersection in the first node
-                // first and then in second. The result is simply the first
-                // intersection with the smaller t.
-                first
-                    .intersection(ray, tmin, tsplit)
-                    .or_else(|| second.intersection(ray, tsplit, tmax))
             }
-        }
+        })
     }
 }
 
@@ -382,6 +428,27 @@ mod tests {
                 if let Some((v, _)) = tree.intersection(&ray) {
                     assert_ne!(v, p);
                 }
+            }
+        }
+    }
+    proptest! {
+        #[test]
+        fn prop_kdtree_intersections_are_sorted(
+            rpts in vec3::distinct_vec3(2..=2),
+            ts in proptest::collection::hash_set(any::<i32>(), 2..50)
+        ) {
+            // generate points on ray so that we're sure we have multiple
+            // intersections per ray
+
+            let ray = Ray::new(rpts[0], rpts[1] - rpts[0]);
+
+            let pts = ts.into_iter().map(|t| ray.point_at(f64::from(t))).collect::<Vec<_>>();
+            let tree = KdTree::new(pts.clone());
+
+            let ints = tree.intersections(&ray).collect::<Vec<_>>();
+
+            for w in ints.windows(2) {
+                assert!(w[0].1 <= w[1].1);
             }
         }
     }
