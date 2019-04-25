@@ -231,6 +231,9 @@ fn partition<T: Shape>(
 mod tests {
     use super::*;
 
+    use proptest::prelude::*;
+
+    use crate::vec3;
     use crate::Vec3;
 
     #[test]
@@ -326,4 +329,51 @@ mod tests {
         );
     }
 
+    proptest! {
+        #[test]
+        fn prop_kdtree_of_points_intersects_its_points_at_t0(
+            pts in vec3::distinct_vec3(2..100)
+        ) {
+            let bbox = Aabb::from_iter(pts.iter().cloned()).unwrap();
+            let center = bbox.center();
+
+            let tree = KdTree::new(pts.clone());
+
+            for p in pts {
+                let d = (center - p).normalized();
+                let ray = Ray::new(p, d);
+
+                let int = tree.intersection(&ray);
+
+                assert!(int.is_some(), "ray {:?}", ray);
+
+                let (intersected, t) = int.unwrap();
+                assert_eq!(*intersected, p);
+                assert_eq!(t, 0.0);
+            }
+        }
+    }
+
+    proptest! {
+        #[test]
+        fn prop_kdtree_of_points_does_not_intersect_points_not_contained(
+            mut pts in vec3::distinct_vec3(4..200)
+        ) {
+            let n = pts.len();
+            let outside_pts = pts.split_off(n / 2);
+
+            let tree = KdTree::new(pts.clone());
+
+            for (i, p) in outside_pts.iter().enumerate() {
+                let ray = Ray::new(
+                    *p,
+                    (outside_pts[(i + 1) % outside_pts.len()] - *p).normalized(),
+                );
+
+                if let Some((v, _)) = tree.intersection(&ray) {
+                    assert_ne!(v, p);
+                }
+            }
+        }
+    }
 }
