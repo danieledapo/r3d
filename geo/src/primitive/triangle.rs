@@ -1,3 +1,4 @@
+use crate::ray::Ray;
 use crate::Vec3;
 
 /// Calculate the area of a triangle. If it is made up by 3
@@ -59,6 +60,44 @@ pub fn barycentric((v0, v1, v2): (&Vec3, &Vec3, &Vec3), p: &Vec3) -> Option<Vec3
         None
     } else {
         Some(Vec3::new(1.0 - u - v, v, u))
+    }
+}
+
+/// Return the parameter t of the intersection between the ray and a triangle if
+/// any.
+pub fn ray_intersection((v1, v2, v3): (Vec3, Vec3, Vec3), ray: &Ray) -> Option<f64> {
+    let e1 = v2 - v1;
+    let e2 = v3 - v1;
+
+    let px = ray.dir.y * e2.z - ray.dir.z * e2.y;
+    let py = ray.dir.z * e2.x - ray.dir.x * e2.z;
+    let pz = ray.dir.x * e2.y - ray.dir.y * e2.x;
+
+    let det = e1.x * px + e1.y * py + e1.z * pz;
+    if det.abs() < 1e-9 {
+        return None;
+    }
+
+    let inv = 1.0 / det;
+    let t = ray.origin - v1;
+    let u = (t.x * px + t.y * py + t.z * pz) * inv;
+    if u < 0.0 || u > 1.0 {
+        return None;
+    }
+
+    let qx = t.y * e1.z - t.z * e1.y;
+    let qy = t.z * e1.x - t.x * e1.z;
+    let qz = t.x * e1.y - t.y * e1.x;
+    let v = (ray.dir.x * qx + ray.dir.y * qy + ray.dir.z * qz) * inv;
+    if v < 0.0 || u + v > 1.0 {
+        return None;
+    }
+
+    let d = (e2.x * qx + e2.y * qy + e2.z * qz) * inv;
+    if d < 1e-9 {
+        None
+    } else {
+        Some(d)
     }
 }
 
