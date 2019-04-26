@@ -1,8 +1,11 @@
 #![allow(clippy::useless_let_if_seq)]
 
 pub mod camera;
+pub mod facet;
 pub mod material;
 pub mod sphere;
+
+use std::ops::Deref;
 
 use image::{Rgb, RgbImage};
 use rand::Rng;
@@ -10,16 +13,26 @@ use rayon::prelude::*;
 
 use geo::ray::Ray;
 use geo::spatial_index::bvh::Bvh;
+use geo::spatial_index::Shape;
 use geo::{vec3, Vec3};
 
 use camera::Camera;
 use material::{dielectric_bounce, lambertian_bounce, metal_bounce, Material};
-use sphere::Sphere;
+
+/// An `Object` that can be rendered.
+pub trait Object: Shape + Sync {
+    /// Getter for the `Material` the `Object` is made of.
+    fn material(&self) -> &Material;
+
+    /// Calculate the normal for the given point `p`. This method should never
+    /// be called if the `Object` does not intersect it.
+    fn normal_at(&self, p: Vec3) -> Vec3;
+}
 
 /// A `Scene` is a collection of objects that can be rendered.
-#[derive(Debug, PartialEq, Clone)]
-pub struct Scene {
-    objects: Bvh<Sphere>,
+#[derive(Debug)]
+pub struct Scene<O: Object> {
+    objects: Bvh<O>,
     environment: Environment,
 }
 
@@ -34,10 +47,10 @@ pub enum Environment {
     LinearGradient(Vec3, Vec3),
 }
 
-impl Scene {
+impl<O: Object> Scene<O> {
     /// Create a new `Scene` with the given objects inside the given
     /// `Environment`.
-    pub fn new(objects: impl IntoIterator<Item = Sphere>, environment: Environment) -> Self {
+    pub fn new(objects: impl IntoIterator<Item = O>, environment: Environment) -> Self {
         Scene {
             objects: objects.into_iter().collect(),
             environment,
@@ -47,7 +60,7 @@ impl Scene {
     /// Calculate the intersection between a `Ray` and all the objects in the
     /// scene returning the closest object (along with its intersection result)
     /// to the ray.
-    pub fn intersection<'s>(&'s self, ray: &'s Ray) -> Option<(&'s Sphere, f64)> {
+    pub fn intersection<'s>(&'s self, ray: &'s Ray) -> Option<(&'s O, f64)> {
         self.objects
             .intersections(ray)
             .min_by(|(_, t0), (_, t1)| t0.partial_cmp(t1).unwrap())
@@ -75,7 +88,7 @@ pub struct RenderConfig {
 /// dimensions.
 pub fn render(
     camera: &Camera,
-    scene: &Scene,
+    scene: &Scene<impl Object>,
     rng: &mut impl Rng,
     config: &RenderConfig,
 ) -> image::RgbImage {
@@ -90,7 +103,11 @@ pub fn render(
 
 /// Render a `Scene` from a `Camera` to a new `RgbImage` of the given
 /// dimensions concurrently.
-pub fn parallel_render(camera: &Camera, scene: &Scene, config: &RenderConfig) -> image::RgbImage {
+pub fn parallel_render(
+    camera: &Camera,
+    scene: &Scene<impl Object>,
+    config: &RenderConfig,
+) -> image::RgbImage {
     let mut img = RgbImage::new(config.width, config.height);
 
     img.par_chunks_mut(3)
@@ -119,7 +136,7 @@ pub fn parallel_render(camera: &Camera, scene: &Scene, config: &RenderConfig) ->
 pub fn render_pixel(
     (x, y): (u32, u32),
     camera: &Camera,
-    scene: &Scene,
+    scene: &Scene<impl Object>,
     rng: &mut impl Rng,
     config: &RenderConfig,
 ) -> Rgb<u8> {
@@ -145,7 +162,13 @@ pub fn render_pixel(
     }
 }
 
-fn sample(scene: &Scene, ray: &Ray, depth: u32, rng: &mut impl Rng, config: &RenderConfig) -> Vec3 {
+fn sample(
+    scene: &Scene<impl Object>,
+    ray: &Ray,
+    depth: u32,
+    rng: &mut impl Rng,
+    config: &RenderConfig,
+) -> Vec3 {
     let mut sample_material = |material: &Material, intersection, n| match *material {
         Material::Lambertian { albedo } => {
             albedo
@@ -182,18 +205,32 @@ fn sample(scene: &Scene, ray: &Ray, depth: u32, rng: &mut impl Rng, config: &Ren
             let intersection = ray.point_at(t);
             let n = s.normal_at(intersection);
 
-            sample_material(&s.material, intersection, n)
+            sample_material(&s.material(), intersection, n)
         }
 
         None => sample_environment(scene, ray),
     }
 }
 
-fn sample_environment(scene: &Scene, ray: &Ray) -> Vec3 {
-    let t = 0.5 * (ray.dir.y / ray.dir.norm() + 1.0);
-
+fn sample_environment(scene: &Scene<impl Object>, ray: &Ray) -> Vec3 {
     match scene.environment {
         Environment::Color(c) => c,
-        Environment::LinearGradient(a, b) => vec3::lerp(a, b, t),
+        Environment::LinearGradient(a, b) => {
+            let t = 0.5 * (ray.dir.y / ray.dir.norm() + 1.0);
+            vec3::lerp(a, b, t)
+        }
+    }
+}
+
+impl<T> Object for Box<T>
+where
+    T: Object + ?Sized,
+{
+    fn material(&self) -> &Material {
+        self.deref().material()
+    }
+
+    fn normal_at(&self, p: Vec3) -> Vec3 {
+        self.deref().normal_at(p)
     }
 }

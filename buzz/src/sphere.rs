@@ -4,6 +4,7 @@ use geo::sphere;
 use geo::{Aabb, Vec3};
 
 use crate::material::Material;
+use crate::Object;
 
 #[derive(Debug, PartialEq, Clone)]
 pub struct Sphere {
@@ -20,12 +21,14 @@ impl Sphere {
             material,
         }
     }
+}
 
-    pub fn intersection(&self, ray: &Ray) -> Option<f64> {
-        sphere::ray_intersection(self.center, self.radius, ray)
+impl Object for Sphere {
+    fn material(&self) -> &Material {
+        &self.material
     }
 
-    pub fn normal_at(&self, pt: Vec3) -> Vec3 {
+    fn normal_at(&self, pt: Vec3) -> Vec3 {
         sphere::normal(self.center, pt)
     }
 }
