@@ -62,7 +62,7 @@ where
     /// given ray. Each intersection is defined by the shape and its t parameter
     /// with respect to the ray. The intersections are sorted by their t
     /// parameter.
-    fn intersections<'s>(&'s self, ray: &'s Ray) -> impl Iterator<Item = (&'s T, f64)> + 's {
+    pub fn intersections<'s>(&'s self, ray: &'s Ray) -> impl Iterator<Item = (&'s T, f64)> + 's {
         self.root.intersections(ray, 0.0, std::f64::INFINITY)
     }
 }
@@ -76,16 +76,19 @@ where
             return Node::Leaf { data: shapes };
         }
 
-        let (split_axis, split_value) = best_partitioning(&bboxes);
+        match best_partitioning(&bboxes) {
+            None => Node::Leaf { data: shapes },
+            Some((split_axis, split_value)) => {
+                let (left, right) = partition(shapes, bboxes, split_axis, split_value);
 
-        let (left, right) = partition(shapes, bboxes, split_axis, split_value);
+                Node::Branch {
+                    left: Box::new(Node::new(left.0, left.1)),
+                    right: Box::new(Node::new(right.0, right.1)),
 
-        Node::Branch {
-            left: Box::new(Node::new(left.0, left.1)),
-            right: Box::new(Node::new(right.0, right.1)),
-
-            split_value,
-            split_axis,
+                    split_value,
+                    split_axis,
+                }
+            }
         }
     }
 
@@ -198,8 +201,9 @@ fn partition_bbox(bbox: &Aabb, axis: Axis, c: f64) -> (bool, bool) {
 
 /// Find the best best partitioning (split_axis and split_value) for a given
 /// collection of `Aabb` such that the shapes are well distributed over the
-/// resulting two partitions.
-fn best_partitioning(bboxes: &[Aabb]) -> (Axis, f64) {
+/// resulting two partitions. If it wasn't able to find a suitable partitioning
+/// then `None` is returned.
+fn best_partitioning(bboxes: &[Aabb]) -> Option<(Axis, f64)> {
     // the idea here is to find the median X,Y,Z values for the centers which
     // partition the space almost equally by definition.
     //
@@ -209,7 +213,7 @@ fn best_partitioning(bboxes: &[Aabb]) -> (Axis, f64) {
     // the input.
     //
 
-    let partion_score = |bboxes, axis, value| {
+    let partition_size = |bboxes, axis, value| {
         let mut lefties = 0;
         let mut rightists = 0;
 
@@ -230,7 +234,7 @@ fn best_partitioning(bboxes: &[Aabb]) -> (Axis, f64) {
 
     let mut centers = bboxes.iter().map(|b| b.center()).collect::<Vec<_>>();
 
-    let (split_axis, split_value, _) = [Axis::X, Axis::Y, Axis::Z]
+    let (split_axis, split_value, partition_size) = [Axis::X, Axis::Y, Axis::Z]
         .iter()
         .map(|axis| {
             let p = centers.len() / 2;
@@ -241,12 +245,18 @@ fn best_partitioning(bboxes: &[Aabb]) -> (Axis, f64) {
 
             let value = mid[*axis];
 
-            (axis, value, partion_score(bboxes, *axis, value))
+            (axis, value, partition_size(bboxes, *axis, value))
         })
         .min_by(|(_, _, s1), (_, _, s2)| s1.partial_cmp(s2).unwrap())
         .unwrap();
 
-    (*split_axis, split_value)
+    // if the best partitioning we found is no better than having everything
+    // flat, then do not return any partitioning
+    if partition_size == bboxes.len() {
+        None
+    } else {
+        Some((*split_axis, split_value))
+    }
 }
 
 /// Partition the given `Shape`s and their `Aabb`s using the given `split_axis`
@@ -363,11 +373,11 @@ mod tests {
     fn test_best_partitioning() {
         assert_eq!(
             best_partitioning(&[
-                Aabb::new(Vec3::zero()).expanded(&Vec3::new(10.0, 10.0, 10.0)),
+                Aabb::new(Vec3::new(5.0, 0.0, 0.0)).expanded(&Vec3::new(10.0, 10.0, 10.0)),
                 Aabb::new(Vec3::new(1.0, 2.0, 3.0)).expanded(&Vec3::new(7.0, 2.0, 7.0)),
                 Aabb::new(Vec3::new(-1.0, -2.0, 3.0)).expanded(&Vec3::new(1.0, 1.0, 3.0)),
             ]),
-            (Axis::X, 4.0)
+            Some((Axis::X, 4.0))
         );
 
         assert_eq!(
@@ -380,7 +390,7 @@ mod tests {
                 Aabb::new(Vec3::new(4.0, 4.0, 2.0)),
                 Aabb::new(Vec3::new(5.0, 5.0, 2.0)),
             ]),
-            (Axis::Y, 2.0)
+            Some((Axis::Y, 2.0))
         );
     }
 
@@ -485,5 +495,31 @@ mod tests {
             tree.intersection(&ray),
             Some((&Vec3::new(0.0, 0.0, 1.0), 0.0))
         );
+    }
+
+    #[test]
+    fn test_best_partitioning_no_better() {
+        let bboxes = vec![
+            Aabb::new(Vec3::new(-0.1640625, -0.6953125, -0.9453125))
+                .expanded(&Vec3::new(0.0, -0.6328125, -0.8828125)),
+            Aabb::new(Vec3::new(-0.1640625, -0.7109375, -0.9296875))
+                .expanded(&Vec3::new(-0.0625, -0.6328125, -0.8359375)),
+            Aabb::new(Vec3::new(-0.234375, -0.7109375, -0.9296875))
+                .expanded(&Vec3::new(-0.1171875, -0.6328125, -0.8359375)),
+            Aabb::new(Vec3::new(-0.234375, -0.734375, -0.9140625))
+                .expanded(&Vec3::new(-0.109375, -0.6328125, -0.71875)),
+            Aabb::new(Vec3::new(-0.265625, -0.734375, -0.9140625))
+                .expanded(&Vec3::new(-0.109375, -0.6328125, -0.71875)),
+            Aabb::new(Vec3::new(-0.265625, -0.734375, -0.8203125))
+                .expanded(&Vec3::new(-0.109375, -0.6640625, -0.703125)),
+            Aabb::new(Vec3::new(-0.1171875, -0.734375, -0.8359375))
+                .expanded(&Vec3::new(-0.09375, -0.7109375, -0.71875)),
+            Aabb::new(Vec3::new(-0.1171875, -0.7265625, -0.8359375))
+                .expanded(&Vec3::new(-0.09375, -0.7109375, -0.7421875)),
+            Aabb::new(Vec3::new(-0.1171875, -0.7109375, -0.8828125))
+                .expanded(&Vec3::new(-0.0625, -0.6953125, -0.8203125)),
+        ];
+
+        assert!(best_partitioning(&bboxes).is_none());
     }
 }
