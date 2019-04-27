@@ -11,9 +11,7 @@ use buzz::sphere::Sphere;
 use buzz::Object;
 use buzz::{parallel_render, Environment, RenderConfig, Scene};
 
-const MESH_MATERIAL: Material = Material::Lambertian {
-    albedo: Vec3::new(0.8, 0.1, 0.1),
-};
+const MESH_MATERIAL: Material = Material::lambertian(Vec3::new(0.8, 0.1, 0.1));
 
 pub fn main() -> io::Result<()> {
     let camera = Camera::look_at(
@@ -27,16 +25,12 @@ pub fn main() -> io::Result<()> {
         Box::new(Sphere::new(
             Vec3::new(-1.5, -4.5, 0.3),
             1.0,
-            Material::Light {
-                emittance: Vec3::new(9.0, 9.0, 9.0),
-            },
+            Material::light(Vec3::new(9.0, 9.0, 9.0)),
         )),
         Box::new(Sphere::new(
             Vec3::new(2.1, 4.5, 0.3),
             1.0,
-            Material::Light {
-                emittance: Vec3::new(9.0, 9.0, 9.0),
-            },
+            Material::light(Vec3::new(9.0, 9.0, 9.0)),
         )),
     ];
 

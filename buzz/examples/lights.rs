@@ -14,23 +14,17 @@ fn main() {
             Sphere::new(
                 Vec3::new(0.0, 0.0, -1.0),
                 0.5,
-                Material::Lambertian {
-                    albedo: Vec3::new(0.8, 0.3, 0.3),
-                },
+                Material::lambertian(Vec3::new(0.8, 0.3, 0.3)),
             ),
             Sphere::new(
                 Vec3::new(1.5, 0.0, -1.0),
                 0.5,
-                Material::Light {
-                    emittance: Vec3::new(7.0, 7.0, 7.0),
-                },
+                Material::light(Vec3::new(7.0, 7.0, 7.0)),
             ),
             Sphere::new(
                 Vec3::new(-0.5, 1.0, 1.0),
                 0.3,
-                Material::Light {
-                    emittance: Vec3::new(0.5, 0.5, 0.5),
-                },
+                Material::light(Vec3::new(0.5, 0.5, 0.5)),
             ),
         ],
         Environment::Color(Vec3::zero()),

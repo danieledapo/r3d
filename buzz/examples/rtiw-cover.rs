@@ -15,9 +15,7 @@ pub fn main() {
     scene.push(Sphere::new(
         Vec3::new(0.0, -1000.0, 0.0),
         1000.0,
-        Material::Lambertian {
-            albedo: Vec3::new(0.5, 0.5, 0.5),
-        },
+        Material::lambertian(Vec3::new(0.5, 0.5, 0.5)),
     ));
 
     let mut rng = rand::thread_rng();
@@ -32,18 +30,11 @@ pub fn main() {
             if (center - Vec3::new(4.0, 0.2, 0.0)).norm() > 0.9 {
                 let mp = rng.gen::<f64>();
                 let mat = if mp < 0.8 {
-                    Material::Lambertian {
-                        albedo: rng.gen::<Vec3>() * rng.gen::<Vec3>(),
-                    }
+                    Material::lambertian(rng.gen::<Vec3>() * rng.gen::<Vec3>())
                 } else if mp < 0.95 {
-                    Material::Metal {
-                        albedo: (rng.gen::<Vec3>() + 1.0) * 0.5,
-                        fuzziness: 0.5 * rng.gen::<f64>(),
-                    }
+                    Material::metal((rng.gen::<Vec3>() + 1.0) * 0.5, 0.5 * rng.gen::<f64>())
                 } else {
-                    Material::Dielectric {
-                        refraction_index: 1.5,
-                    }
+                    Material::dielectric(1.5)
                 };
 
                 scene.push(Sphere::new(center, 0.2, mat));
@@ -54,24 +45,17 @@ pub fn main() {
     scene.push(Sphere::new(
         Vec3::new(0.0, 1.0, 0.0),
         1.0,
-        Material::Dielectric {
-            refraction_index: 1.5,
-        },
+        Material::dielectric(1.5),
     ));
     scene.push(Sphere::new(
         Vec3::new(-4.0, 1.0, 0.0),
         1.0,
-        Material::Lambertian {
-            albedo: Vec3::new(0.4, 0.2, 0.1),
-        },
+        Material::lambertian(Vec3::new(0.4, 0.2, 0.1)),
     ));
     scene.push(Sphere::new(
         Vec3::new(4.0, 1.0, 0.0),
         1.0,
-        Material::Metal {
-            albedo: Vec3::new(0.7, 0.6, 0.5),
-            fuzziness: 0.0,
-        },
+        Material::metal(Vec3::new(0.7, 0.6, 0.5), 0.0),
     ));
 
     let target = Vec3::zero();
