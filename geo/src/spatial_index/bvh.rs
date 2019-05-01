@@ -39,6 +39,28 @@ impl<T> Bvh<T>
 where
     T: Shape,
 {
+    /// Iterator over all the elements.
+    pub fn iter(&self) -> impl Iterator<Item = &T> {
+        let mut stack = vec![];
+        if self.root.is_some() {
+            stack.push(self.root.as_ref().unwrap());
+        }
+
+        std::iter::from_fn(move || {
+            while let Some(n) = stack.pop() {
+                match n {
+                    Node::Leaf { data } => return Some(data),
+                    Node::Branch { left, right, .. } => {
+                        stack.push(&right);
+                        stack.push(&left);
+                    }
+                }
+            }
+
+            None
+        })
+    }
+
     /// Return all the objects that intersect the given ray along with their t
     /// parameter.
     pub fn intersections<'s>(&'s self, ray: &'s Ray) -> impl Iterator<Item = (&'s T, f64)> {
@@ -217,6 +239,15 @@ mod tests {
                     })
                 })
             }
+        );
+
+        assert_eq!(
+            bvh.iter().collect::<Vec<_>>(),
+            vec![
+                &Vec3::new(0.0, 2.0, 0.0),
+                &Vec3::new(8.0, 1.0, 4.0),
+                &Vec3::new(10.0, -1.0, 7.0)
+            ]
         );
     }
 
