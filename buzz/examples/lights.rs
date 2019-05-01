@@ -17,14 +17,19 @@ fn main() {
                 Material::lambertian(Vec3::new(0.8, 0.3, 0.3)),
             ),
             Sphere::new(
+                Vec3::new(0.0, -100.5, -1.0),
+                100.0,
+                Material::lambertian(Vec3::new(0.8, 0.8, 0.0)),
+            ),
+            Sphere::new(
                 Vec3::new(1.5, 0.0, -1.0),
                 0.5,
-                Material::light(Vec3::new(7.0, 7.0, 7.0)),
+                Material::light(Vec3::new(0.5, 0.5, 0.5)),
             ),
             Sphere::new(
                 Vec3::new(-0.5, 1.0, 1.0),
                 0.3,
-                Material::light(Vec3::new(0.5, 0.5, 0.5)),
+                Material::light(Vec3::new(0.2, 0.2, 0.2)),
             ),
         ],
         Environment::Color(Vec3::zero()),
@@ -41,6 +46,7 @@ fn main() {
             height: 200,
             samples: 100,
             max_bounces: 50,
+            direct_lighting: true,
         },
     );
     img.save("lights.png").unwrap();

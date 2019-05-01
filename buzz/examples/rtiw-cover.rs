@@ -76,6 +76,7 @@ pub fn main() {
             height: 800,
             max_bounces: 50,
             samples: 50,
+            direct_lighting: false,
         },
     );
     img.save("ray-tracing-in-a-weekend-cover.png").unwrap();

@@ -40,13 +40,23 @@ pub fn main() -> io::Result<()> {
         .collect::<io::Result<Vec<_>>>()?;
 
     scene.push(Box::new(Sphere::new(
-        Vec3::new(0.0, -10000.0, 0.0),
-        9000.0,
-        Material::light(Vec3::new(1.0, 1.0, 1.0)),
+        Vec3::new(-0.5, -6.0, 0.0),
+        0.5,
+        Material::light(Vec3::new(0.5, 0.5, 0.5)),
+    )));
+    scene.push(Box::new(Sphere::new(
+        Vec3::new(0.0, 0.0, 6.0),
+        0.5,
+        Material::light(Vec3::new(0.2, 0.2, 0.2)),
+    )));
+    scene.push(Box::new(Sphere::new(
+        Vec3::new(0.0, 100.0, 0.0),
+        90.0,
+        Material::lambertian(Vec3::new(0.2, 0.3, 0.36)),
     )));
 
-    let environment = Environment::Color(Vec3::new(0.2, 0.3, 0.36));
     // let environment = Environment::Color(Vec3::new(0.8, 0.9, 0.8));
+    let environment = Environment::Color(Vec3::zero());
 
     let img = parallel_render(
         &camera,
@@ -55,7 +65,8 @@ pub fn main() -> io::Result<()> {
             width: 1920,
             height: 1080,
             max_bounces: 50,
-            samples: 100,
+            samples: 25,
+            direct_lighting: true,
         },
     );
 
