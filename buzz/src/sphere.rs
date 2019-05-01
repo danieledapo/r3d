@@ -31,6 +31,10 @@ impl Object for Sphere {
     fn normal_at(&self, pt: Vec3) -> Vec3 {
         sphere::normal(self.center, pt)
     }
+
+    fn bounding_sphere(&self) -> (Vec3, f64) {
+        (self.center, self.radius)
+    }
 }
 
 impl Shape for Sphere {

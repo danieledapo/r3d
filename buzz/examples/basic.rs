@@ -43,7 +43,8 @@ pub fn main() {
             height: 200,
             samples: 10,
             max_bounces: 50,
+            direct_lighting: false,
         },
     );
-    img.save("debug.ppm").unwrap();
+    img.save("basic.png").unwrap();
 }

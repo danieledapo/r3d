@@ -24,7 +24,7 @@ impl Material {
     }
 
     /// A metallic material that reflects light as it comes in. The `fuzziness`
-    /// attribute is how much to perturbate each reflected ray. A low value of
+    /// attribute is how much to perturb each reflected ray. A low value of
     /// `fuzziness` makes it reflect more accurately because the reflected rays
     /// will change less. On the other hand, an high value will make it a bit
     /// opaque while still reflecting its surroundings.

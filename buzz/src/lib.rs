@@ -8,11 +8,11 @@ pub mod sphere;
 use std::ops::Deref;
 
 use image::{Rgb, RgbImage};
-use rand::Rng;
+use rand::prelude::*;
 use rayon::prelude::*;
 
 use geo::ray::Ray;
-use geo::spatial_index::bvh::Bvh;
+use geo::spatial_index::Bvh;
 use geo::spatial_index::Shape;
 use geo::{vec3, Vec3};
 
@@ -27,6 +27,10 @@ pub trait Object: Shape + Sync {
     /// Calculate the normal for the given point `p`. This method should never
     /// be called if the `Object` does not intersect it.
     fn normal_at(&self, p: Vec3) -> Vec3;
+
+    /// Get a bounding sphere for this `Object`. This is used in case the
+    /// `Object` is used with a `Light` material.
+    fn bounding_sphere(&self) -> (Vec3, f64);
 }
 
 /// A `Scene` is a collection of objects that can be rendered.
@@ -65,6 +69,17 @@ impl<O: Object> Scene<O> {
             .intersections(ray)
             .min_by(|(_, t0), (_, t1)| t0.partial_cmp(t1).unwrap())
     }
+
+    /// Return an iterator over all the lights in the `Scene`.
+    pub fn lights(&self) -> impl Iterator<Item = &O> {
+        self.objects.iter().filter(|o| {
+            if let Material::Light { .. } = o.material() {
+                true
+            } else {
+                false
+            }
+        })
+    }
 }
 
 /// Simple struct to hold rendering params together.
@@ -79,6 +94,13 @@ pub struct RenderConfig {
     /// better results in scenes with a lot of reflective objects.
     pub max_bounces: u32,
 
+    /// whether to calculate direct lighting for each intersection. This is
+    /// useful because calculating only indirect lighting in a scene is
+    /// particularly resource hungry if a lot of details is needed. On the other
+    /// hand, mother nature only uses indirect lighting and therefore direct
+    /// lighting feels a bit "artificial".
+    pub direct_lighting: bool,
+
     /// width and height of the rendered image.
     pub width: u32,
     pub height: u32,
@@ -92,10 +114,16 @@ pub fn render(
     rng: &mut impl Rng,
     config: &RenderConfig,
 ) -> image::RgbImage {
+    let lights = if config.direct_lighting {
+        scene.lights().collect::<Vec<_>>()
+    } else {
+        vec![]
+    };
+
     let mut img = RgbImage::new(config.width, config.height);
 
     for (x, y, pix) in img.enumerate_pixels_mut() {
-        *pix = render_pixel((x, y), camera, scene, rng, config);
+        *pix = render_pixel((x, y), camera, scene, &lights, rng, config);
     }
 
     img
@@ -108,6 +136,12 @@ pub fn parallel_render(
     scene: &Scene<impl Object>,
     config: &RenderConfig,
 ) -> image::RgbImage {
+    let lights = if config.direct_lighting {
+        scene.lights().collect::<Vec<_>>()
+    } else {
+        vec![]
+    };
+
     let mut img = RgbImage::new(config.width, config.height);
 
     img.par_chunks_mut(3)
@@ -120,6 +154,7 @@ pub fn parallel_render(
                 (x as u32, y as u32),
                 camera,
                 scene,
+                &lights,
                 &mut rand::thread_rng(),
                 config,
             );
@@ -133,17 +168,18 @@ pub fn parallel_render(
 }
 
 /// Render a single pixel of an image from a `Scene` and `Camera`.
-pub fn render_pixel(
+pub fn render_pixel<O: Object>(
     (x, y): (u32, u32),
     camera: &Camera,
-    scene: &Scene<impl Object>,
+    scene: &Scene<O>,
+    lights: &[&O],
     rng: &mut impl Rng,
     config: &RenderConfig,
 ) -> Rgb<u8> {
     let mut c = (0..config.samples)
         .map(|_| {
             let r = camera.cast_ray((x, y), (config.width, config.height), rng);
-            sample(&scene, &r, 0, rng, config)
+            sample(&scene, lights, &r, 0, rng, config)
         })
         .sum::<Vec3>()
         / f64::from(config.samples);
@@ -162,23 +198,54 @@ pub fn render_pixel(
     }
 }
 
-fn sample(
-    scene: &Scene<impl Object>,
+fn sample<O: Object>(
+    scene: &Scene<O>,
+    lights: &[&O],
     ray: &Ray,
     depth: u32,
     rng: &mut impl Rng,
     config: &RenderConfig,
 ) -> Vec3 {
+    let sample_light = |light: &O, intersection: Vec3, n| {
+        let (light_pos, _light_radius) = light.bounding_sphere();
+
+        let light_ray = Ray::new(intersection, (light_pos - intersection).normalized());
+
+        // if `light_ray` goes in the opposite direction wrt `n` then it doesn't
+        // reach the light for sure
+        let diffuse = light_ray.dir.dot(&n);
+        if diffuse <= 0.0 {
+            return Vec3::zero();
+        }
+
+        // check if `intersection` is in the shadow of another object or reaches
+        // a light
+        if let Some((o, _t)) = scene.intersection(&light_ray) {
+            if let Material::Light { emittance } = o.material() {
+                return *emittance * diffuse;
+            }
+        }
+
+        Vec3::zero()
+    };
+
     let mut sample_material = |material: &Material, intersection, n| match *material {
         Material::Lambertian { albedo } => {
-            albedo
-                * sample(
-                    scene,
-                    &lambertian_bounce(intersection, n, rng),
-                    depth + 1,
-                    rng,
-                    config,
-                )
+            let indirect = sample(
+                scene,
+                lights,
+                &lambertian_bounce(intersection, n, rng),
+                depth + 1,
+                rng,
+                config,
+            );
+
+            let direct = lights
+                .iter()
+                .map(|l| sample_light(l, intersection, n))
+                .sum::<Vec3>();
+
+            albedo * (direct + indirect)
         }
         Material::Metal { albedo, fuzziness } => {
             let r = metal_bounce(ray, intersection, n, fuzziness, rng);
@@ -187,10 +254,11 @@ fn sample(
                 return Vec3::zero();
             }
 
-            albedo * sample(scene, &r, depth + 1, rng, config)
+            albedo * sample(scene, lights, &r, depth + 1, rng, config)
         }
         Material::Dielectric { refraction_index } => sample(
             scene,
+            lights,
             &dielectric_bounce(ray, intersection, n, refraction_index, rng),
             depth + 1,
             rng,
@@ -232,5 +300,9 @@ where
 
     fn normal_at(&self, p: Vec3) -> Vec3 {
         self.deref().normal_at(p)
+    }
+
+    fn bounding_sphere(&self) -> (Vec3, f64) {
+        self.deref().bounding_sphere()
     }
 }
