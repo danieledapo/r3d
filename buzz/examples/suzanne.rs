@@ -2,6 +2,7 @@ use std::io;
 use std::io::{BufReader, Cursor};
 
 use geo::mesh::stl;
+use geo::util::opener;
 use geo::Vec3;
 
 use buzz::camera::Camera;
@@ -13,7 +14,7 @@ use buzz::{parallel_render, Environment, Object, RenderConfig, Scene};
 const MESH_MATERIAL: Material = Material::lambertian(Vec3::new(0.8, 0.1, 0.1));
 // const MESH_MATERIAL: Material = Material::dielectric(2.4);
 
-pub fn main() -> io::Result<()> {
+pub fn main() -> opener::Result<()> {
     let camera = Camera::look_at(
         Vec3::new(0.0, -4.0, 0.0),
         Vec3::new(0.0, 0.0, 0.0),
@@ -70,5 +71,7 @@ pub fn main() -> io::Result<()> {
         },
     );
 
-    img.save("suzanne.png")
+    img.save("suzanne.png")?;
+
+    opener::open("suzanne.png")
 }
