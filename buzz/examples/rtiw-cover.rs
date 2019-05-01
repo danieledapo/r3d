@@ -1,5 +1,6 @@
 use rand::Rng;
 
+use geo::util::opener;
 use geo::Vec3;
 
 use buzz::camera::Camera;
@@ -10,7 +11,7 @@ use buzz::{parallel_render, Environment, RenderConfig, Scene};
 const SKY_ENVIRONMENT: Environment =
     Environment::LinearGradient(Vec3::new(1.0, 1.0, 1.0), Vec3::new(0.5, 0.7, 1.0));
 
-pub fn main() {
+pub fn main() -> opener::Result<()> {
     let mut scene = Vec::with_capacity(400);
     scene.push(Sphere::new(
         Vec3::new(0.0, -1000.0, 0.0),
@@ -79,5 +80,7 @@ pub fn main() {
             direct_lighting: false,
         },
     );
-    img.save("ray-tracing-in-a-weekend-cover.png").unwrap();
+    img.save("ray-tracing-in-a-weekend-cover.png")?;
+
+    opener::open("ray-tracing-in-a-weekend-cover.png")
 }

@@ -1,3 +1,4 @@
+use geo::util::opener;
 use geo::Vec3;
 
 use buzz::camera::Camera;
@@ -5,7 +6,7 @@ use buzz::material::Material;
 use buzz::sphere::Sphere;
 use buzz::{render, Environment, RenderConfig, Scene};
 
-pub fn main() {
+pub fn main() -> opener::Result<()> {
     let target = Vec3::new(0.0, 0.0, -1.0);
     let camera = Camera::look_at(Vec3::zero(), target, Vec3::new(0.0, 1.0, 0.0), 90.0)
         .with_focus(target, 0.25);
@@ -46,5 +47,7 @@ pub fn main() {
             direct_lighting: false,
         },
     );
-    img.save("basic.png").unwrap();
+    img.save("basic.png")?;
+
+    opener::open("basic.png")
 }
