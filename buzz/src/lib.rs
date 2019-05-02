@@ -3,6 +3,7 @@
 pub mod camera;
 pub mod facet;
 pub mod material;
+pub mod plane;
 pub mod sphere;
 
 use std::ops::Deref;
