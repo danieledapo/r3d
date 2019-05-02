@@ -68,11 +68,6 @@ impl<'a> Object for Facet<'a> {
     }
 
     fn bounding_sphere(&self) -> (Vec3, f64) {
-        let bbox = self.bbox();
-
-        let c = bbox.center();
-        let r = bbox.min().dist(&c);
-
-        (c, r)
+        self.bbox().bounding_sphere()
     }
 }

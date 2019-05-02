@@ -125,6 +125,14 @@ impl Aabb {
 
         true
     }
+
+    /// Get the bounding sphere of this `Aabb`.
+    pub fn bounding_sphere(&self) -> (Vec3, f64) {
+        let c = self.center();
+        let r = self.min().dist(&c);
+
+        (c, r)
+    }
 }
 
 #[cfg(test)]
