@@ -38,7 +38,6 @@ pub fn main() -> opener::Result<()> {
     let img = render(
         &camera,
         &Scene::new(scene, Environment::Color(background)),
-        &mut rand::thread_rng(),
         &RenderConfig {
             width: 960,
             height: 540,
