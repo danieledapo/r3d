@@ -68,6 +68,7 @@ pub fn main() -> opener::Result<()> {
             max_bounces: 50,
             samples: 25,
             direct_lighting: true,
+            soft_shadows: true,
         },
     );
 

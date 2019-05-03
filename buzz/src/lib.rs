@@ -102,6 +102,9 @@ pub struct RenderConfig {
     /// lighting feels a bit "artificial".
     pub direct_lighting: bool,
 
+    /// try to smooth shadows a bit to make them a bit more gradual.
+    pub soft_shadows: bool,
+
     /// width and height of the rendered image.
     pub width: u32,
     pub height: u32,
@@ -199,16 +202,30 @@ pub fn render_pixel<O: Object>(
     }
 }
 
-fn sample<O: Object>(
+fn sample<O: Object, R: Rng>(
     scene: &Scene<O>,
     lights: &[&O],
     ray: &Ray,
     depth: u32,
-    rng: &mut impl Rng,
+    rng: &mut R,
     config: &RenderConfig,
 ) -> Vec3 {
-    let sample_light = |light: &O, intersection: Vec3, n| {
-        let (light_pos, _light_radius) = light.bounding_sphere();
+    let sample_light = |light: &O, intersection: Vec3, n, rng: &mut R| {
+        let (mut light_pos, light_radius) = light.bounding_sphere();
+
+        if config.soft_shadows {
+            light_pos = loop {
+                let x = rng.gen::<f64>() * 2.0 - 1.0;
+                let y = rng.gen::<f64>() * 2.0 - 1.0;
+                if x.powi(2) + y.powi(2) <= 1.0 {
+                    let l = (light_pos - ray.origin).normalized();
+                    let u = l.cross(&Vec3::random_unit(rng)).normalized();
+                    let v = l.cross(&u);
+
+                    break light_pos + (u * (x * light_radius)) + (v * (y * light_radius));
+                }
+            };
+        }
 
         let light_ray = Ray::new(intersection, (light_pos - intersection).normalized());
 
@@ -243,7 +260,7 @@ fn sample<O: Object>(
 
             let direct = lights
                 .iter()
-                .map(|l| sample_light(l, intersection, n))
+                .map(|l| sample_light(l, intersection, n, rng))
                 .sum::<Vec3>();
 
             albedo * (direct + indirect)

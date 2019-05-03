@@ -78,6 +78,7 @@ pub fn main() -> opener::Result<()> {
             max_bounces: 50,
             samples: 50,
             direct_lighting: false,
+            soft_shadows: false,
         },
     );
     img.save("ray-tracing-in-a-weekend-cover.png")?;
