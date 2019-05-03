@@ -48,6 +48,7 @@ fn main() -> opener::Result<()> {
             samples: 100,
             max_bounces: 50,
             direct_lighting: true,
+            soft_shadows: true,
         },
     );
     img.save("lights.png")?;

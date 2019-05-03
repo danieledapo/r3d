@@ -24,11 +24,7 @@ pub fn main() -> opener::Result<()> {
         Material::light(Vec3::new(0.5, 0.5, 0.5)),
     );
 
-    let scene: Vec<Box<dyn Object>> = vec![
-        Box::new(plane),
-        Box::new(sphere),
-        Box::new(light)
-    ];
+    let scene: Vec<Box<dyn Object>> = vec![Box::new(plane), Box::new(sphere), Box::new(light)];
 
     let camera = Camera::look_at(
         Vec3::new(3.0, 3.0, 3.0),
@@ -46,9 +42,10 @@ pub fn main() -> opener::Result<()> {
         &RenderConfig {
             width: 960,
             height: 540,
-            max_bounces: 10,
-            samples: 50,
+            max_bounces: 20,
+            samples: 100,
             direct_lighting: true,
+            soft_shadows: true,
         },
     );
     img.save("hello.png")?;

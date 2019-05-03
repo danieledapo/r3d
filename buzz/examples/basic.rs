@@ -45,6 +45,7 @@ pub fn main() -> opener::Result<()> {
             samples: 10,
             max_bounces: 50,
             direct_lighting: false,
+            soft_shadows: false,
         },
     );
     img.save("basic.png")?;
