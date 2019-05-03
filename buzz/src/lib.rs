@@ -4,6 +4,7 @@ pub mod camera;
 pub mod facet;
 pub mod material;
 pub mod plane;
+mod sampler;
 pub mod sphere;
 
 use std::ops::Deref;
@@ -15,10 +16,10 @@ use rayon::prelude::*;
 use geo::ray::Ray;
 use geo::spatial_index::Bvh;
 use geo::spatial_index::Shape;
-use geo::{vec3, Vec3};
+use geo::Vec3;
 
 use camera::Camera;
-use material::{dielectric_bounce, lambertian_bounce, metal_bounce, Material};
+use material::Material;
 
 /// An `Object` that can be rendered.
 pub trait Object: Shape + Sync {
@@ -115,7 +116,6 @@ pub struct RenderConfig {
 pub fn render(
     camera: &Camera,
     scene: &Scene<impl Object>,
-    rng: &mut impl Rng,
     config: &RenderConfig,
 ) -> image::RgbImage {
     let lights = if config.direct_lighting {
@@ -124,10 +124,11 @@ pub fn render(
         vec![]
     };
 
+    let mut rng = thread_rng();
     let mut img = RgbImage::new(config.width, config.height);
 
     for (x, y, pix) in img.enumerate_pixels_mut() {
-        *pix = render_pixel((x, y), camera, scene, &lights, rng, config);
+        *pix = render_pixel((x, y), camera, scene, &lights, &mut rng, config);
     }
 
     img
@@ -183,7 +184,7 @@ pub fn render_pixel<O: Object>(
     let mut c = (0..config.samples)
         .map(|_| {
             let r = camera.cast_ray((x, y), (config.width, config.height), rng);
-            sample(&scene, lights, &r, 0, rng, config)
+            sampler::sample(&scene, lights, &r, 0, rng, config)
         })
         .sum::<Vec3>()
         / f64::from(config.samples);
@@ -199,112 +200,6 @@ pub fn render_pixel<O: Object>(
             (c.y * 255.0) as u8,
             (c.z * 255.0) as u8,
         ],
-    }
-}
-
-fn sample<O: Object, R: Rng>(
-    scene: &Scene<O>,
-    lights: &[&O],
-    ray: &Ray,
-    depth: u32,
-    rng: &mut R,
-    config: &RenderConfig,
-) -> Vec3 {
-    let sample_light = |light: &O, intersection: Vec3, n, rng: &mut R| {
-        let (mut light_pos, light_radius) = light.bounding_sphere();
-
-        if config.soft_shadows {
-            light_pos = loop {
-                let x = rng.gen::<f64>() * 2.0 - 1.0;
-                let y = rng.gen::<f64>() * 2.0 - 1.0;
-                if x.powi(2) + y.powi(2) <= 1.0 {
-                    let l = (light_pos - ray.origin).normalized();
-                    let u = l.cross(&Vec3::random_unit(rng)).normalized();
-                    let v = l.cross(&u);
-
-                    break light_pos + (u * (x * light_radius)) + (v * (y * light_radius));
-                }
-            };
-        }
-
-        let light_ray = Ray::new(intersection, (light_pos - intersection).normalized());
-
-        // if `light_ray` goes in the opposite direction wrt `n` then it doesn't
-        // reach the light for sure
-        let diffuse = light_ray.dir.dot(&n);
-        if diffuse <= 0.0 {
-            return Vec3::zero();
-        }
-
-        // check if `intersection` is in the shadow of another object or reaches
-        // a light
-        if let Some((o, _t)) = scene.intersection(&light_ray) {
-            if let Material::Light { emittance } = o.material() {
-                return *emittance * diffuse;
-            }
-        }
-
-        Vec3::zero()
-    };
-
-    let mut sample_material = |material: &Material, intersection, n| match *material {
-        Material::Lambertian { albedo } => {
-            let indirect = sample(
-                scene,
-                lights,
-                &lambertian_bounce(intersection, n, rng),
-                depth + 1,
-                rng,
-                config,
-            );
-
-            let direct = lights
-                .iter()
-                .map(|l| sample_light(l, intersection, n, rng))
-                .sum::<Vec3>();
-
-            albedo * (direct + indirect)
-        }
-        Material::Metal { albedo, fuzziness } => {
-            let r = metal_bounce(ray, intersection, n, fuzziness, rng);
-
-            if r.dir.dot(&n) < 0.0 {
-                return Vec3::zero();
-            }
-
-            albedo * sample(scene, lights, &r, depth + 1, rng, config)
-        }
-        Material::Dielectric { refraction_index } => sample(
-            scene,
-            lights,
-            &dielectric_bounce(ray, intersection, n, refraction_index, rng),
-            depth + 1,
-            rng,
-            config,
-        ),
-        Material::Light { emittance } => emittance,
-    };
-
-    match scene.intersection(ray) {
-        Some(_) if depth >= config.max_bounces => Vec3::zero(),
-        Some((s, t)) => {
-            let intersection = ray.point_at(t);
-            let n = s.normal_at(intersection);
-
-            sample_material(&s.material(), intersection, n)
-        }
-
-        None => sample_environment(scene, ray),
-    }
-}
-
-fn sample_environment(scene: &Scene<impl Object>, ray: &Ray) -> Vec3 {
-    match scene.environment {
-        Environment::Color(c) => c,
-        Environment::LinearGradient(a, b) => {
-            let t = 0.5 * (ray.dir.y / ray.dir.norm() + 1.0);
-            vec3::lerp(a, b, t)
-        }
     }
 }
 

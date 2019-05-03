@@ -36,12 +36,9 @@ fn main() -> opener::Result<()> {
         Environment::Color(Vec3::zero()),
     );
 
-    let mut rng = rand::thread_rng();
-
     let img = render(
         &camera,
         &scene,
-        &mut rng,
         &RenderConfig {
             width: 400,
             height: 200,
