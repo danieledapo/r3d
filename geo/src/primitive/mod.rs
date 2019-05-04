@@ -1,4 +1,5 @@
 pub mod aabb;
+pub mod plane;
 pub mod ray;
 pub mod sphere;
 pub mod triangle;
