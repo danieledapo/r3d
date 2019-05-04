@@ -23,6 +23,16 @@ impl Vec3 {
         Vec3 { x, y, z }
     }
 
+    /// Create a new `Vec3` with all the values set to the given one.
+    pub const fn replicate(v: f64) -> Self {
+        Vec3 { x: v, y: v, z: v }
+    }
+
+    /// `Vec3` with everything set to 0.
+    pub const fn zero() -> Self {
+        Vec3::replicate(0.0)
+    }
+
     /// Generate a random unit `Vec3` inside the unit circle.
     pub fn random_unit(rng: &mut impl Rng) -> Self {
         loop {
@@ -32,11 +42,6 @@ impl Vec3 {
                 break v;
             }
         }
-    }
-
-    /// `Vec3` with everything set to 0.
-    pub const fn zero() -> Self {
-        Vec3::new(0.0, 0.0, 0.0)
     }
 
     /// Calculate the distance between two `Vec3`.

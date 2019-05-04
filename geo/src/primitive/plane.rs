@@ -5,8 +5,7 @@ use crate::{Aabb, Vec3};
 pub fn bbox() -> Aabb {
     use std::f64::{INFINITY, NEG_INFINITY};
 
-    Aabb::new(Vec3::new(NEG_INFINITY, NEG_INFINITY, NEG_INFINITY))
-        .expanded(&Vec3::new(INFINITY, INFINITY, INFINITY))
+    Aabb::new(Vec3::replicate(NEG_INFINITY)).expanded(&Vec3::replicate(INFINITY))
 }
 
 /// Calculate the intersection between an infinite plane defined by a point and
