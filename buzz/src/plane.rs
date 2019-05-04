@@ -1,3 +1,4 @@
+use geo::plane;
 use geo::ray::Ray;
 use geo::spatial_index::Shape;
 use geo::{Aabb, Vec3};
@@ -39,27 +40,10 @@ impl Object for Plane {
 
 impl Shape for Plane {
     fn bbox(&self) -> Aabb {
-        use std::f64::{INFINITY, NEG_INFINITY};
-
-        Aabb::new(Vec3::new(INFINITY, INFINITY, INFINITY)).expanded(&Vec3::new(
-            NEG_INFINITY,
-            NEG_INFINITY,
-            NEG_INFINITY,
-        ))
+        plane::bbox()
     }
 
     fn intersection(&self, ray: &Ray) -> Option<f64> {
-        let d = self.normal.dot(&ray.dir);
-        if d.abs() < 1e-6 {
-            return None;
-        }
-
-        let a = self.origin - ray.origin;
-        let t = a.dot(&self.normal) / d;
-        if t < 1e-6 {
-            return None;
-        }
-
-        Some(t)
+        plane::intersection(self.origin, self.normal, ray)
     }
 }
