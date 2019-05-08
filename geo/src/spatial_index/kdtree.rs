@@ -2,7 +2,7 @@ use std::ops::Deref;
 use std::sync::Arc;
 
 use crate::ray::Ray;
-use crate::spatial_index::Shape;
+use crate::spatial_index::{Intersection, Shape};
 use crate::util::ksmallest_by;
 use crate::{Aabb, Axis};
 
@@ -54,7 +54,7 @@ where
     /// Find the intersection, if any, between the objects in the `KdTree` and a
     /// given `Ray`. The intersection is defined by the shape and its t
     /// parameter with respect to the ray.
-    pub fn intersection<'s>(&'s self, ray: &'s Ray) -> Option<(&'s T, f64)> {
+    pub fn intersection<'s>(&'s self, ray: &'s Ray) -> Option<(&'s T, T::Intersection)> {
         self.intersections(ray).next()
     }
 
@@ -62,7 +62,10 @@ where
     /// given ray. Each intersection is defined by the shape and its t parameter
     /// with respect to the ray. The intersections are sorted by their t
     /// parameter.
-    pub fn intersections<'s>(&'s self, ray: &'s Ray) -> impl Iterator<Item = (&'s T, f64)> + 's {
+    pub fn intersections<'s>(
+        &'s self,
+        ray: &'s Ray,
+    ) -> impl Iterator<Item = (&'s T, T::Intersection)> + 's {
         self.root.intersections(ray, 0.0, std::f64::INFINITY)
     }
 }
@@ -97,10 +100,11 @@ where
         ray: &'s Ray,
         tmin: f64,
         tmax: f64,
-    ) -> impl Iterator<Item = (&'s T, f64)> + 's {
+    ) -> impl Iterator<Item = (&'s T, T::Intersection)> + 's {
         let mut node_stack = vec![(self, tmin, tmax)];
 
-        let mut current_intersections: Vec<(&'s T, f64)> = Vec::with_capacity(LEAF_SIZE);
+        let mut current_intersections: Vec<(&'s T, T::Intersection)> =
+            Vec::with_capacity(LEAF_SIZE);
 
         let mut tmin = tmin;
         let mut tmax = tmax;
@@ -120,10 +124,11 @@ where
                     Node::Leaf { data } => {
                         current_intersections.clear();
                         current_intersections.extend(data.iter().flat_map(|s| {
-                            let t = s.intersection(ray)?;
+                            let intersection = s.intersection(ray)?;
+                            let t = intersection.t();
 
                             if tmin <= t && tmax >= t {
-                                Some((s.deref(), t))
+                                Some((s.deref(), intersection))
                             } else {
                                 None
                             }
@@ -132,7 +137,7 @@ where
                         // sort in reverse order so that we can pop the sorted
                         // elements quickly
                         current_intersections
-                            .sort_by(|(_, t1), (_, t2)| t2.partial_cmp(t1).unwrap());
+                            .sort_by(|(_, t1), (_, t2)| t2.t().partial_cmp(&t1.t()).unwrap());
                     }
                     Node::Branch {
                         left,

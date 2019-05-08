@@ -38,11 +38,13 @@ impl Object for Sphere {
 }
 
 impl Shape for Sphere {
+    type Intersection = f64;
+
     fn bbox(&self) -> Aabb {
         sphere::bounding_box(self.center, self.radius)
     }
 
-    fn intersection(&self, ray: &Ray) -> Option<f64> {
+    fn intersection(&self, ray: &Ray) -> Option<Self::Intersection> {
         sphere::ray_intersection(self.center, self.radius, ray)
     }
 }

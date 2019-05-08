@@ -39,11 +39,13 @@ impl Object for Plane {
 }
 
 impl Shape for Plane {
+    type Intersection = f64;
+
     fn bbox(&self) -> Aabb {
         plane::bbox()
     }
 
-    fn intersection(&self, ray: &Ray) -> Option<f64> {
+    fn intersection(&self, ray: &Ray) -> Option<Self::Intersection> {
         plane::intersection(self.origin, self.normal, ray)
     }
 }

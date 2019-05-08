@@ -3,7 +3,7 @@ use std::f64::EPSILON;
 use std::iter::FromIterator;
 
 use crate::ray::Ray;
-use crate::spatial_index::Shape;
+use crate::spatial_index::{Intersection, Shape};
 use crate::util::ksmallest_by;
 use crate::{Aabb, Axis, Vec3};
 
@@ -63,7 +63,10 @@ where
 
     /// Return all the objects that intersect the given ray along with their t
     /// parameter.
-    pub fn intersections<'s>(&'s self, ray: &'s Ray) -> impl Iterator<Item = (&'s T, f64)> {
+    pub fn intersections<'s>(
+        &'s self,
+        ray: &'s Ray,
+    ) -> impl Iterator<Item = (&'s T, T::Intersection)> {
         let mut stack = vec![];
         if self.root.is_some() {
             stack.push(self.root.as_ref().unwrap());
@@ -73,11 +76,10 @@ where
             while let Some(n) = stack.pop() {
                 match n {
                     Node::Leaf { data } => {
-                        let intersection = data.intersection(ray);
-
-                        match intersection {
-                            Some(t) if t >= 0.0 => return Some((data, t)),
-                            _ => {}
+                        if let Some(inter) = data.intersection(ray) {
+                            if inter.t() >= 0.0 {
+                                return Some((data, inter));
+                            }
                         }
                     }
 

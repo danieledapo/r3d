@@ -32,11 +32,12 @@ pub fn main() -> opener::Result<()> {
         &include_bytes!("../../data/suzanne.stl")[..],
     )))?;
 
-    let mut scene: Vec<Box<dyn Object>> = tris
+    let mut scene: Vec<Box<dyn Object<Intersection = f64>>> = tris
         .into_iter()
         .map(|t| {
             let t = t?;
-            Ok(Box::new(Facet::new(t, &MESH_MATERIAL, true)) as Box<dyn Object>)
+            Ok(Box::new(Facet::new(t, &MESH_MATERIAL, true))
+                as Box<dyn Object<Intersection = f64>>)
         })
         .collect::<io::Result<Vec<_>>>()?;
 
