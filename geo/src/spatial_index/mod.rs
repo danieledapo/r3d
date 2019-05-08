@@ -10,16 +10,24 @@ use crate::{Aabb, Vec3};
 use std::ops::Deref;
 
 pub trait Shape: std::fmt::Debug {
+    type Intersection: Intersection;
+
     fn bbox(&self) -> Aabb;
-    fn intersection(&self, ray: &Ray) -> Option<f64>;
+    fn intersection(&self, ray: &Ray) -> Option<Self::Intersection>;
+}
+
+pub trait Intersection {
+    fn t(&self) -> f64;
 }
 
 impl Shape for Vec3 {
+    type Intersection = f64;
+
     fn bbox(&self) -> Aabb {
         Aabb::new(*self)
     }
 
-    fn intersection(&self, ray: &Ray) -> Option<f64> {
+    fn intersection(&self, ray: &Ray) -> Option<Self::Intersection> {
         let t = ray.t_of(*self)?;
 
         // we're only interested in intersection on the ray and not its opposite
@@ -31,15 +39,23 @@ impl Shape for Vec3 {
     }
 }
 
+impl Intersection for f64 {
+    fn t(&self) -> f64 {
+        *self
+    }
+}
+
 impl<T> Shape for Box<T>
 where
     T: Shape + ?Sized,
 {
+    type Intersection = T::Intersection;
+
     fn bbox(&self) -> Aabb {
         self.deref().bbox()
     }
 
-    fn intersection(&self, ray: &Ray) -> Option<f64> {
+    fn intersection(&self, ray: &Ray) -> Option<Self::Intersection> {
         self.deref().intersection(ray)
     }
 }

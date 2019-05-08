@@ -29,13 +29,15 @@ impl<'a> Facet<'a> {
 }
 
 impl<'a> Shape for Facet<'a> {
+    type Intersection = f64;
+
     fn bbox(&self) -> Aabb {
         Aabb::new(self.positions[0])
             .expanded(&self.positions[1])
             .expanded(&self.positions[2])
     }
 
-    fn intersection(&self, ray: &Ray) -> Option<f64> {
+    fn intersection(&self, ray: &Ray) -> Option<Self::Intersection> {
         triangle::ray_intersection(
             (self.positions[0], self.positions[1], self.positions[2]),
             ray,

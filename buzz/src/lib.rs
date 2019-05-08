@@ -15,7 +15,7 @@ use rayon::prelude::*;
 
 use geo::ray::Ray;
 use geo::spatial_index::Bvh;
-use geo::spatial_index::Shape;
+use geo::spatial_index::{Intersection, Shape};
 use geo::Vec3;
 
 use camera::Camera;
@@ -66,10 +66,10 @@ impl<O: Object> Scene<O> {
     /// Calculate the intersection between a `Ray` and all the objects in the
     /// scene returning the closest object (along with its intersection result)
     /// to the ray.
-    pub fn intersection<'s>(&'s self, ray: &'s Ray) -> Option<(&'s O, f64)> {
+    pub fn intersection<'s>(&'s self, ray: &'s Ray) -> Option<(&'s O, O::Intersection)> {
         self.objects
             .intersections(ray)
-            .min_by(|(_, t0), (_, t1)| t0.partial_cmp(t1).unwrap())
+            .min_by(|(_, t0), (_, t1)| t0.t().partial_cmp(&t1.t()).unwrap())
     }
 
     /// Return an iterator over all the lights in the `Scene`.

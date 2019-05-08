@@ -1,6 +1,7 @@
 use rand::prelude::*;
 
 use geo::ray::Ray;
+use geo::spatial_index::Intersection;
 use geo::{vec3, Vec3};
 
 use crate::material::{dielectric_bounce, lambertian_bounce, metal_bounce, Material};
@@ -16,8 +17,8 @@ pub fn sample<O: Object>(
 ) -> Vec3 {
     match scene.intersection(ray) {
         Some(_) if depth >= config.max_bounces => Vec3::zero(),
-        Some((s, t)) => {
-            let intersection = ray.point_at(t);
+        Some((s, hit)) => {
+            let intersection = ray.point_at(hit.t());
             let n = s.normal_at(intersection);
 
             sample_material(

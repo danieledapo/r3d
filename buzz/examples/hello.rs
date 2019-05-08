@@ -24,7 +24,8 @@ pub fn main() -> opener::Result<()> {
         Material::light(Vec3::new(0.5, 0.5, 0.5)),
     );
 
-    let scene: Vec<Box<dyn Object>> = vec![Box::new(plane), Box::new(sphere), Box::new(light)];
+    let scene: Vec<Box<dyn Object<Intersection = f64>>> =
+        vec![Box::new(plane), Box::new(sphere), Box::new(light)];
 
     let camera = Camera::look_at(
         Vec3::new(3.0, 3.0, 3.0),
