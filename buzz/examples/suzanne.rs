@@ -32,26 +32,25 @@ pub fn main() -> opener::Result<()> {
         &include_bytes!("../../data/suzanne.stl")[..],
     )))?;
 
-    let mut scene: Vec<Box<dyn Object<Intersection = f64>>> = tris
+    let mut objects = tris
         .into_iter()
         .map(|t| {
             let t = t?;
-            Ok(Box::new(Facet::new(t, &MESH_MATERIAL, true))
-                as Box<dyn Object<Intersection = f64>>)
+            Ok(Box::new(Facet::new(t, &MESH_MATERIAL, true)) as Box<dyn Object>)
         })
         .collect::<io::Result<Vec<_>>>()?;
 
-    scene.push(Box::new(Sphere::new(
+    objects.push(Box::new(Sphere::new(
         Vec3::new(-0.5, -6.0, 0.0),
         0.5,
         Material::light(Vec3::new(0.5, 0.5, 0.5)),
     )));
-    scene.push(Box::new(Sphere::new(
+    objects.push(Box::new(Sphere::new(
         Vec3::new(0.0, 0.0, 6.0),
         0.5,
         Material::light(Vec3::new(0.2, 0.2, 0.2)),
     )));
-    scene.push(Box::new(Sphere::new(
+    objects.push(Box::new(Sphere::new(
         Vec3::new(0.0, 100.0, 0.0),
         90.0,
         Material::lambertian(Vec3::new(0.2, 0.3, 0.36)),
@@ -60,9 +59,17 @@ pub fn main() -> opener::Result<()> {
     // let environment = Environment::Color(Vec3::new(0.8, 0.9, 0.8));
     let environment = Environment::Color(Vec3::zero());
 
+    let scene = Scene::new(objects, environment);
+
     let img = parallel_render(
         &camera,
-        &Scene::new(scene, environment),
+        // FIXME: theoretically speaking, transmute should not be necessary
+        // because rustc should automatically figure out the proper lifetimes.
+        // It doesn't seem to be a problem with the trait definitions themselves
+        // because if the scene is composed of Box<Plane> only it compiles
+        // perfectly. I think it's the manual cast to Box<dyn Object> that
+        // throws it off.
+        unsafe { std::mem::transmute::<_, &Scene<Box<dyn Object>>>(&scene) },
         &RenderConfig {
             width: 1920,
             height: 1080,

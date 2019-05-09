@@ -21,8 +21,14 @@ use geo::Vec3;
 use camera::Camera;
 use material::Material;
 
+#[derive(Debug)]
+pub struct Hit<'o> {
+    pub t: f64,
+    pub object: &'o Object<'o>,
+}
+
 /// An `Object` that can be rendered.
-pub trait Object: Shape + Sync {
+pub trait Object<'a>: Shape<'a, Intersection = Hit<'a>> + Sync {
     /// Getter for the `Material` the `Object` is made of.
     fn material(&self) -> &Material;
 
@@ -37,7 +43,7 @@ pub trait Object: Shape + Sync {
 
 /// A `Scene` is a collection of objects that can be rendered.
 #[derive(Debug)]
-pub struct Scene<O: Object> {
+pub struct Scene<O> {
     objects: Bvh<O>,
     environment: Environment,
 }
@@ -53,7 +59,7 @@ pub enum Environment {
     LinearGradient(Vec3, Vec3),
 }
 
-impl<O: Object> Scene<O> {
+impl<'o, O: Object<'o> + 'o> Scene<O> {
     /// Create a new `Scene` with the given objects inside the given
     /// `Environment`.
     pub fn new(objects: impl IntoIterator<Item = O>, environment: Environment) -> Self {
@@ -66,7 +72,7 @@ impl<O: Object> Scene<O> {
     /// Calculate the intersection between a `Ray` and all the objects in the
     /// scene returning the closest object (along with its intersection result)
     /// to the ray.
-    pub fn intersection<'s>(&'s self, ray: &'s Ray) -> Option<(&'s O, O::Intersection)> {
+    pub fn intersection(&'o self, ray: &Ray) -> Option<(&O, <O as Shape<'o>>::Intersection)> {
         self.objects
             .intersections(ray)
             .min_by(|(_, t0), (_, t1)| t0.t().partial_cmp(&t1.t()).unwrap())
@@ -113,9 +119,9 @@ pub struct RenderConfig {
 
 /// Render a `Scene` from a `Camera` to a new `RgbImage` of the given
 /// dimensions.
-pub fn render(
+pub fn render<'s, O: Object<'s> + 's>(
     camera: &Camera,
-    scene: &Scene<impl Object>,
+    scene: &'s Scene<O>,
     config: &RenderConfig,
 ) -> image::RgbImage {
     let lights = if config.direct_lighting {
@@ -136,9 +142,9 @@ pub fn render(
 
 /// Render a `Scene` from a `Camera` to a new `RgbImage` of the given
 /// dimensions concurrently.
-pub fn parallel_render(
+pub fn parallel_render<'s, O: Object<'s> + 's>(
     camera: &Camera,
-    scene: &Scene<impl Object>,
+    scene: &'s Scene<O>,
     config: &RenderConfig,
 ) -> image::RgbImage {
     let lights = if config.direct_lighting {
@@ -173,10 +179,10 @@ pub fn parallel_render(
 }
 
 /// Render a single pixel of an image from a `Scene` and `Camera`.
-pub fn render_pixel<O: Object>(
+pub fn render_pixel<'s, O: Object<'s> + 's>(
     (x, y): (u32, u32),
     camera: &Camera,
-    scene: &Scene<O>,
+    scene: &'s Scene<O>,
     lights: &[&O],
     rng: &mut impl Rng,
     config: &RenderConfig,
@@ -203,9 +209,15 @@ pub fn render_pixel<O: Object>(
     }
 }
 
-impl<T> Object for Box<T>
+impl<'o> Intersection<'o> for Hit<'o> {
+    fn t(&self) -> f64 {
+        self.t
+    }
+}
+
+impl<'o, T> Object<'o> for Box<T>
 where
-    T: Object + ?Sized,
+    T: Object<'o> + ?Sized + 'o,
 {
     fn material(&self) -> &Material {
         self.deref().material()

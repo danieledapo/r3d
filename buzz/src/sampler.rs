@@ -7,8 +7,8 @@ use geo::{vec3, Vec3};
 use crate::material::{dielectric_bounce, lambertian_bounce, metal_bounce, Material};
 use crate::{Environment, Object, RenderConfig, Scene};
 
-pub fn sample<O: Object>(
-    scene: &Scene<O>,
+pub fn sample<'s, O: Object<'s> + 's>(
+    scene: &'s Scene<O>,
     lights: &[&O],
     ray: &Ray,
     depth: u32,
@@ -24,7 +24,7 @@ pub fn sample<O: Object>(
             sample_material(
                 scene,
                 lights,
-                ray,
+                &ray,
                 depth,
                 &s.material(),
                 intersection,
@@ -34,12 +34,12 @@ pub fn sample<O: Object>(
             )
         }
 
-        None => sample_environment(scene, ray),
+        None => sample_environment(scene, &ray),
     }
 }
 
-fn sample_material<O: Object>(
-    scene: &Scene<O>,
+fn sample_material<'s, O: Object<'s> + 's>(
+    scene: &'s Scene<O>,
     lights: &[&O],
     ray: &Ray,
     depth: u32,
@@ -88,8 +88,8 @@ fn sample_material<O: Object>(
     }
 }
 
-fn sample_light<O: Object>(
-    scene: &Scene<O>,
+fn sample_light<'s, O: Object<'s> + 's>(
+    scene: &'s Scene<O>,
     light: &O,
     ray: &Ray,
     intersection: Vec3,
@@ -134,7 +134,7 @@ fn sample_light<O: Object>(
     Vec3::zero()
 }
 
-fn sample_environment(scene: &Scene<impl Object>, ray: &Ray) -> Vec3 {
+fn sample_environment<'s, O: Object<'s> + 's>(scene: &Scene<O>, ray: &Ray) -> Vec3 {
     match scene.environment {
         Environment::Color(c) => c,
         Environment::LinearGradient(a, b) => {

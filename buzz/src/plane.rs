@@ -4,7 +4,7 @@ use geo::spatial_index::Shape;
 use geo::{Aabb, Vec3};
 
 use crate::material::Material;
-use crate::Object;
+use crate::{Hit, Object};
 
 /// An infinite plane.
 #[derive(Debug, PartialEq, Clone)]
@@ -24,7 +24,7 @@ impl Plane {
     }
 }
 
-impl Object for Plane {
+impl<'a> Object<'a> for Plane {
     fn material(&self) -> &Material {
         &self.material
     }
@@ -38,14 +38,16 @@ impl Object for Plane {
     }
 }
 
-impl Shape for Plane {
-    type Intersection = f64;
+impl<'a> Shape<'a> for Plane {
+    type Intersection = Hit<'a>;
 
     fn bbox(&self) -> Aabb {
         plane::bbox()
     }
 
-    fn intersection(&self, ray: &Ray) -> Option<Self::Intersection> {
-        plane::intersection(self.origin, self.normal, ray)
+    fn intersection(&'a self, ray: &Ray) -> Option<Self::Intersection> {
+        let t = plane::intersection(self.origin, self.normal, ray)?;
+
+        Some(Hit { t, object: self })
     }
 }

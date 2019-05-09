@@ -24,8 +24,14 @@ pub fn main() -> opener::Result<()> {
         Material::light(Vec3::new(0.5, 0.5, 0.5)),
     );
 
-    let scene: Vec<Box<dyn Object<Intersection = f64>>> =
-        vec![Box::new(plane), Box::new(sphere), Box::new(light)];
+    let scene = Scene::new(
+        vec![
+            Box::new(plane) as Box<dyn Object>,
+            Box::new(sphere) as Box<dyn Object>,
+            Box::new(light) as Box<dyn Object>,
+        ],
+        Environment::Color(Vec3::zero()),
+    );
 
     let camera = Camera::look_at(
         Vec3::new(3.0, 3.0, 3.0),
@@ -34,11 +40,15 @@ pub fn main() -> opener::Result<()> {
         50.0,
     );
 
-    let background = Vec3::zero();
-
     let img = render(
         &camera,
-        &Scene::new(scene, Environment::Color(background)),
+        // FIXME: theoretically speaking, transmute should not be necessary
+        // because rustc should automatically figure out the proper lifetimes.
+        // It doesn't seem to be a problem with the trait definitions themselves
+        // because if the scene is composed of Box<Plane> only it compiles
+        // perfectly. I think it's the manual cast to Box<dyn Object> that
+        // throws it off.
+        unsafe { std::mem::transmute::<_, &Scene<Box<dyn Object>>>(&scene) },
         &RenderConfig {
             width: 960,
             height: 540,
