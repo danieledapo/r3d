@@ -5,7 +5,7 @@ use geo::triangle;
 use geo::{Aabb, Vec3};
 
 use crate::material::Material;
-use crate::Object;
+use crate::{Hit, Object};
 
 #[derive(Debug, PartialEq, Clone)]
 pub struct Facet<'a> {
@@ -28,8 +28,8 @@ impl<'a> Facet<'a> {
     }
 }
 
-impl<'a> Shape for Facet<'a> {
-    type Intersection = f64;
+impl<'a> Shape<'a> for Facet<'a> {
+    type Intersection = Hit<'a>;
 
     fn bbox(&self) -> Aabb {
         Aabb::new(self.positions[0])
@@ -37,15 +37,17 @@ impl<'a> Shape for Facet<'a> {
             .expanded(&self.positions[2])
     }
 
-    fn intersection(&self, ray: &Ray) -> Option<Self::Intersection> {
-        triangle::ray_intersection(
+    fn intersection(&'a self, ray: &Ray) -> Option<Self::Intersection> {
+        let t = triangle::ray_intersection(
             (self.positions[0], self.positions[1], self.positions[2]),
             ray,
-        )
+        )?;
+
+        Some(Hit { t, object: self })
     }
 }
 
-impl<'a> Object for Facet<'a> {
+impl<'a> Object<'a> for Facet<'a> {
     fn material(&self) -> &Material {
         &self.material
     }

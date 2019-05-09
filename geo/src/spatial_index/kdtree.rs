@@ -38,9 +38,9 @@ enum Node<T> {
     },
 }
 
-impl<T> KdTree<T>
+impl<'s, T> KdTree<T>
 where
-    T: Shape,
+    T: Shape<'s> + 's,
 {
     /// Create a new `KdTree` that contains all the given shapes.
     pub fn new(shapes: Vec<T>) -> Self {
@@ -54,7 +54,7 @@ where
     /// Find the intersection, if any, between the objects in the `KdTree` and a
     /// given `Ray`. The intersection is defined by the shape and its t
     /// parameter with respect to the ray.
-    pub fn intersection<'s>(&'s self, ray: &'s Ray) -> Option<(&'s T, T::Intersection)> {
+    pub fn intersection(&'s self, ray: &'s Ray) -> Option<(&'s T, <T as Shape<'s>>::Intersection)> {
         self.intersections(ray).next()
     }
 
@@ -62,17 +62,17 @@ where
     /// given ray. Each intersection is defined by the shape and its t parameter
     /// with respect to the ray. The intersections are sorted by their t
     /// parameter.
-    pub fn intersections<'s>(
+    pub fn intersections(
         &'s self,
         ray: &'s Ray,
-    ) -> impl Iterator<Item = (&'s T, T::Intersection)> + 's {
+    ) -> impl Iterator<Item = (&'s T, <T as Shape<'s>>::Intersection)> + 's {
         self.root.intersections(ray, 0.0, std::f64::INFINITY)
     }
 }
 
-impl<T> Node<T>
+impl<'s, T> Node<T>
 where
-    T: Shape,
+    T: Shape<'s> + 's,
 {
     fn new(shapes: Vec<Arc<T>>, bboxes: Vec<Aabb>) -> Self {
         if shapes.len() <= LEAF_SIZE {
@@ -95,15 +95,15 @@ where
         }
     }
 
-    fn intersections<'s>(
+    fn intersections(
         &'s self,
         ray: &'s Ray,
         tmin: f64,
         tmax: f64,
-    ) -> impl Iterator<Item = (&'s T, T::Intersection)> + 's {
+    ) -> impl Iterator<Item = (&'s T, <T as Shape<'s>>::Intersection)> {
         let mut node_stack = vec![(self, tmin, tmax)];
 
-        let mut current_intersections: Vec<(&'s T, T::Intersection)> =
+        let mut current_intersections: Vec<(&'s T, <T as Shape<'s>>::Intersection)> =
             Vec::with_capacity(LEAF_SIZE);
 
         let mut tmin = tmin;
@@ -266,7 +266,7 @@ fn best_partitioning(bboxes: &[Aabb]) -> Option<(Axis, f64)> {
 
 /// Partition the given `Shape`s and their `Aabb`s using the given `split_axis`
 /// and `split_value`.
-fn partition<T: Shape>(
+fn partition<'s, T: Shape<'s>>(
     mut shapes: Vec<Arc<T>>,
     mut bboxes: Vec<Aabb>,
     split_axis: Axis,

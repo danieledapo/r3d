@@ -35,9 +35,9 @@ enum Node<T> {
     },
 }
 
-impl<T> Bvh<T>
+impl<'s, T> Bvh<T>
 where
-    T: Shape,
+    T: Shape<'s>,
 {
     /// Iterator over all the elements.
     pub fn iter(&self) -> impl Iterator<Item = &T> {
@@ -63,43 +63,57 @@ where
 
     /// Return all the objects that intersect the given ray along with their t
     /// parameter.
-    pub fn intersections<'s>(
-        &'s self,
-        ray: &'s Ray,
-    ) -> impl Iterator<Item = (&'s T, T::Intersection)> {
+    pub fn intersections(&self, ray: &Ray) -> Intersections<T> {
         let mut stack = vec![];
         if self.root.is_some() {
             stack.push(self.root.as_ref().unwrap());
         }
 
-        std::iter::from_fn(move || {
-            while let Some(n) = stack.pop() {
-                match n {
-                    Node::Leaf { data } => {
-                        if let Some(inter) = data.intersection(ray) {
-                            if inter.t() >= 0.0 {
-                                return Some((data, inter));
-                            }
-                        }
-                    }
-
-                    Node::Branch { bbox, left, right } => {
-                        if bbox.intersect(ray) {
-                            stack.push(&right);
-                            stack.push(&left);
-                        }
-                    }
-                }
-            }
-
-            None
-        })
+        Intersections {
+            stack,
+            ray: ray.clone(),
+        }
     }
 }
 
-impl<T> FromIterator<T> for Bvh<T>
+pub struct Intersections<'s, T> {
+    stack: Vec<&'s Node<T>>,
+    ray: Ray,
+}
+
+impl<'s, T> std::iter::Iterator for Intersections<'s, T>
 where
-    T: Shape,
+    T: Shape<'s>,
+{
+    type Item = (&'s T, T::Intersection);
+
+    fn next(&mut self) -> Option<Self::Item> {
+        while let Some(n) = self.stack.pop() {
+            match n {
+                Node::Leaf { data } => {
+                    if let Some(inter) = data.intersection(&self.ray) {
+                        if inter.t() >= 0.0 {
+                            return Some((data, inter));
+                        }
+                    }
+                }
+
+                Node::Branch { bbox, left, right } => {
+                    if bbox.intersect(&self.ray) {
+                        self.stack.push(&right);
+                        self.stack.push(&left);
+                    }
+                }
+            }
+        }
+
+        None
+    }
+}
+
+impl<'s, T: 's> FromIterator<T> for Bvh<T>
+where
+    T: Shape<'s>,
 {
     fn from_iter<I: IntoIterator<Item = T>>(it: I) -> Self {
         let elems = it
@@ -120,9 +134,9 @@ where
     }
 }
 
-impl<T> Node<T>
+impl<'s, T> Node<T>
 where
-    T: Shape,
+    T: Shape<'s>,
 {
     fn new(mut elems: Vec<(T, Aabb)>) -> Self {
         assert!(!elems.is_empty());

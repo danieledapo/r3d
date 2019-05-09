@@ -9,18 +9,18 @@ use crate::{Aabb, Vec3};
 
 use std::ops::Deref;
 
-pub trait Shape: std::fmt::Debug {
-    type Intersection: Intersection;
+pub trait Shape<'s>: std::fmt::Debug {
+    type Intersection: Intersection<'s>;
 
     fn bbox(&self) -> Aabb;
-    fn intersection(&self, ray: &Ray) -> Option<Self::Intersection>;
+    fn intersection(&'s self, ray: &Ray) -> Option<Self::Intersection>;
 }
 
-pub trait Intersection {
+pub trait Intersection<'s> {
     fn t(&self) -> f64;
 }
 
-impl Shape for Vec3 {
+impl<'s> Shape<'s> for Vec3 {
     type Intersection = f64;
 
     fn bbox(&self) -> Aabb {
@@ -39,15 +39,15 @@ impl Shape for Vec3 {
     }
 }
 
-impl Intersection for f64 {
+impl<'s> Intersection<'s> for f64 {
     fn t(&self) -> f64 {
         *self
     }
 }
 
-impl<T> Shape for Box<T>
+impl<'s, T> Shape<'s> for Box<T>
 where
-    T: Shape + ?Sized,
+    T: Shape<'s> + ?Sized + 's,
 {
     type Intersection = T::Intersection;
 
@@ -55,7 +55,7 @@ where
         self.deref().bbox()
     }
 
-    fn intersection(&self, ray: &Ray) -> Option<Self::Intersection> {
+    fn intersection(&'s self, ray: &Ray) -> Option<Self::Intersection> {
         self.deref().intersection(ray)
     }
 }
