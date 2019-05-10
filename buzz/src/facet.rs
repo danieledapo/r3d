@@ -5,7 +5,7 @@ use geo::triangle;
 use geo::{Aabb, Vec3};
 
 use crate::material::Material;
-use crate::{Hit, Object};
+use crate::{Hit, Object, Surface};
 
 #[derive(Debug, PartialEq, Clone)]
 pub struct Facet<'a> {
@@ -43,7 +43,7 @@ impl<'a> Shape<'a> for Facet<'a> {
             ray,
         )?;
 
-        Some(Hit { t, object: self })
+        Some(Hit { t, surface: self })
     }
 }
 
@@ -52,6 +52,12 @@ impl<'a> Object<'a> for Facet<'a> {
         &self.material
     }
 
+    fn bounding_sphere(&self) -> (Vec3, f64) {
+        self.bbox().bounding_sphere()
+    }
+}
+
+impl<'a> Surface for Facet<'a> {
     fn normal_at(&self, pt: Vec3) -> Vec3 {
         if self.flat_shading {
             self.normal
@@ -69,9 +75,5 @@ impl<'a> Object<'a> for Facet<'a> {
 
             n
         }
-    }
-
-    fn bounding_sphere(&self) -> (Vec3, f64) {
-        self.bbox().bounding_sphere()
     }
 }
