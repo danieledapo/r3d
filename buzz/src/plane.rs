@@ -4,7 +4,7 @@ use geo::spatial_index::Shape;
 use geo::{Aabb, Vec3};
 
 use crate::material::Material;
-use crate::{Hit, Object};
+use crate::{Hit, Object, Surface};
 
 /// An infinite plane.
 #[derive(Debug, PartialEq, Clone)]
@@ -29,12 +29,14 @@ impl<'a> Object<'a> for Plane {
         &self.material
     }
 
-    fn normal_at(&self, _pt: Vec3) -> Vec3 {
-        self.normal
-    }
-
     fn bounding_sphere(&self) -> (Vec3, f64) {
         (self.origin, std::f64::INFINITY)
+    }
+}
+
+impl Surface for Plane {
+    fn normal_at(&self, _pt: Vec3) -> Vec3 {
+        self.normal
     }
 }
 
@@ -48,6 +50,6 @@ impl<'a> Shape<'a> for Plane {
     fn intersection(&'a self, ray: &Ray) -> Option<Self::Intersection> {
         let t = plane::intersection(self.origin, self.normal, ray)?;
 
-        Some(Hit { t, object: self })
+        Some(Hit { t, surface: self })
     }
 }

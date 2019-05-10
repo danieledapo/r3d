@@ -4,7 +4,7 @@ use geo::sphere;
 use geo::{Aabb, Vec3};
 
 use crate::material::Material;
-use crate::{Hit, Object};
+use crate::{Hit, Object, Surface};
 
 #[derive(Debug, PartialEq, Clone)]
 pub struct Sphere {
@@ -28,12 +28,14 @@ impl<'a> Object<'a> for Sphere {
         &self.material
     }
 
-    fn normal_at(&self, pt: Vec3) -> Vec3 {
-        sphere::normal(self.center, pt)
-    }
-
     fn bounding_sphere(&self) -> (Vec3, f64) {
         (self.center, self.radius)
+    }
+}
+
+impl Surface for Sphere {
+    fn normal_at(&self, pt: Vec3) -> Vec3 {
+        sphere::normal(self.center, pt)
     }
 }
 
@@ -47,6 +49,6 @@ impl<'s> Shape<'s> for Sphere {
     fn intersection(&'s self, ray: &Ray) -> Option<Self::Intersection> {
         let t = sphere::ray_intersection(self.center, self.radius, ray)?;
 
-        Some(Hit { t, object: self })
+        Some(Hit { t, surface: self })
     }
 }

@@ -21,24 +21,30 @@ use geo::Vec3;
 use camera::Camera;
 use material::Material;
 
+/// An `Hit` represents an intersection between a `Ray` and the shapes in a `Scene`.
 #[derive(Debug)]
 pub struct Hit<'o> {
+    /// `t` parameter wrt the `Ray` that generated this `Hit`
     pub t: f64,
-    pub object: &'o Object<'o>,
+
+    /// the `Surface` the `Ray` hit
+    pub surface: &'o Surface,
 }
 
 /// An `Object` that can be rendered.
 pub trait Object<'a>: Shape<'a, Intersection = Hit<'a>> + Sync {
-    /// Getter for the `Material` the `Object` is made of.
-    fn material(&self) -> &Material;
-
-    /// Calculate the normal for the given point `p`. This method should never
-    /// be called if the `Object` does not intersect it.
-    fn normal_at(&self, p: Vec3) -> Vec3;
-
     /// Get a bounding sphere for this `Object`. This is used in case the
     /// `Object` is used with a `Light` material.
     fn bounding_sphere(&self) -> (Vec3, f64);
+
+    /// Getter for the `Material` the `Object` is made of.
+    fn material(&self) -> &Material;
+}
+
+pub trait Surface: std::fmt::Debug {
+    /// Calculate the normal for the given point `p`. This method should never
+    /// be called if the `Surface` does not intersect it.
+    fn normal_at(&self, p: Vec3) -> Vec3;
 }
 
 /// A `Scene` is a collection of objects that can be rendered.
@@ -223,11 +229,15 @@ where
         self.deref().material()
     }
 
-    fn normal_at(&self, p: Vec3) -> Vec3 {
-        self.deref().normal_at(p)
-    }
-
     fn bounding_sphere(&self) -> (Vec3, f64) {
         self.deref().bounding_sphere()
+    }
+}
+impl<T> Surface for Box<T>
+where
+    T: Surface + ?Sized,
+{
+    fn normal_at(&self, p: Vec3) -> Vec3 {
+        self.deref().normal_at(p)
     }
 }

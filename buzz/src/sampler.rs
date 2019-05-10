@@ -19,14 +19,14 @@ pub fn sample<'s, O: Object<'s> + 's>(
         Some(_) if depth >= config.max_bounces => Vec3::zero(),
         Some((s, hit)) => {
             let intersection = ray.point_at(hit.t());
-            let n = s.normal_at(intersection);
+            let n = hit.surface.normal_at(intersection);
 
             sample_material(
                 scene,
                 lights,
                 &ray,
                 depth,
-                &s.material(),
+                s.material(),
                 intersection,
                 n,
                 rng,
