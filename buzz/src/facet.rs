@@ -9,26 +9,67 @@ use crate::{Hit, Object, Surface};
 
 #[derive(Debug, PartialEq, Clone)]
 pub struct Facet<'a> {
+    geom: FacetGeometry,
+    material: &'a Material,
+}
+
+#[derive(Debug, PartialEq, Clone)]
+pub struct FacetGeometry {
     positions: [Vec3; 3],
     normal: Vec3,
-    material: &'a Material,
     flat_shading: bool,
 }
 
 impl<'a> Facet<'a> {
     pub fn new(tri: stl::StlTriangle, material: &'a Material, flat_shading: bool) -> Self {
-        let normal = geo::triangle::normal(&tri.positions[0], &tri.positions[1], &tri.positions[2]);
-
         Facet {
-            positions: tri.positions,
-            normal,
+            geom: FacetGeometry::new(tri, flat_shading),
             material,
-            flat_shading,
         }
     }
 }
 
+impl FacetGeometry {
+    pub fn new(tri: stl::StlTriangle, flat_shading: bool) -> Self {
+        let normal = geo::triangle::normal(&tri.positions[0], &tri.positions[1], &tri.positions[2]);
+
+        FacetGeometry {
+            positions: tri.positions,
+            flat_shading,
+            normal,
+        }
+    }
+}
+
+impl<'a> Object<'a> for Facet<'a> {
+    fn material(&self) -> &Material {
+        &self.material
+    }
+
+    fn bounding_sphere(&self) -> (Vec3, f64) {
+        self.bbox().bounding_sphere()
+    }
+}
+
 impl<'a> Shape<'a> for Facet<'a> {
+    type Intersection = Hit<'a>;
+
+    fn bbox(&self) -> Aabb {
+        self.geom.bbox()
+    }
+
+    fn intersection(&'a self, ray: &Ray) -> Option<Self::Intersection> {
+        self.geom.intersection(ray)
+    }
+}
+
+impl<'a> Surface for Facet<'a> {
+    fn normal_at(&self, pt: Vec3) -> Vec3 {
+        self.geom.normal_at(pt)
+    }
+}
+
+impl<'a> Shape<'a> for FacetGeometry {
     type Intersection = Hit<'a>;
 
     fn bbox(&self) -> Aabb {
@@ -47,17 +88,7 @@ impl<'a> Shape<'a> for Facet<'a> {
     }
 }
 
-impl<'a> Object<'a> for Facet<'a> {
-    fn material(&self) -> &Material {
-        &self.material
-    }
-
-    fn bounding_sphere(&self) -> (Vec3, f64) {
-        self.bbox().bounding_sphere()
-    }
-}
-
-impl<'a> Surface for Facet<'a> {
+impl<'a> Surface for FacetGeometry {
     fn normal_at(&self, pt: Vec3) -> Vec3 {
         if self.flat_shading {
             self.normal

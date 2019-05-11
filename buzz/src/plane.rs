@@ -9,45 +9,67 @@ use crate::{Hit, Object, Surface};
 /// An infinite plane.
 #[derive(Debug, PartialEq, Clone)]
 pub struct Plane {
+    pub geom: PlaneGeometry,
+    pub material: Material,
+}
+
+#[derive(Debug, PartialEq, Clone)]
+pub struct PlaneGeometry {
     pub origin: Vec3,
     pub normal: Vec3,
-    pub material: Material,
 }
 
 impl Plane {
     pub fn new(origin: Vec3, normal: Vec3, material: Material) -> Self {
         Plane {
-            origin,
+            geom: PlaneGeometry { origin, normal },
             material,
-            normal,
         }
     }
 }
 
-impl<'a> Object<'a> for Plane {
+impl Object<'_> for Plane {
     fn material(&self) -> &Material {
         &self.material
     }
 
     fn bounding_sphere(&self) -> (Vec3, f64) {
-        (self.origin, std::f64::INFINITY)
+        (self.geom.origin, std::f64::INFINITY)
     }
 }
 
 impl Surface for Plane {
+    fn normal_at(&self, pt: Vec3) -> Vec3 {
+        self.geom.normal_at(pt)
+    }
+}
+
+impl<'s> Shape<'s> for Plane {
+    type Intersection = Hit<'s>;
+
+    fn bbox(&self) -> Aabb {
+        self.geom.bbox()
+    }
+
+    fn intersection(&'s self, ray: &Ray) -> Option<Self::Intersection> {
+        self.geom.intersection(ray)
+    }
+}
+
+impl Surface for PlaneGeometry {
     fn normal_at(&self, _pt: Vec3) -> Vec3 {
         self.normal
     }
 }
 
-impl<'a> Shape<'a> for Plane {
-    type Intersection = Hit<'a>;
+impl<'s> Shape<'s> for PlaneGeometry {
+    type Intersection = Hit<'s>;
 
     fn bbox(&self) -> Aabb {
         plane::bbox()
     }
 
-    fn intersection(&'a self, ray: &Ray) -> Option<Self::Intersection> {
+    fn intersection(&'s self, ray: &Ray) -> Option<Self::Intersection> {
         let t = plane::intersection(self.origin, self.normal, ray)?;
 
         Some(Hit { t, surface: self })
