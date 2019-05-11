@@ -1,6 +1,7 @@
 #![allow(clippy::useless_let_if_seq)]
 
 pub mod camera;
+pub mod csg;
 pub mod facet;
 pub mod material;
 pub mod plane;
