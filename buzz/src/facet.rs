@@ -45,10 +45,6 @@ impl<'a> Object<'a> for Facet<'a> {
     fn material(&self) -> &Material {
         &self.material
     }
-
-    fn bounding_sphere(&self) -> (Vec3, f64) {
-        self.bbox().bounding_sphere()
-    }
 }
 
 impl<'a> Shape<'a> for Facet<'a> {

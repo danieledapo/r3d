@@ -32,10 +32,6 @@ impl Object<'_> for Plane {
     fn material(&self) -> &Material {
         &self.material
     }
-
-    fn bounding_sphere(&self) -> (Vec3, f64) {
-        (self.geom.origin, std::f64::INFINITY)
-    }
 }
 
 impl Surface for Plane {
@@ -67,6 +63,10 @@ impl<'s> Shape<'s> for PlaneGeometry {
 
     fn bbox(&self) -> Aabb {
         plane::bbox()
+    }
+
+    fn bounding_sphere(&self) -> (Vec3, f64) {
+        (self.origin, std::f64::INFINITY)
     }
 
     fn intersection(&'s self, ray: &Ray) -> Option<Self::Intersection> {

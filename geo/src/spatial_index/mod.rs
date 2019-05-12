@@ -9,18 +9,37 @@ use crate::{Aabb, Vec3};
 
 use std::ops::Deref;
 
+/// A `Shape` is a 2d figure that can be inserted in a spatial index. A `Shape`
+/// must have a bounding box and provides a way to check for the first
+/// intersection with a `Ray`.
 pub trait Shape<'s>: std::fmt::Debug {
+    /// The type of the `Intersection` returned by `intersection`. Usually it's
+    /// `f64` if there's no additional information gathered during the
+    /// intersection checking.
     type Intersection: Intersection<'s>;
 
-    fn bbox(&self) -> Aabb;
+    /// Calculate the intersection between this `Shape` and a `Ray` returning at
+    /// least the parameter `t` that can be used to retrieve the intersection
+    /// point.
     fn intersection(&'s self, ray: &Ray) -> Option<Self::Intersection>;
+
+    /// The bounding box of the `Shape`.
+    fn bbox(&self) -> Aabb;
+
+    /// The bounding sphere of this `Shape`. By default it's the bounding sphere
+    /// of `bbox()`.
+    fn bounding_sphere(&self) -> (Vec3, f64) {
+        self.bbox().bounding_sphere()
+    }
 }
 
+/// Simple trait over an `Intersection`. Can be used to return additional
+/// information other than the `t` parameter.
 pub trait Intersection<'s> {
     fn t(&self) -> f64;
 }
 
-impl<'s> Shape<'s> for Vec3 {
+impl Shape<'_> for Vec3 {
     type Intersection = f64;
 
     fn bbox(&self) -> Aabb {
@@ -37,9 +56,13 @@ impl<'s> Shape<'s> for Vec3 {
             None
         }
     }
+
+    fn bounding_sphere(&self) -> (Vec3, f64) {
+        (*self, 0.0)
+    }
 }
 
-impl<'s> Intersection<'s> for f64 {
+impl Intersection<'_> for f64 {
     fn t(&self) -> f64 {
         *self
     }
@@ -57,5 +80,9 @@ where
 
     fn intersection(&'s self, ray: &Ray) -> Option<Self::Intersection> {
         self.deref().intersection(ray)
+    }
+
+    fn bounding_sphere(&self) -> (Vec3, f64) {
+        self.deref().bounding_sphere()
     }
 }

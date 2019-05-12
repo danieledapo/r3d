@@ -31,10 +31,6 @@ impl Object<'_> for Sphere {
     fn material(&self) -> &Material {
         &self.material
     }
-
-    fn bounding_sphere(&self) -> (Vec3, f64) {
-        (self.geom.center, self.geom.radius)
-    }
 }
 
 impl<'s> Shape<'s> for Sphere {
@@ -60,6 +56,10 @@ impl<'s> Shape<'s> for SphereGeometry {
 
     fn bbox(&self) -> Aabb {
         sphere::bounding_box(self.center, self.radius)
+    }
+
+    fn bounding_sphere(&self) -> (Vec3, f64) {
+        (self.center, self.radius)
     }
 
     fn intersection(&'s self, ray: &Ray) -> Option<Self::Intersection> {

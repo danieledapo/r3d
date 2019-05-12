@@ -34,10 +34,6 @@ pub struct Hit<'o> {
 
 /// An `Object` that can be rendered.
 pub trait Object<'a>: Shape<'a, Intersection = Hit<'a>> + Sync {
-    /// Get a bounding sphere for this `Object`. This is used in case the
-    /// `Object` is used with a `Light` material.
-    fn bounding_sphere(&self) -> (Vec3, f64);
-
     /// Getter for the `Material` the `Object` is made of.
     fn material(&self) -> &Material;
 }
@@ -229,11 +225,8 @@ where
     fn material(&self) -> &Material {
         self.deref().material()
     }
-
-    fn bounding_sphere(&self) -> (Vec3, f64) {
-        self.deref().bounding_sphere()
-    }
 }
+
 impl<T> Surface for Box<T>
 where
     T: Surface + ?Sized,
