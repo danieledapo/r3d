@@ -3,14 +3,7 @@ use geo::spatial_index::Shape;
 use geo::sphere;
 use geo::{Aabb, Vec3};
 
-use crate::material::Material;
-use crate::{Hit, Object, Surface};
-
-#[derive(Debug, PartialEq, Clone)]
-pub struct Sphere {
-    pub geom: SphereGeometry,
-    pub material: Material,
-}
+use crate::{Hit, Surface};
 
 #[derive(Debug, PartialEq, Clone)]
 pub struct SphereGeometry {
@@ -18,36 +11,9 @@ pub struct SphereGeometry {
     pub radius: f64,
 }
 
-impl Sphere {
-    pub fn new(center: Vec3, radius: f64, material: Material) -> Self {
-        Sphere {
-            geom: SphereGeometry { center, radius },
-            material,
-        }
-    }
-}
-
-impl Object<'_> for Sphere {
-    fn material(&self) -> &Material {
-        &self.material
-    }
-}
-
-impl<'s> Shape<'s> for Sphere {
-    type Intersection = Hit<'s>;
-
-    fn bbox(&self) -> Aabb {
-        self.geom.bbox()
-    }
-
-    fn intersection(&'s self, ray: &Ray) -> Option<Self::Intersection> {
-        self.geom.intersection(ray)
-    }
-}
-
-impl Surface for Sphere {
-    fn normal_at(&self, pt: Vec3) -> Vec3 {
-        self.geom.normal_at(pt)
+impl SphereGeometry {
+    pub fn new(center: Vec3, radius: f64) -> Self {
+        SphereGeometry { center, radius }
     }
 }
 

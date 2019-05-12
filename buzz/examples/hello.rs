@@ -3,24 +3,21 @@ use geo::Vec3;
 
 use buzz::camera::Camera;
 use buzz::material::Material;
-use buzz::plane::Plane;
-use buzz::sphere::Sphere;
-use buzz::{render, Environment, Object, RenderConfig, Scene};
+use buzz::plane::PlaneGeometry;
+use buzz::sphere::SphereGeometry;
+use buzz::{render, Environment, Object, RenderConfig, Scene, SimpleObject};
 
 pub fn main() -> opener::Result<()> {
-    let plane = Plane::new(
-        Vec3::zero(),
-        Vec3::new(0.0, 0.0, 1.0),
+    let plane = SimpleObject::new(
+        PlaneGeometry::new(Vec3::zero(), Vec3::new(0.0, 0.0, 1.0)),
         Material::lambertian(Vec3::new(1.0, 1.0, 1.0)),
     );
-    let sphere = Sphere::new(
-        Vec3::new(0.0, 0.0, 1.0),
-        1.0,
+    let sphere = SimpleObject::new(
+        SphereGeometry::new(Vec3::new(0.0, 0.0, 1.0), 1.0),
         Material::lambertian(Vec3::new(1.0, 1.0, 1.0)),
     );
-    let light = Sphere::new(
-        Vec3::new(0.0, 0.0, 5.0),
-        1.0,
+    let light = SimpleObject::new(
+        SphereGeometry::new(Vec3::new(0.0, 0.0, 5.0), 1.0),
         Material::light(Vec3::new(0.5, 0.5, 0.5)),
     );
 
@@ -44,10 +41,9 @@ pub fn main() -> opener::Result<()> {
         &camera,
         // FIXME: theoretically speaking, transmute should not be necessary
         // because rustc should automatically figure out the proper lifetimes.
-        // It doesn't seem to be a problem with the trait definitions themselves
-        // because if the scene is composed of Box<Plane> only it compiles
-        // perfectly. I think it's the manual cast to Box<dyn Object> that
-        // throws it off.
+        // In fact I assume it does so in the following call given that I'm not
+        // specifying any lifetimes. I think it's the "scope" of the evaluation
+        // that throws it off.
         unsafe { std::mem::transmute::<_, &Scene<Box<dyn Object>>>(&scene) },
         &RenderConfig {
             width: 960,

@@ -8,8 +8,8 @@ use geo::Vec3;
 use buzz::camera::Camera;
 use buzz::facet::Facet;
 use buzz::material::Material;
-use buzz::sphere::Sphere;
-use buzz::{parallel_render, Environment, Object, RenderConfig, Scene};
+use buzz::sphere::SphereGeometry;
+use buzz::{parallel_render, Environment, Object, RenderConfig, Scene, SimpleObject};
 
 const MESH_MATERIAL: Material = Material::lambertian(Vec3::new(0.8, 0.1, 0.1));
 // const MESH_MATERIAL: Material = Material::dielectric(2.4);
@@ -40,19 +40,16 @@ pub fn main() -> opener::Result<()> {
         })
         .collect::<io::Result<Vec<_>>>()?;
 
-    objects.push(Box::new(Sphere::new(
-        Vec3::new(-0.5, -6.0, 0.0),
-        0.5,
+    objects.push(Box::new(SimpleObject::new(
+        SphereGeometry::new(Vec3::new(-0.5, -6.0, 0.0), 0.5),
         Material::light(Vec3::new(0.5, 0.5, 0.5)),
     )));
-    objects.push(Box::new(Sphere::new(
-        Vec3::new(0.0, 0.0, 6.0),
-        0.5,
+    objects.push(Box::new(SimpleObject::new(
+        SphereGeometry::new(Vec3::new(0.0, 0.0, 6.0), 0.5),
         Material::light(Vec3::new(0.2, 0.2, 0.2)),
     )));
-    objects.push(Box::new(Sphere::new(
-        Vec3::new(0.0, 100.0, 0.0),
-        90.0,
+    objects.push(Box::new(SimpleObject::new(
+        SphereGeometry::new(Vec3::new(0.0, 100.0, 0.0), 90.0),
         Material::lambertian(Vec3::new(0.2, 0.3, 0.36)),
     )));
 
@@ -65,10 +62,9 @@ pub fn main() -> opener::Result<()> {
         &camera,
         // FIXME: theoretically speaking, transmute should not be necessary
         // because rustc should automatically figure out the proper lifetimes.
-        // It doesn't seem to be a problem with the trait definitions themselves
-        // because if the scene is composed of Box<Plane> only it compiles
-        // perfectly. I think it's the manual cast to Box<dyn Object> that
-        // throws it off.
+        // In fact I assume it does so in the following call given that I'm not
+        // specifying any lifetimes. I think it's the "scope" of the evaluation
+        // that throws it off.
         unsafe { std::mem::transmute::<_, &Scene<Box<dyn Object>>>(&scene) },
         &RenderConfig {
             width: 1920,

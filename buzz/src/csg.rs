@@ -6,13 +6,7 @@ use geo::ray::Ray;
 use geo::spatial_index::Shape;
 use geo::Aabb;
 
-use crate::{Hit, Material, Object};
-
-#[derive(Debug, PartialEq, Clone)]
-pub struct Csg<G1, G2> {
-    geom: CsgGeometry<G1, G2>,
-    material: Material,
-}
+use crate::Hit;
 
 #[derive(Debug, PartialEq, Clone)]
 pub struct CsgGeometry<G1, G2> {
@@ -26,12 +20,6 @@ pub enum CsgOp {
     Union,
     Difference,
     Intersection,
-}
-
-impl<G1, G2> Csg<G1, G2> {
-    pub fn new(geom: CsgGeometry<G1, G2>, material: Material) -> Self {
-        Csg { geom, material }
-    }
 }
 
 impl<G1, G2> CsgGeometry<G1, G2> {
@@ -53,32 +41,6 @@ impl<G1, G2> CsgGeometry<G1, G2> {
 
     pub fn intersection<G3>(self, right_geom: G3) -> CsgGeometry<Self, G3> {
         CsgGeometry::new(self, right_geom, CsgOp::Intersection)
-    }
-}
-
-impl<'s, G1, G2> Object<'s> for Csg<G1, G2>
-where
-    G1: Shape<'s, Intersection = Hit<'s>> + Sync,
-    G2: Shape<'s, Intersection = Hit<'s>> + Sync,
-{
-    fn material(&self) -> &Material {
-        &self.material
-    }
-}
-
-impl<'s, G1, G2> Shape<'s> for Csg<G1, G2>
-where
-    G1: Shape<'s, Intersection = Hit<'s>>,
-    G2: Shape<'s, Intersection = Hit<'s>>,
-{
-    type Intersection = Hit<'s>;
-
-    fn bbox(&self) -> Aabb {
-        self.geom.bbox()
-    }
-
-    fn intersection(&'s self, ray: &Ray) -> Option<Self::Intersection> {
-        Shape::intersection(&self.geom, ray)
     }
 }
 
