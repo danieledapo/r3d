@@ -4,7 +4,7 @@
 
 use geo::ray::Ray;
 use geo::spatial_index::Shape;
-use geo::{Aabb, Vec3};
+use geo::Aabb;
 
 use crate::{Hit, Material, Object};
 
@@ -63,10 +63,6 @@ where
 {
     fn material(&self) -> &Material {
         &self.material
-    }
-
-    fn bounding_sphere(&self) -> (Vec3, f64) {
-        self.bbox().bounding_sphere()
     }
 }
 
