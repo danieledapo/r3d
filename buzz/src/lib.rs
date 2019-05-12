@@ -17,7 +17,7 @@ use rayon::prelude::*;
 use geo::ray::Ray;
 use geo::spatial_index::Bvh;
 use geo::spatial_index::{Intersection, Shape};
-use geo::Vec3;
+use geo::{Aabb, Vec3};
 
 use camera::Camera;
 use material::Material;
@@ -193,7 +193,7 @@ pub fn render_pixel<'s, O: Object<'s> + 's>(
     let mut c = (0..config.samples)
         .map(|_| {
             let r = camera.cast_ray((x, y), (config.width, config.height), rng);
-            sampler::sample(&scene, lights, &r, 0, rng, config)
+            sampler::sample(scene, lights, &r, 0, rng, config)
         })
         .sum::<Vec3>()
         / f64::from(config.samples);
@@ -226,12 +226,54 @@ where
         self.deref().material()
     }
 }
-
 impl<T> Surface for Box<T>
 where
     T: Surface + ?Sized,
 {
     fn normal_at(&self, p: Vec3) -> Vec3 {
         self.deref().normal_at(p)
+    }
+}
+
+#[derive(Debug)]
+pub struct SimpleObject<S> {
+    geom: S,
+    material: Material,
+}
+
+impl<G> SimpleObject<G> {
+    pub fn new(geom: G, material: Material) -> Self {
+        SimpleObject {
+            geom: geom,
+            material,
+        }
+    }
+}
+
+impl<'s, S> Object<'s> for SimpleObject<S>
+where
+    S: Shape<'s, Intersection = Hit<'s>> + Sync,
+{
+    fn material(&self) -> &Material {
+        &self.material
+    }
+}
+
+impl<'s, S> Shape<'s> for SimpleObject<S>
+where
+    S: Shape<'s, Intersection = Hit<'s>> + Sync,
+{
+    type Intersection = Hit<'s>;
+
+    fn intersection(&'s self, ray: &Ray) -> Option<Self::Intersection> {
+        self.geom.intersection(ray)
+    }
+
+    fn bbox(&self) -> Aabb {
+        self.geom.bbox()
+    }
+
+    fn bounding_sphere(&self) -> (Vec3, f64) {
+        self.geom.bounding_sphere()
     }
 }

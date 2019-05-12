@@ -3,8 +3,8 @@ use geo::Vec3;
 
 use buzz::camera::Camera;
 use buzz::material::Material;
-use buzz::sphere::Sphere;
-use buzz::{render, Environment, RenderConfig, Scene};
+use buzz::sphere::SphereGeometry;
+use buzz::{render, Environment, RenderConfig, Scene, SimpleObject};
 
 fn main() -> opener::Result<()> {
     let target = Vec3::new(0.0, 0.0, -1.0);
@@ -12,24 +12,20 @@ fn main() -> opener::Result<()> {
 
     let scene = Scene::new(
         vec![
-            Sphere::new(
-                Vec3::new(0.0, 0.0, -1.0),
-                0.5,
+            SimpleObject::new(
+                SphereGeometry::new(Vec3::new(0.0, 0.0, -1.0), 0.5),
                 Material::lambertian(Vec3::new(0.8, 0.3, 0.3)),
             ),
-            Sphere::new(
-                Vec3::new(0.0, -100.5, -1.0),
-                100.0,
+            SimpleObject::new(
+                SphereGeometry::new(Vec3::new(0.0, -100.5, -1.0), 100.0),
                 Material::lambertian(Vec3::new(0.8, 0.8, 0.0)),
             ),
-            Sphere::new(
-                Vec3::new(1.5, 0.0, -1.0),
-                0.5,
+            SimpleObject::new(
+                SphereGeometry::new(Vec3::new(1.5, 0.0, -1.0), 0.5),
                 Material::light(Vec3::new(0.5, 0.5, 0.5)),
             ),
-            Sphere::new(
-                Vec3::new(-0.5, 1.0, 1.0),
-                0.3,
+            SimpleObject::new(
+                SphereGeometry::new(Vec3::new(-0.5, 1.0, 1.0), 0.3),
                 Material::light(Vec3::new(0.2, 0.2, 0.2)),
             ),
         ],

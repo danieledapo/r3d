@@ -5,17 +5,16 @@ use geo::Vec3;
 
 use buzz::camera::Camera;
 use buzz::material::Material;
-use buzz::sphere::Sphere;
-use buzz::{parallel_render, Environment, RenderConfig, Scene};
+use buzz::sphere::SphereGeometry;
+use buzz::{parallel_render, Environment, RenderConfig, Scene, SimpleObject};
 
 const SKY_ENVIRONMENT: Environment =
     Environment::LinearGradient(Vec3::new(1.0, 1.0, 1.0), Vec3::new(0.5, 0.7, 1.0));
 
 pub fn main() -> opener::Result<()> {
-    let mut scene = Vec::with_capacity(400);
-    scene.push(Sphere::new(
-        Vec3::new(0.0, -1000.0, 0.0),
-        1000.0,
+    let mut objects = Vec::with_capacity(400);
+    objects.push(SimpleObject::new(
+        SphereGeometry::new(Vec3::new(0.0, -1000.0, 0.0), 1000.0),
         Material::lambertian(Vec3::new(0.5, 0.5, 0.5)),
     ));
 
@@ -38,26 +37,25 @@ pub fn main() -> opener::Result<()> {
                     Material::dielectric(1.5)
                 };
 
-                scene.push(Sphere::new(center, 0.2, mat));
+                objects.push(SimpleObject::new(SphereGeometry::new(center, 0.2), mat));
             }
         }
     }
 
-    scene.push(Sphere::new(
-        Vec3::new(0.0, 1.0, 0.0),
-        1.0,
+    objects.push(SimpleObject::new(
+        SphereGeometry::new(Vec3::new(0.0, 1.0, 0.0), 1.0),
         Material::dielectric(1.5),
     ));
-    scene.push(Sphere::new(
-        Vec3::new(-4.0, 1.0, 0.0),
-        1.0,
+    objects.push(SimpleObject::new(
+        SphereGeometry::new(Vec3::new(-4.0, 1.0, 0.0), 1.0),
         Material::lambertian(Vec3::new(0.4, 0.2, 0.1)),
     ));
-    scene.push(Sphere::new(
-        Vec3::new(4.0, 1.0, 0.0),
-        1.0,
+    objects.push(SimpleObject::new(
+        SphereGeometry::new(Vec3::new(4.0, 1.0, 0.0), 1.0),
         Material::metal(Vec3::new(0.7, 0.6, 0.5), 0.0),
     ));
+
+    let scene = Scene::new(objects, SKY_ENVIRONMENT);
 
     let target = Vec3::zero();
     let camera = Camera::look_at(
@@ -71,7 +69,7 @@ pub fn main() -> opener::Result<()> {
 
     let img = parallel_render(
         &camera,
-        &Scene::new(scene, SKY_ENVIRONMENT),
+        &scene,
         &RenderConfig {
             width: 1200,
             height: 800,
