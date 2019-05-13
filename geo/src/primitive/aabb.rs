@@ -97,6 +97,28 @@ impl Aabb {
         self.expand(&aabb.max);
     }
 
+    /// Expand the bounding box so that it covers another bounding box too.
+    pub fn intersection(&self, aabb: &Aabb) -> Option<Self> {
+        let b = Aabb {
+            min: Vec3::new(
+                self.min.x.max(aabb.min.x),
+                self.min.y.max(aabb.min.y),
+                self.min.z.max(aabb.min.z),
+            ),
+            max: Vec3::new(
+                self.max.x.min(aabb.max.x),
+                self.max.y.min(aabb.max.y),
+                self.max.z.min(aabb.max.z),
+            ),
+        };
+
+        if b.min.x > b.max.x || b.min.y > b.max.y || b.min.z > b.max.z {
+            None
+        } else {
+            Some(b)
+        }
+    }
+
     /// Check if the bounding box contains the given point.
     pub fn contains(&self, pt: &Vec3) -> bool {
         self.min.x <= pt.x
@@ -217,6 +239,29 @@ mod tests {
                 min: Vec3::new(-5.0, -1.0, -3.0),
                 max: Vec3::new(1.0, 0.0, 2.0)
             }
+        );
+    }
+
+    #[test]
+    fn test_intersection() {
+        let mut aabb = Aabb::new(Vec3::zero());
+        assert_eq!(aabb.intersection(&aabb), Some(aabb.clone()));
+        aabb.expand(&Vec3::new(10.0, 20.0, 10.0));
+
+        assert_eq!(
+            aabb.intersection(&Aabb::cube(Vec3::new(5.0, 10.0, 5.0), 6.0)),
+            Some(Aabb {
+                min: Vec3::new(2.0, 7.0, 2.0),
+                max: Vec3::new(8.0, 13.0, 8.0),
+            })
+        );
+
+        assert_eq!(
+            aabb.intersection(&Aabb::cube(Vec3::new(-5.0, -5.0, -5.0), 20.0)),
+            Some(Aabb {
+                min: Vec3::zero(),
+                max: Vec3::replicate(5.0),
+            })
         );
     }
 
