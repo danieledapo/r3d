@@ -19,6 +19,15 @@ impl Aabb {
         Aabb { min: p, max: p }
     }
 
+    /// Create a bounding box that covers the cube centered at `center` with a
+    /// given `size`.
+    pub fn cube(center: Vec3, size: f64) -> Self {
+        Aabb {
+            min: center - Vec3::replicate(size / 2.0),
+            max: center + Vec3::replicate(size / 2.0),
+        }
+    }
+
     /// Build a bounding box that covers all the points in the given iterator.
     /// Returns `None` if there are no points to cover.
     pub fn from_iter(it: impl IntoIterator<Item = Vec3>) -> Option<Self> {
@@ -156,6 +165,19 @@ mod tests {
         assert_eq!(aabb.min(), &Vec3::new(-2.0, 0.0, -5.0));
         assert_eq!(aabb.max(), &Vec3::new(8.0, 8.0, 1.0));
         assert_eq!(aabb.center(), Vec3::new(3.0, 4.0, -2.0));
+    }
+
+    #[test]
+    fn test_cube() {
+        let aabb = Aabb::cube(Vec3::new(0.0, 1.0, -1.0), 2.0);
+        assert_eq!(
+            aabb,
+            Aabb {
+                min: Vec3::new(-1.0, 0.0, -2.0),
+                max: Vec3::new(1.0, 2.0, 0.0),
+            }
+        );
+        assert_eq!(aabb.dimensions(), Vec3::replicate(2.0));
     }
 
     #[test]
