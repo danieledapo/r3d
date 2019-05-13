@@ -52,9 +52,30 @@ where
     type Intersection = Hit<'s>;
 
     fn bbox(&self) -> Aabb {
-        let mut b = self.left_geom.bbox();
-        b.union(&self.right_geom.bbox());
-        b
+        match self.op {
+            CsgOp::Union => {
+                let mut b = self.left_geom.bbox();
+                b.union(&self.right_geom.bbox());
+                b
+            }
+            CsgOp::Intersection => self
+                .left_geom
+                .bbox()
+                .intersection(&self.right_geom.bbox())
+                .expect(
+                r#"please do not try to build a CsgOp::Intersection between non intersecting shapes,
+                   I know this method shouldn't blow up, but eh. The correct thing would be to avoid
+                   creating empty intersections
+                "#,
+            ),
+            CsgOp::Difference => {
+                // TODO: I'm not too sure about this. I mean, it is correct
+                // because by definition the difference between two objects
+                // cannot return a bigger object than the first, but probably we
+                // can reduce the bbox further.
+                self.left_geom.bbox()
+            }
+        }
     }
 
     fn intersection(&'s self, ray: &Ray) -> Option<Self::Intersection> {
