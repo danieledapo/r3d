@@ -7,6 +7,7 @@ pub mod material;
 pub mod plane;
 mod sampler;
 pub mod sphere;
+pub mod cube;
 
 use std::ops::Deref;
 

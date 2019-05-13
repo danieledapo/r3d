@@ -1,8 +1,9 @@
 use geo::util::opener;
-use geo::Vec3;
+use geo::{Aabb, Vec3};
 
 use buzz::camera::Camera;
 use buzz::csg::{CsgGeometry, CsgOp};
+use buzz::cube::CubeGeometry;
 use buzz::material::Material;
 use buzz::plane::PlaneGeometry;
 use buzz::sphere::SphereGeometry;
@@ -20,14 +21,8 @@ pub fn main() -> opener::Result<()> {
 
     let csg1 = SimpleObject::new(
         CsgGeometry::new(
-            SphereGeometry {
-                center: Vec3::new(-0.5, 0.0, 1.0),
-                radius: 1.0,
-            },
-            SphereGeometry {
-                center: Vec3::new(0.5, 0.0, 1.0),
-                radius: 1.0,
-            },
+            SphereGeometry::new(Vec3::new(-0.5, 0.0, 1.0), 1.0),
+            SphereGeometry::new(Vec3::new(0.5, 0.0, 1.0), 1.0),
             CsgOp::Intersection,
         ),
         Material::lambertian(Vec3::new(0.2, 1.0, 0.1)),
@@ -35,14 +30,8 @@ pub fn main() -> opener::Result<()> {
 
     let csg2 = SimpleObject::new(
         CsgGeometry::new(
-            SphereGeometry {
-                center: Vec3::new(2.0, 0.0, 1.0),
-                radius: 0.5,
-            },
-            SphereGeometry {
-                center: Vec3::new(2.5, 0.0, 1.0),
-                radius: 0.5,
-            },
+            SphereGeometry::new(Vec3::new(2.0, 0.0, 1.0), 0.5),
+            SphereGeometry::new(Vec3::new(2.5, 0.0, 1.0), 0.5),
             CsgOp::Union,
         ),
         Material::lambertian(Vec3::new(1.0, 0.2, 0.2)),
@@ -50,15 +39,18 @@ pub fn main() -> opener::Result<()> {
 
     let csg3 = SimpleObject::new(
         CsgGeometry::new(
-            SphereGeometry {
-                center: Vec3::new(-2.5, 0.5, 1.0),
-                radius: 0.8,
-            },
-            SphereGeometry {
-                center: Vec3::new(-2.0, 0.5, 1.0),
-                radius: 0.8,
-            },
+            SphereGeometry::new(Vec3::new(0.5, -5.0, 1.0), 0.8),
+            SphereGeometry::new(Vec3::new(0.0, -5.0, 1.0), 0.8),
             CsgOp::Difference,
+        ),
+        Material::lambertian(Vec3::new(0.1, 0.1, 0.9)),
+    );
+
+    let csg4 = SimpleObject::new(
+        CsgGeometry::new(
+            SphereGeometry::new(Vec3::new(-0.5, 0.0, 1.0), 1.3),
+            CubeGeometry::new(Aabb::cube(Vec3::new(-0.5, 0.0, 1.0), 2.0)),
+            CsgOp::Intersection,
         ),
         Material::lambertian(Vec3::new(0.1, 0.1, 0.9)),
     );
@@ -70,6 +62,7 @@ pub fn main() -> opener::Result<()> {
             Box::new(csg1) as Box<dyn Object>,
             Box::new(csg2) as Box<dyn Object>,
             Box::new(csg3) as Box<dyn Object>,
+            Box::new(csg4) as Box<dyn Object>,
         ],
         Environment::Color(Vec3::zero()),
     );
