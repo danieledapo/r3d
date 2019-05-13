@@ -96,10 +96,21 @@ where
                     }
                 }
             }
-            CsgOp::Intersection => self
-                .left_geom
-                .intersection(ray)
-                .and_then(|_| self.right_geom.intersection(ray)),
+            CsgOp::Intersection => {
+                let hit1 = self.left_geom.intersection(ray);
+                let hit2 = self.right_geom.intersection(ray);
+
+                match (hit1, hit2) {
+                    (Some(h1), Some(h2)) => {
+                        if h1.t > h2.t {
+                            Some(h1)
+                        } else {
+                            Some(h2)
+                        }
+                    }
+                    _ => None,
+                }
+            }
             CsgOp::Difference => self.left_geom.intersection(ray).and_then(|h| {
                 if self.right_geom.intersection(ray).is_some() {
                     None
