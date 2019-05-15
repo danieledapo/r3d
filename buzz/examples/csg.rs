@@ -21,15 +21,6 @@ pub fn main() -> opener::Result<()> {
 
     let csg1 = SimpleObject::new(
         CsgGeometry::new(
-            SphereGeometry::new(Vec3::new(-0.5, 0.0, 1.0), 1.0),
-            SphereGeometry::new(Vec3::new(0.5, 0.0, 1.0), 1.0),
-            CsgOp::Intersection,
-        ),
-        Material::lambertian(Vec3::new(0.2, 1.0, 0.1)),
-    );
-
-    let csg2 = SimpleObject::new(
-        CsgGeometry::new(
             SphereGeometry::new(Vec3::new(2.0, 0.0, 1.0), 0.5),
             SphereGeometry::new(Vec3::new(2.5, 0.0, 1.0), 0.5),
             CsgOp::Union,
@@ -37,7 +28,7 @@ pub fn main() -> opener::Result<()> {
         Material::lambertian(Vec3::new(1.0, 0.2, 0.2)),
     );
 
-    let csg3 = SimpleObject::new(
+    let csg2 = SimpleObject::new(
         CsgGeometry::new(
             SphereGeometry::new(Vec3::new(0.5, -5.0, 1.0), 0.8),
             SphereGeometry::new(Vec3::new(0.0, -5.0, 1.0), 0.8),
@@ -46,7 +37,7 @@ pub fn main() -> opener::Result<()> {
         Material::lambertian(Vec3::new(0.1, 0.1, 0.9)),
     );
 
-    let csg4 = SimpleObject::new(
+    let csg3 = SimpleObject::new(
         CsgGeometry::new(
             SphereGeometry::new(Vec3::new(-0.5, 0.0, 1.0), 1.3),
             CubeGeometry::new(Aabb::cube(Vec3::new(-0.5, 0.0, 1.0), 2.0)),
@@ -62,7 +53,6 @@ pub fn main() -> opener::Result<()> {
             Box::new(csg1) as Box<dyn Object>,
             Box::new(csg2) as Box<dyn Object>,
             Box::new(csg3) as Box<dyn Object>,
-            Box::new(csg4) as Box<dyn Object>,
         ],
         Environment::Color(Vec3::zero()),
     );
