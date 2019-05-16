@@ -4,6 +4,7 @@ use geo::{Aabb, Vec3};
 use buzz::camera::Camera;
 use buzz::csg::{CsgGeometry, CsgOp};
 use buzz::cube::CubeGeometry;
+use buzz::cylinder::CylinderGeometry;
 use buzz::material::Material;
 use buzz::plane::PlaneGeometry;
 use buzz::sphere::SphereGeometry;
@@ -39,10 +40,11 @@ pub fn main() -> opener::Result<()> {
 
     let csg3 = SimpleObject::new(
         CsgGeometry::new(
-            SphereGeometry::new(Vec3::new(-0.5, 0.0, 1.0), 1.0),
-            CubeGeometry::new(Aabb::cube(Vec3::new(-0.5, 0.0, 1.0), 1.8)),
+            SphereGeometry::new(Vec3::new(0.0, 0.0, 1.0), 1.0),
+            CubeGeometry::new(Aabb::cube(Vec3::new(0.0, 0.0, 1.0), 1.8)),
             CsgOp::Intersection,
-        ),
+        )
+        .difference(CylinderGeometry::new(0.1, (-0.5, 2.5))),
         Material::lambertian(Vec3::new(0.31, 0.46, 0.22)),
     );
 
