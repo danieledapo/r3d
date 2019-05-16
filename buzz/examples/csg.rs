@@ -15,8 +15,8 @@ pub fn main() -> opener::Result<()> {
         Material::lambertian(Vec3::new(1.0, 1.0, 1.0)),
     );
     let light = SimpleObject::new(
-        SphereGeometry::new(Vec3::new(0.0, 0.0, 5.0), 1.0),
-        Material::light(Vec3::new(0.5, 0.5, 0.5)),
+        SphereGeometry::new(Vec3::new(5.0, 5.0, 0.0), 1.0),
+        Material::light(Vec3::new(0.8, 0.8, 0.8)),
     );
 
     let csg1 = SimpleObject::new(
@@ -39,11 +39,11 @@ pub fn main() -> opener::Result<()> {
 
     let csg3 = SimpleObject::new(
         CsgGeometry::new(
-            SphereGeometry::new(Vec3::new(-0.5, 0.0, 1.0), 1.3),
-            CubeGeometry::new(Aabb::cube(Vec3::new(-0.5, 0.0, 1.0), 2.0)),
+            SphereGeometry::new(Vec3::new(-0.5, 0.0, 1.0), 1.0),
+            CubeGeometry::new(Aabb::cube(Vec3::new(-0.5, 0.0, 1.0), 1.8)),
             CsgOp::Intersection,
         ),
-        Material::lambertian(Vec3::new(0.1, 0.1, 0.9)),
+        Material::lambertian(Vec3::new(0.31, 0.46, 0.22)),
     );
 
     let scene = Scene::new(
