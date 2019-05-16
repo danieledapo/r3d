@@ -2,12 +2,14 @@
 
 pub mod camera;
 pub mod csg;
+pub mod cube;
+pub mod cylinder;
 pub mod facet;
 pub mod material;
 pub mod plane;
-mod sampler;
 pub mod sphere;
-pub mod cube;
+
+mod sampler;
 
 use std::ops::Deref;
 
