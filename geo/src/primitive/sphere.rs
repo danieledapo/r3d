@@ -88,6 +88,15 @@ mod tests {
             ),
             None
         );
+
+        assert_eq!(
+            ray_intersection(c, r, &Ray::new(c, Vec3::new(0.0, 0.0, -1.0))),
+            Some(1.0)
+        );
+        assert_eq!(
+            ray_intersection(c, r, &Ray::new(c, Vec3::new(0.0, 0.0, 1.0))),
+            Some(1.0)
+        );
     }
 
     #[test]
