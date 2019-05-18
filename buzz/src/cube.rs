@@ -17,24 +17,45 @@ impl<'s> Shape<'s> for CubeGeometry {
     type Intersection = Hit<'s>;
 
     fn intersection(&'s self, ray: &Ray) -> Option<Self::Intersection> {
-        let n = (*self.bbox.min() - ray.origin) / ray.dir;
-        let f = (*self.bbox.max() - ray.origin) / ray.dir;
+        let min = *self.bbox().min();
+        let max = *self.bbox().max();
 
-        let ab = Aabb::new(n).expanded(&f);
-        let n = ab.min();
-        let f = ab.max();
-
-        let t0 = n.x.max(n.y).max(n.z);
-        let t1 = f.x.min(f.y).min(f.z);
-
-        if t0 > 0.0 && t0 < t1 {
-            Some(Hit {
-                t: t0,
-                surface: self,
-            })
-        } else {
-            None
+        let mut tmin = (min.x - ray.origin.x) / ray.dir.x;
+        let mut tmax = (max.x - ray.origin.x) / ray.dir.x;
+        if tmin > tmax {
+            std::mem::swap(&mut tmin, &mut tmax);
         }
+
+        let mut tymin = (min.y - ray.origin.y) / ray.dir.y;
+        let mut tymax = (max.y - ray.origin.y) / ray.dir.y;
+        if tymin > tymax {
+            std::mem::swap(&mut tymin, &mut tymax);
+        }
+
+        if tmin > tymax || tymin > tmax {
+            return None;
+        }
+
+        tmin = tmin.max(tymin);
+        tmax = tmax.min(tymax);
+
+        let mut tzmin = (min.z - ray.origin.z) / ray.dir.z;
+        let mut tzmax = (max.z - ray.origin.z) / ray.dir.z;
+        if tzmin > tzmax {
+            std::mem::swap(&mut tzmin, &mut tzmax);
+        }
+
+        if tmin > tzmax || tzmin > tmax {
+            return None;
+        }
+
+        tmin = tmin.max(tzmin);
+        tmax = tmax.min(tzmax);
+
+        Some(Hit {
+            t: tmin.min(tmax),
+            surface: self,
+        })
     }
 
     fn bbox(&self) -> Aabb {
