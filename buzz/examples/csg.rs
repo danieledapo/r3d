@@ -15,9 +15,13 @@ pub fn main() -> opener::Result<()> {
         PlaneGeometry::new(Vec3::zero(), Vec3::new(0.0, 0.0, 1.0)),
         Material::lambertian(Vec3::new(1.0, 1.0, 1.0)),
     );
+    // let light = SimpleObject::new(
+    //     SphereGeometry::new(Vec3::new(3.0, 5.0, 0.0), 1.0),
+    //     Material::light(Vec3::new(0.5, 0.5, 0.5)),
+    // );
     let light = SimpleObject::new(
-        SphereGeometry::new(Vec3::new(5.0, 5.0, 0.0), 1.0),
-        Material::light(Vec3::new(0.8, 0.8, 0.8)),
+        SphereGeometry::new(Vec3::new(0.0, 5.0, 3.0), 1.0),
+        Material::light(Vec3::new(0.3, 0.3, 0.3)),
     );
 
     let csg1 = SimpleObject::new(
@@ -31,8 +35,9 @@ pub fn main() -> opener::Result<()> {
 
     let csg2 = SimpleObject::new(
         CsgGeometry::new(
-            SphereGeometry::new(Vec3::new(0.5, -5.0, 1.0), 0.8),
-            SphereGeometry::new(Vec3::new(0.0, -5.0, 1.0), 0.8),
+            // CubeGeometry::new(Aabb::cube(Vec3::new(0.5, -5.0, 1.0), 1.8)),
+            SphereGeometry::new(Vec3::new(0.5, -5.0, 1.0), 1.5),
+            SphereGeometry::new(Vec3::new(0.5, -4.0, 1.0), 0.8),
             CsgOp::Difference,
         ),
         Material::lambertian(Vec3::new(0.1, 0.1, 0.9)),
@@ -40,11 +45,11 @@ pub fn main() -> opener::Result<()> {
 
     let csg3 = SimpleObject::new(
         CsgGeometry::new(
-            SphereGeometry::new(Vec3::new(0.0, 0.0, 1.0), 1.0),
             CubeGeometry::new(Aabb::cube(Vec3::new(0.0, 0.0, 1.0), 1.8)),
+            SphereGeometry::new(Vec3::new(0.0, 0.0, 1.0), 1.0),
             CsgOp::Intersection,
         )
-        .difference(CylinderGeometry::new(0.1, (-0.5, 2.5))),
+        .difference(CylinderGeometry::new(0.2, (-0.5, 2.5))),
         Material::lambertian(Vec3::new(0.31, 0.46, 0.22)),
     );
 
@@ -75,10 +80,10 @@ pub fn main() -> opener::Result<()> {
         // that throws it off.
         unsafe { std::mem::transmute::<_, &Scene<Box<dyn Object>>>(&scene) },
         &RenderConfig {
-            width: 960,
-            height: 540,
+            width: 1920,
+            height: 1080,
             max_bounces: 20,
-            samples: 20,
+            samples: 50,
             direct_lighting: true,
             soft_shadows: true,
         },
