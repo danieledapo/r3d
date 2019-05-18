@@ -79,45 +79,56 @@ where
     }
 
     fn intersection(&'s self, ray: &Ray) -> Option<Self::Intersection> {
+        let hit1 = self.left_geom.intersection(ray);
+        let hit2 = self.right_geom.intersection(ray);
+
         match self.op {
-            CsgOp::Union => {
-                let hit1 = self.left_geom.intersection(ray);
-                let hit2 = self.right_geom.intersection(ray);
-
-                match (hit1, hit2) {
-                    (None, None) => None,
-                    (None, Some(h)) | (Some(h), None) => Some(h),
-                    (Some(h1), Some(h2)) => {
-                        if h1.t < h2.t {
-                            Some(h1)
-                        } else {
-                            Some(h2)
-                        }
+            CsgOp::Union => match (hit1, hit2) {
+                (None, None) => None,
+                (None, Some(h)) | (Some(h), None) => Some(h),
+                (Some(h1), Some(h2)) => {
+                    if h1.t < h2.t {
+                        Some(h1)
+                    } else {
+                        Some(h2)
                     }
                 }
-            }
-            CsgOp::Intersection => {
-                let hit1 = self.left_geom.intersection(ray);
-                let hit2 = self.right_geom.intersection(ray);
-
-                match (hit1, hit2) {
-                    (Some(h1), Some(h2)) => {
-                        if h1.t > h2.t {
-                            Some(h1)
-                        } else {
-                            Some(h2)
-                        }
+            },
+            CsgOp::Intersection => match (hit1, hit2) {
+                (Some(h1), Some(h2)) => {
+                    if h1.t > h2.t {
+                        Some(h1)
+                    } else {
+                        Some(h2)
                     }
-                    _ => None,
                 }
-            }
-            CsgOp::Difference => self.left_geom.intersection(ray).and_then(|h| {
-                if self.right_geom.intersection(ray).is_some() {
-                    None
-                } else {
-                    Some(h)
+                _ => None,
+            },
+            CsgOp::Difference => match (hit1, hit2) {
+                (Some(h1), Some(h2)) => {
+                    if h1.t < h2.t {
+                        return Some(h1);
+                    }
+
+                    let inside_ray = Ray::new(ray.point_at(h1.t + 0.01), ray.dir);
+
+                    match self.right_geom.intersection(&inside_ray) {
+                        None => Some(h1),
+                        Some(h3) => match self.left_geom.intersection(&inside_ray) {
+                            Some(h) => {
+                                if h.t < h3.t {
+                                    Some(h)
+                                } else {
+                                    Some(h3)
+                                }
+                            }
+                            None => Some(h1),
+                        },
+                    }
                 }
-            }),
+                (Some(h), None) => Some(h),
+                (None, None) | (None, Some(_)) => None,
+            },
         }
     }
 }
