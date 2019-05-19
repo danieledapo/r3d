@@ -1,0 +1,60 @@
+use geo::mat4::{Mat4, Transform};
+use geo::Aabb;
+
+use crate::{Hit, Ray, Shape, Surface, Vec3};
+
+#[derive(Debug, PartialEq, Clone)]
+pub struct TransformedGeometry<S> {
+    shape: S,
+    trans: Mat4,
+    inverse_trans: Mat4,
+}
+
+impl<S> TransformedGeometry<S> {
+    pub fn new(shape: S, trans: Mat4) -> Self {
+        let inverse_trans = trans.inverse();
+
+        TransformedGeometry {
+            shape,
+            trans,
+            inverse_trans,
+        }
+    }
+}
+
+impl<'s, S> Shape<'s> for TransformedGeometry<S>
+where
+    S: Shape<'s, Intersection = Hit<'s>> + Surface,
+{
+    type Intersection = Hit<'s>;
+
+    fn intersection(&'s self, ray: &Ray) -> Option<Self::Intersection> {
+        let transformed_ray = ray.transform(&self.inverse_trans);
+        let hit = self.shape.intersection(&transformed_ray)?;
+
+        let p = transformed_ray.point_at(hit.t);
+        let n = self.shape.normal_at(p);
+
+        let intersection = p.transform(&self.trans);
+        let tn = self.inverse_trans.transform_normal(&n);
+
+        Some(Hit {
+            t: (p - ray.origin).norm(),
+            surface: self,
+            point_and_normal: Some((intersection, tn)),
+        })
+    }
+
+    fn bbox(&self) -> Aabb {
+        self.shape.bbox().transform(&self.trans)
+    }
+}
+
+impl<S> Surface for TransformedGeometry<S>
+where
+    S: Surface,
+{
+    fn normal_at(&self, _p: Vec3) -> Vec3 {
+        unreachable!()
+    }
+}

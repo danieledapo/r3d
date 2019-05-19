@@ -1,3 +1,4 @@
+use geo::mat4::{Mat4, Transform};
 use geo::util::opener;
 use geo::{Aabb, Vec3};
 
@@ -8,6 +9,7 @@ use buzz::cylinder::CylinderGeometry;
 use buzz::material::Material;
 use buzz::plane::PlaneGeometry;
 use buzz::sphere::SphereGeometry;
+use buzz::transformed::TransformedGeometry;
 use buzz::{parallel_render, Environment, Object, RenderConfig, Scene, SimpleObject};
 
 pub fn main() -> opener::Result<()> {
@@ -49,7 +51,11 @@ pub fn main() -> opener::Result<()> {
             SphereGeometry::new(Vec3::new(0.0, 0.0, 1.0), 1.0),
             CsgOp::Intersection,
         )
-        .difference(CylinderGeometry::new(0.2, (-0.5, 2.5))),
+        .difference(TransformedGeometry::new(
+            CylinderGeometry::new(0.2, (-0.5, 2.5)),
+            Mat4::rotate(Vec3::new(0.0, -1.0, 0.0), 90.0_f64.to_radians())
+                .transform(&Mat4::translate(Vec3::new(-1.0, 0.0, -1.0))),
+        )),
         Material::lambertian(Vec3::new(0.31, 0.46, 0.22)),
     );
 
@@ -57,9 +63,24 @@ pub fn main() -> opener::Result<()> {
         vec![
             Box::new(plane) as Box<dyn Object>,
             Box::new(light) as Box<dyn Object>,
-            Box::new(csg1) as Box<dyn Object>,
-            Box::new(csg2) as Box<dyn Object>,
+            // Box::new(csg1) as Box<dyn Object>,
+            // Box::new(csg2) as Box<dyn Object>,
             Box::new(csg3) as Box<dyn Object>,
+            //
+            //
+            // mat4 tests
+            // Box::new(SimpleObject::new(
+            //     TransformedGeometry::new(CylinderGeometry::new(0.2, (-0.5, 2.5)), Mat4::identity()),
+            //     Material::lambertian(Vec3::new(0.31, 0.46, 0.22)),
+            // )),
+            // Box::new(SimpleObject::new(
+            //     TransformedGeometry::new(
+            //         CylinderGeometry::new(0.2, (-0.5, 2.5)),
+            //         Mat4::rotate(Vec3::new(0.0, -1.0, 0.0), 90.0_f64.to_radians())
+            //             .transform(&Mat4::translate(Vec3::new(-1.0, 0.0, -1.0))),
+            //     ),
+            //     Material::lambertian(Vec3::new(0.31, 0.46, 0.22)),
+            // )),
         ],
         Environment::Color(Vec3::zero()),
     );
@@ -80,10 +101,10 @@ pub fn main() -> opener::Result<()> {
         // that throws it off.
         unsafe { std::mem::transmute::<_, &Scene<Box<dyn Object>>>(&scene) },
         &RenderConfig {
-            width: 1920,
-            height: 1080,
+            width: 1920 / 2,
+            height: 1080 / 2,
             max_bounces: 20,
-            samples: 50,
+            samples: 50 / 2,
             direct_lighting: true,
             soft_shadows: true,
         },

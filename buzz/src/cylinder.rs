@@ -49,6 +49,7 @@ impl<'s> Shape<'s> for CylinderGeometry {
             return Some(Hit {
                 surface: self,
                 t: t0,
+                point_and_normal: None,
             });
         }
 
@@ -57,6 +58,7 @@ impl<'s> Shape<'s> for CylinderGeometry {
             return Some(Hit {
                 surface: self,
                 t: t1,
+                point_and_normal: None,
             });
         }
 
