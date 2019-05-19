@@ -1,4 +1,5 @@
 pub mod aabb;
+pub mod mat4;
 pub mod plane;
 pub mod ray;
 pub mod sphere;

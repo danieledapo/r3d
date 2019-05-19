@@ -6,4 +6,4 @@ pub mod util;
 pub use primitive::aabb::Aabb;
 pub use primitive::vec3::Vec3;
 pub use primitive::Axis;
-pub use primitive::{plane, ray, sphere, triangle, vec3};
+pub use primitive::{mat4, plane, ray, sphere, triangle, vec3};

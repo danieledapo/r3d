@@ -1,6 +1,6 @@
+use crate::mat4::{Mat4, Transform};
 use crate::ray::Ray;
-use crate::Axis;
-use crate::Vec3;
+use crate::{Axis, Vec3};
 
 /// An [Axis aligned bounding box][0] useful for approximating the boundary of
 /// shapes.
@@ -163,6 +163,32 @@ impl Aabb {
         let r = self.min().dist(&c);
 
         (c, r)
+    }
+}
+
+impl Transform for Aabb {
+    fn transform(&self, m: &Mat4) -> Self {
+        // http://dev.theomader.com/transform-bounding-boxes/
+        let r = Vec3::new(m.data[0][0], m.data[1][0], m.data[2][0]);
+        let u = Vec3::new(m.data[0][1], m.data[1][1], m.data[2][1]);
+        let b = Vec3::new(m.data[0][2], m.data[1][2], m.data[2][2]);
+        let t = Vec3::new(m.data[0][3], m.data[1][3], m.data[2][3]);
+
+        let xa = r * self.min.x;
+        let xb = r * self.max.x;
+        let ya = u * self.min.y;
+        let yb = u * self.max.y;
+        let za = b * self.min.z;
+        let zb = b * self.max.z;
+
+        let Aabb { min: xa, max: xb } = Aabb::new(xa).expanded(&xb);
+        let Aabb { min: ya, max: yb } = Aabb::new(ya).expanded(&yb);
+        let Aabb { min: za, max: zb } = Aabb::new(za).expanded(&zb);
+
+        Aabb {
+            min: xa + ya + za + t,
+            max: xb + yb + zb + t,
+        }
     }
 }
 
