@@ -1,3 +1,4 @@
+use crate::mat4::{Mat4, Transform};
 use crate::{Axis, Vec3};
 
 /// A `Ray` is a line starting from a given point and going towards a given
@@ -72,6 +73,12 @@ impl Ray {
         } else {
             None
         }
+    }
+}
+
+impl Transform for Ray {
+    fn transform(&self, mat: &Mat4) -> Self {
+        Ray::new(self.origin.transform(mat), mat.transform_normal(&self.dir))
     }
 }
 
