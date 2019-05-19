@@ -8,6 +8,7 @@ pub mod facet;
 pub mod material;
 pub mod plane;
 pub mod sphere;
+pub mod transformed;
 
 mod sampler;
 
@@ -33,6 +34,8 @@ pub struct Hit<'o> {
 
     /// the `Surface` the `Ray` hit
     pub surface: &'o Surface,
+
+    pub point_and_normal: Option<(Vec3, Vec3)>,
 }
 
 /// An `Object` that can be rendered.

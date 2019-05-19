@@ -80,7 +80,11 @@ impl<'a> Shape<'a> for FacetGeometry {
             ray,
         )?;
 
-        Some(Hit { t, surface: self })
+        Some(Hit {
+            t,
+            surface: self,
+            point_and_normal: None,
+        })
     }
 }
 

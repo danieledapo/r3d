@@ -31,7 +31,11 @@ impl<'s> Shape<'s> for SphereGeometry {
     fn intersection(&'s self, ray: &Ray) -> Option<Self::Intersection> {
         let t = sphere::ray_intersection(self.center, self.radius, ray)?;
 
-        Some(Hit { t, surface: self })
+        Some(Hit {
+            t,
+            surface: self,
+            point_and_normal: None,
+        })
     }
 }
 

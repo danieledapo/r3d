@@ -18,8 +18,12 @@ pub fn sample<'s, O: Object<'s> + 's>(
     match scene.intersection(ray) {
         Some(_) if depth >= config.max_bounces => Vec3::zero(),
         Some((s, hit)) => {
-            let intersection = ray.point_at(hit.t());
-            let n = hit.surface.normal_at(intersection);
+            let (intersection, n) = hit.point_and_normal.unwrap_or_else(|| {
+                let intersection = ray.point_at(hit.t());
+                let n = hit.surface.normal_at(intersection);
+
+                (intersection, n)
+            });
 
             sample_material(
                 scene,

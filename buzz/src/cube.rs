@@ -55,6 +55,7 @@ impl<'s> Shape<'s> for CubeGeometry {
         Some(Hit {
             t: tmin.min(tmax),
             surface: self,
+            point_and_normal: None,
         })
     }
 
