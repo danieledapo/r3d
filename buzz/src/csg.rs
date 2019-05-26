@@ -106,23 +106,29 @@ where
             },
             CsgOp::Difference => match (hit1, hit2) {
                 (Some(h1), Some(h2)) => {
+                    // TODO: this is probably wrong for complex shapes...
+
                     if h1.t < h2.t {
                         return Some(h1);
                     }
 
-                    let inside_ray = Ray::new(ray.point_at(h1.t + 0.01), ray.dir);
-
-                    match self.right_geom.intersection(&inside_ray) {
-                        None => Some(h1),
-                        Some(h3) => match self.left_geom.intersection(&inside_ray) {
+                    match self
+                        .right_geom
+                        .intersection(&Ray::new(ray.point_at(h2.t + 1e-6), ray.dir))
+                    {
+                        None => None,
+                        Some(h3) => match self
+                            .left_geom
+                            .intersection(&Ray::new(ray.point_at(h1.t + 1e-6), ray.dir))
+                        {
+                            None => None,
                             Some(h) => {
                                 if h.t < h3.t {
-                                    Some(h)
+                                    None
                                 } else {
                                     Some(h3)
                                 }
                             }
-                            None => Some(h1),
                         },
                     }
                 }
