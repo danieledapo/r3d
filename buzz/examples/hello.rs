@@ -46,10 +46,10 @@ pub fn main() -> opener::Result<()> {
         // that throws it off.
         unsafe { std::mem::transmute::<_, &Scene<Box<dyn Object>>>(&scene) },
         &RenderConfig {
-            width: 960,
-            height: 540,
+            width: 1920,
+            height: 1080,
             max_bounces: 20,
-            samples: 100,
+            samples: 50,
             direct_lighting: true,
             soft_shadows: true,
         },
