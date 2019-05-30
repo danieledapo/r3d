@@ -1,9 +1,9 @@
 use geo::mat4::{Mat4, Transform};
 use geo::util::opener;
-use geo::Vec3;
+use geo::{Aabb, Vec3};
 
 use buzz::camera::Camera;
-use buzz::csg::{CsgGeometry, CsgOp};
+use buzz::cube::CubeGeometry;
 use buzz::cylinder::CylinderGeometry;
 use buzz::material::Material;
 use buzz::plane::PlaneGeometry;
@@ -21,29 +21,30 @@ pub fn main() -> opener::Result<()> {
         Material::light(Vec3::new(0.5, 0.5, 0.5)),
     );
 
-    let cylinder = CylinderGeometry::new(0.25, (0.0, 2.5));
-
-    let cylinders_geo = CsgGeometry::new(
-        cylinder.clone(),
+    let cylinder1 = SimpleObject::new(
+        CylinderGeometry::new(0.25, (0.5, 2.5)),
+        Material::lambertian(Vec3::new(0.31, 0.46, 0.22)),
+    );
+    let cylinder2 = SimpleObject::new(
         TransformedGeometry::new(
-            cylinder.clone(),
+            CylinderGeometry::new(0.25, (0.0, 2.5)),
             Mat4::rotate(Vec3::new(0.0, 1.0, 0.0), 90.0_f64.to_radians())
                 .transform(&Mat4::translate(Vec3::new(1.0, 0.0, -1.25))),
         ),
-        CsgOp::Union,
-    )
-    .difference(SphereGeometry::new(Vec3::new(0.0, 0.0, 1.0), 0.5));
-
-    let cylinders = SimpleObject::new(
-        cylinders_geo,
         Material::lambertian(Vec3::new(0.31, 0.46, 0.22)),
+    );
+    let cube = SimpleObject::new(
+        CubeGeometry::new(Aabb::cube(Vec3::zero(), 1.0)),
+        Material::lambertian(Vec3::new(0.88, 0.1, 0.1)),
     );
 
     let scene = Scene::new(
         vec![
             Box::new(plane) as Box<dyn Object>,
             Box::new(light) as Box<dyn Object>,
-            Box::new(cylinders) as Box<dyn Object>,
+            Box::new(cylinder1) as Box<dyn Object>,
+            Box::new(cylinder2) as Box<dyn Object>,
+            Box::new(cube) as Box<dyn Object>,
         ],
         Environment::Color(Vec3::zero()),
     );
