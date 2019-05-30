@@ -1,10 +1,9 @@
+use geo::mat4::Mat4;
 use geo::util::opener;
-use geo::{Aabb, Vec3};
+use geo::Vec3;
 
 use buzz::camera::Camera;
-use buzz::csg::{CsgGeometry, CsgOp};
-use buzz::cube::CubeGeometry;
-use buzz::cylinder::CylinderGeometry;
+use buzz::csg::{Cube, Cylinder, SdfGeometry, SignedDistanceFunction, Sphere};
 use buzz::material::Material;
 use buzz::plane::PlaneGeometry;
 use buzz::sphere::SphereGeometry;
@@ -12,42 +11,59 @@ use buzz::{parallel_render, Environment, Object, RenderConfig, Scene, SimpleObje
 
 pub fn main() -> opener::Result<()> {
     let plane = SimpleObject::new(
-        PlaneGeometry::new(Vec3::zero(), Vec3::new(0.0, 0.0, 1.0)),
+        PlaneGeometry::new(Vec3::new(0.0, 0.0, -0.5), Vec3::new(0.0, 0.0, 1.0)),
         Material::lambertian(Vec3::new(1.0, 1.0, 1.0)),
     );
-    let _light = SimpleObject::new(
-        SphereGeometry::new(Vec3::new(3.0, 5.0, 0.0), 1.0),
-        Material::light(Vec3::new(0.5, 0.5, 0.5)),
+
+    let light1 = SimpleObject::new(
+        SphereGeometry::new(Vec3::new(0.0, -1.0, 0.25).normalized() * 4.0, 0.25),
+        Material::light(Vec3::new(0.3, 0.3, 0.3)),
     );
-    let light = SimpleObject::new(
-        SphereGeometry::new(Vec3::new(0.0, 5.0, 3.0), 1.0),
+    let light2 = SimpleObject::new(
+        SphereGeometry::new(Vec3::new(-1.0, 1.0, 0.0).normalized() * 4.0, 0.25),
         Material::light(Vec3::new(0.3, 0.3, 0.3)),
     );
 
+    let rounded_cube = Sphere::new(0.65).intersection(Cube::new(Vec3::replicate(1.0)));
+    let cylinder = Cylinder::new(0.25, 1.1);
+    let cylinder_a = cylinder.clone().transformed(Mat4::rotate(
+        Vec3::new(1.0, 0.0, 0.0),
+        90.0_f64.to_radians(),
+    ));
+    let cylinder_b = cylinder.clone().transformed(Mat4::rotate(
+        Vec3::new(0.0, 0.0, 1.0),
+        90.0_f64.to_radians(),
+    ));
+
     let csg = SimpleObject::new(
-        CsgGeometry::new(
-            CubeGeometry::new(Aabb::cube(Vec3::new(0.0, 0.0, 1.0), 1.8)),
-            SphereGeometry::new(Vec3::new(0.0, 0.0, 1.0), 1.0),
-            CsgOp::Intersection,
-        )
-        .difference(CylinderGeometry::new(0.2, (-20.0, 20.0))),
+        SdfGeometry::new(
+            rounded_cube
+                .difference(cylinder)
+                .difference(cylinder_a)
+                .difference(cylinder_b)
+                .transformed(Mat4::rotate(
+                    Vec3::new(0.0, 0.0, 1.0),
+                    30.0_f64.to_radians(),
+                )),
+        ),
         Material::lambertian(Vec3::new(0.31, 0.46, 0.22)),
     );
 
     let scene = Scene::new(
         vec![
+            Box::new(light1) as Box<dyn Object>,
+            Box::new(light2) as Box<dyn Object>,
             Box::new(plane) as Box<dyn Object>,
-            Box::new(light) as Box<dyn Object>,
             Box::new(csg) as Box<dyn Object>,
         ],
         Environment::Color(Vec3::zero()),
     );
 
     let camera = Camera::look_at(
-        Vec3::new(3.0, 3.0, 3.0),
-        Vec3::new(0.0, 0.0, 0.5),
+        Vec3::new(-3.0, 0.0, 1.0),
+        Vec3::zero(),
         Vec3::new(0.0, 0.0, 1.0),
-        50.0,
+        35.0,
     );
 
     let img = parallel_render(
