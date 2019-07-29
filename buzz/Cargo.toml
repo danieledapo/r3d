@@ -5,10 +5,10 @@ authors = ["Daniele D'Orazio <d.dorazio96@gmail.com>"]
 edition = "2018"
 
 [dependencies]
-image = "0.21"
-rand = "0.6"
-rayon = "1.0"
+image = "0.22"
+rand = "0.7"
+rayon = "1.1"
 geo = { path = "../geo"}
 
 [dev-dependencies]
-rand_xorshift = "0.1.1"
+rand_xorshift = "0.2"
