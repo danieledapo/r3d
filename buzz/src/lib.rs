@@ -170,7 +170,7 @@ pub fn parallel_render<'s, O: Object<'s> + 's>(
             let x = i % config.width;
             let y = i / config.width;
 
-            let rgb = render_pixel(
+            let Rgb([r, g, b]) = render_pixel(
                 (x as u32, y as u32),
                 camera,
                 scene,
@@ -179,9 +179,9 @@ pub fn parallel_render<'s, O: Object<'s> + 's>(
                 config,
             );
 
-            pix[0] = rgb.data[0];
-            pix[1] = rgb.data[1];
-            pix[2] = rgb.data[2];
+            pix[0] = r;
+            pix[1] = g;
+            pix[2] = b;
         });
 
     img
@@ -209,13 +209,11 @@ pub fn render_pixel<'s, O: Object<'s> + 's>(
     c.y = c.y.sqrt();
     c.z = c.z.sqrt();
 
-    Rgb {
-        data: [
-            (c.x * 255.0) as u8,
-            (c.y * 255.0) as u8,
-            (c.z * 255.0) as u8,
-        ],
-    }
+    Rgb([
+        (c.x * 255.0) as u8,
+        (c.y * 255.0) as u8,
+        (c.z * 255.0) as u8,
+    ])
 }
 
 impl<'o> Intersection<'o> for Hit<'o> {
