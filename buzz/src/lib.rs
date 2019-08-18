@@ -33,7 +33,7 @@ pub struct Hit<'o> {
     pub t: f64,
 
     /// the `Surface` the `Ray` hit
-    pub surface: &'o Surface,
+    pub surface: &'o dyn Surface,
 
     pub point_and_normal: Option<(Vec3, Vec3)>,
 }
