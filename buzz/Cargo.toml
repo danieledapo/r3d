@@ -7,7 +7,7 @@ edition = "2018"
 [dependencies]
 image = "0.22"
 rand = "0.7"
-rayon = "1.1"
+rayon = "1.2"
 geo = { path = "../geo"}
 
 [dev-dependencies]
