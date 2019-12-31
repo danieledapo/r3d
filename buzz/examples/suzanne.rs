@@ -69,7 +69,7 @@ pub fn main() -> opener::Result<()> {
         &RenderConfig {
             width: 1920,
             height: 1080,
-            max_bounces: 50,
+            max_bounces: 5,
             samples: 25,
             direct_lighting: true,
             soft_shadows: true,

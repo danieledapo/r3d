@@ -40,7 +40,7 @@ pub fn main() -> opener::Result<()> {
             width: 400,
             height: 200,
             samples: 10,
-            max_bounces: 50,
+            max_bounces: 5,
             direct_lighting: false,
             soft_shadows: false,
         },
