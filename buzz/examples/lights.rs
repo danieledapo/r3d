@@ -38,8 +38,8 @@ fn main() -> opener::Result<()> {
         &RenderConfig {
             width: 400,
             height: 200,
-            samples: 100,
-            max_bounces: 50,
+            samples: 10,
+            max_bounces: 5,
             direct_lighting: true,
             soft_shadows: true,
         },
