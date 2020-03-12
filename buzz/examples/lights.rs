@@ -44,7 +44,7 @@ fn main() -> opener::Result<()> {
             soft_shadows: true,
         },
     );
-    img.save("lights.png")?;
+    img.save("lights.png").expect("cannot save output image");
 
     opener::open("lights.png")
 }

@@ -36,7 +36,7 @@ pub fn main() -> opener::Result<()> {
         .into_iter()
         .map(|t| {
             let t = t?;
-            Ok(Box::new(Facet::new(t, &MESH_MATERIAL, true)) as Box<dyn Object>)
+            Ok(Box::new(Facet::new(t.positions, &MESH_MATERIAL, true)) as Box<dyn Object>)
         })
         .collect::<io::Result<Vec<_>>>()?;
 
@@ -76,7 +76,7 @@ pub fn main() -> opener::Result<()> {
         },
     );
 
-    img.save("suzanne.png")?;
+    img.save("suzanne.png").expect("cannot save output image");
 
     opener::open("suzanne.png")
 }

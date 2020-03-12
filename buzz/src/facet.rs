@@ -1,4 +1,3 @@
-use geo::mesh::stl;
 use geo::ray::Ray;
 use geo::spatial_index::Shape;
 use geo::triangle;
@@ -21,20 +20,20 @@ pub struct FacetGeometry {
 }
 
 impl<'a> Facet<'a> {
-    pub fn new(tri: stl::StlTriangle, material: &'a Material, flat_shading: bool) -> Self {
+    pub fn new(vertices: [Vec3; 3], material: &'a Material, flat_shading: bool) -> Self {
         Facet {
-            geom: FacetGeometry::new(tri, flat_shading),
+            geom: FacetGeometry::new(vertices, flat_shading),
             material,
         }
     }
 }
 
 impl FacetGeometry {
-    pub fn new(tri: stl::StlTriangle, flat_shading: bool) -> Self {
-        let normal = geo::triangle::normal(&tri.positions[0], &tri.positions[1], &tri.positions[2]);
+    pub fn new(positions: [Vec3; 3], flat_shading: bool) -> Self {
+        let normal = geo::triangle::normal(&positions[0], &positions[1], &positions[2]);
 
         FacetGeometry {
-            positions: tri.positions,
+            positions,
             flat_shading,
             normal,
         }

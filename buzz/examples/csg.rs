@@ -83,7 +83,7 @@ pub fn main() -> opener::Result<()> {
             soft_shadows: true,
         },
     );
-    img.save("csg.png")?;
+    img.save("csg.png").expect("cannot save output image");
 
     opener::open("csg.png")
 }
