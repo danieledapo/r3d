@@ -81,7 +81,7 @@ pub fn main() -> opener::Result<()> {
             soft_shadows: false,
         },
     );
-    img.save("particles.png")?;
+    img.save("particles.png").expect("cannot save output image");
 
     opener::open("particles.png")
 }
