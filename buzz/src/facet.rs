@@ -10,6 +10,7 @@ use crate::{Hit, Object, Surface};
 pub struct Facet<'a> {
     geom: FacetGeometry,
     material: &'a Material,
+    surface_id: usize,
 }
 
 #[derive(Debug, PartialEq, Clone)]
@@ -24,6 +25,7 @@ impl<'a> Facet<'a> {
         Facet {
             geom: FacetGeometry::new(vertices, flat_shading),
             material,
+            surface_id: 0,
         }
     }
 }
@@ -40,21 +42,27 @@ impl FacetGeometry {
     }
 }
 
-impl<'a> Object<'a> for Facet<'a> {
+impl Object for Facet<'_> {
     fn material(&self) -> &Material {
         &self.material
     }
+
+    fn set_surface_id(&mut self, sfid: usize) {
+        self.surface_id = sfid;
+    }
 }
 
-impl<'a> Shape<'a> for Facet<'a> {
-    type Intersection = Hit<'a>;
+impl Shape for Facet<'_> {
+    type Intersection = Hit;
 
     fn bbox(&self) -> Aabb {
         self.geom.bbox()
     }
 
-    fn intersection(&'a self, ray: &Ray) -> Option<Self::Intersection> {
-        self.geom.intersection(ray)
+    fn intersection(&self, ray: &Ray) -> Option<Self::Intersection> {
+        let mut h = self.geom.intersection(ray)?;
+        h.surface_id = self.surface_id;
+        Some(h)
     }
 }
 
@@ -64,8 +72,8 @@ impl<'a> Surface for Facet<'a> {
     }
 }
 
-impl<'a> Shape<'a> for FacetGeometry {
-    type Intersection = Hit<'a>;
+impl Shape for FacetGeometry {
+    type Intersection = Hit;
 
     fn bbox(&self) -> Aabb {
         Aabb::new(self.positions[0])
@@ -73,21 +81,17 @@ impl<'a> Shape<'a> for FacetGeometry {
             .expanded(&self.positions[2])
     }
 
-    fn intersection(&'a self, ray: &Ray) -> Option<Self::Intersection> {
+    fn intersection(&self, ray: &Ray) -> Option<Self::Intersection> {
         let t = triangle::ray_intersection(
             (self.positions[0], self.positions[1], self.positions[2]),
             ray,
         )?;
 
-        Some(Hit {
-            t,
-            surface: self,
-            point_and_normal: None,
-        })
+        Some(Hit::new(t, None))
     }
 }
 
-impl<'a> Surface for FacetGeometry {
+impl Surface for FacetGeometry {
     fn normal_at(&self, pt: Vec3) -> Vec3 {
         if self.flat_shading {
             self.normal

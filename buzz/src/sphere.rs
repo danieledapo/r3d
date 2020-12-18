@@ -17,8 +17,8 @@ impl SphereGeometry {
     }
 }
 
-impl<'s> Shape<'s> for SphereGeometry {
-    type Intersection = Hit<'s>;
+impl Shape for SphereGeometry {
+    type Intersection = Hit;
 
     fn bbox(&self) -> Aabb {
         sphere::bounding_box(self.center, self.radius)
@@ -28,14 +28,9 @@ impl<'s> Shape<'s> for SphereGeometry {
         (self.center, self.radius)
     }
 
-    fn intersection(&'s self, ray: &Ray) -> Option<Self::Intersection> {
+    fn intersection(&self, ray: &Ray) -> Option<Self::Intersection> {
         let t = sphere::ray_intersection(self.center, self.radius, ray)?;
-
-        Some(Hit {
-            t,
-            surface: self,
-            point_and_normal: None,
-        })
+        Some(Hit::new(t, None))
     }
 }
 

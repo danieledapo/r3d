@@ -12,7 +12,10 @@ pub mod transformed;
 
 mod sampler;
 
-use std::ops::Deref;
+use std::{
+    ops::{Deref, DerefMut},
+    sync::Arc,
+};
 
 use image::{Rgb, RgbImage};
 use rand::prelude::*;
@@ -28,20 +31,32 @@ use material::Material;
 
 /// An `Hit` represents an intersection between a `Ray` and the shapes in a `Scene`.
 #[derive(Debug)]
-pub struct Hit<'o> {
+pub struct Hit {
     /// `t` parameter wrt the `Ray` that generated this `Hit`
     pub t: f64,
 
     /// the `Surface` the `Ray` hit
-    pub surface: &'o dyn Surface,
+    pub surface_id: usize,
 
     pub point_and_normal: Option<(Vec3, Vec3)>,
 }
 
+impl Hit {
+    pub fn new(t: f64, point_and_normal: Option<(Vec3, Vec3)>) -> Self {
+        Self {
+            t,
+            point_and_normal,
+            surface_id: 0,
+        }
+    }
+}
+
 /// An `Object` that can be rendered.
-pub trait Object<'a>: Shape<'a, Intersection = Hit<'a>> + Sync {
+pub trait Object: Shape<Intersection = Hit> + Surface + Sync + Send {
     /// Getter for the `Material` the `Object` is made of.
     fn material(&self) -> &Material;
+
+    fn set_surface_id(&mut self, id: usize);
 }
 
 pub trait Surface: std::fmt::Debug {
@@ -50,10 +65,16 @@ pub trait Surface: std::fmt::Debug {
     fn normal_at(&self, p: Vec3) -> Vec3;
 }
 
+#[derive(Debug)]
+pub struct SceneObjects {
+    objects: Vec<Arc<dyn Object>>,
+}
+
 /// A `Scene` is a collection of objects that can be rendered.
 #[derive(Debug)]
-pub struct Scene<O> {
-    objects: Bvh<O>,
+pub struct Scene {
+    objects: Vec<Arc<dyn Object>>,
+    objects_index: Bvh<Arc<dyn Object>>,
     environment: Environment,
 }
 
@@ -68,12 +89,15 @@ pub enum Environment {
     LinearGradient(Vec3, Vec3),
 }
 
-impl<'o, O: Object<'o> + 'o> Scene<O> {
+impl Scene {
     /// Create a new `Scene` with the given objects inside the given
     /// `Environment`.
-    pub fn new(objects: impl IntoIterator<Item = O>, environment: Environment) -> Self {
+    pub fn new(objects: SceneObjects, environment: Environment) -> Self {
+        let objects: Vec<Arc<_>> = objects.objects;
+        let objects_index: Bvh<_> = objects.iter().cloned().collect();
         Scene {
-            objects: objects.into_iter().collect(),
+            objects,
+            objects_index,
             environment,
         }
     }
@@ -81,21 +105,40 @@ impl<'o, O: Object<'o> + 'o> Scene<O> {
     /// Calculate the intersection between a `Ray` and all the objects in the
     /// scene returning the closest object (along with its intersection result)
     /// to the ray.
-    pub fn intersection(&'o self, ray: &Ray) -> Option<(&O, <O as Shape<'o>>::Intersection)> {
-        self.objects
+    pub fn intersection(&self, ray: &Ray) -> Option<(&dyn Object, Hit)> {
+        self.objects_index
             .intersections(ray)
             .min_by(|(_, t0), (_, t1)| t0.t().partial_cmp(&t1.t()).unwrap())
+            .map(|(s, t)| (s.as_ref(), t))
+    }
+
+    pub fn surface(&self, sfid: usize) -> &dyn Object {
+        self.objects[sfid].as_ref()
     }
 
     /// Return an iterator over all the lights in the `Scene`.
-    pub fn lights(&self) -> impl Iterator<Item = &O> {
-        self.objects.iter().filter(|o| {
-            if let Material::Light { .. } = o.material() {
-                true
-            } else {
-                false
-            }
-        })
+    pub fn lights(&self) -> impl Iterator<Item = &dyn Object> {
+        self.objects
+            .iter()
+            .filter(|o| {
+                if let Material::Light { .. } = o.material() {
+                    true
+                } else {
+                    false
+                }
+            })
+            .map(|o| o.as_ref())
+    }
+}
+
+impl SceneObjects {
+    pub fn new() -> Self {
+        Self { objects: vec![] }
+    }
+
+    pub fn push(&mut self, mut o: impl Object + 'static) {
+        o.set_surface_id(self.objects.len());
+        self.objects.push(Arc::new(o));
     }
 }
 
@@ -128,11 +171,7 @@ pub struct RenderConfig {
 
 /// Render a `Scene` from a `Camera` to a new `RgbImage` of the given
 /// dimensions.
-pub fn render<'s, O: Object<'s> + 's>(
-    camera: &Camera,
-    scene: &'s Scene<O>,
-    config: &RenderConfig,
-) -> image::RgbImage {
+pub fn render(camera: &Camera, scene: &Scene, config: &RenderConfig) -> image::RgbImage {
     let lights = if config.direct_lighting {
         scene.lights().collect::<Vec<_>>()
     } else {
@@ -151,11 +190,7 @@ pub fn render<'s, O: Object<'s> + 's>(
 
 /// Render a `Scene` from a `Camera` to a new `RgbImage` of the given
 /// dimensions concurrently.
-pub fn parallel_render<'s, O: Object<'s> + 's>(
-    camera: &Camera,
-    scene: &'s Scene<O>,
-    config: &RenderConfig,
-) -> image::RgbImage {
+pub fn parallel_render(camera: &Camera, scene: &Scene, config: &RenderConfig) -> image::RgbImage {
     let lights = if config.direct_lighting {
         scene.lights().collect::<Vec<_>>()
     } else {
@@ -188,11 +223,11 @@ pub fn parallel_render<'s, O: Object<'s> + 's>(
 }
 
 /// Render a single pixel of an image from a `Scene` and `Camera`.
-pub fn render_pixel<'s, O: Object<'s> + 's>(
+pub fn render_pixel(
     (x, y): (u32, u32),
     camera: &Camera,
-    scene: &'s Scene<O>,
-    lights: &[&O],
+    scene: &Scene,
+    lights: &[&dyn Object],
     rng: &mut impl Rng,
     config: &RenderConfig,
 ) -> Rgb<u8> {
@@ -216,18 +251,22 @@ pub fn render_pixel<'s, O: Object<'s> + 's>(
     ])
 }
 
-impl<'o> Intersection<'o> for Hit<'o> {
+impl Intersection for Hit {
     fn t(&self) -> f64 {
         self.t
     }
 }
 
-impl<'o, T> Object<'o> for Box<T>
+impl<T> Object for Box<T>
 where
-    T: Object<'o> + ?Sized + 'o,
+    T: Object + ?Sized,
 {
     fn material(&self) -> &Material {
         self.deref().material()
+    }
+
+    fn set_surface_id(&mut self, id: usize) {
+        self.deref_mut().set_surface_id(id)
     }
 }
 impl<T> Surface for Box<T>
@@ -243,34 +282,51 @@ where
 pub struct SimpleObject<S> {
     geom: S,
     material: Material,
+    surface_id: usize,
 }
 
 impl<G> SimpleObject<G> {
     pub fn new(geom: G, material: Material) -> Self {
         SimpleObject {
-            geom: geom,
+            geom,
             material,
+            surface_id: 0,
         }
     }
 }
 
-impl<'s, S> Object<'s> for SimpleObject<S>
+impl<S> Object for SimpleObject<S>
 where
-    S: Shape<'s, Intersection = Hit<'s>> + Sync,
+    S: Shape<Intersection = Hit> + Surface + Sync + Send,
 {
     fn material(&self) -> &Material {
         &self.material
     }
+
+    fn set_surface_id(&mut self, id: usize) {
+        self.surface_id = id;
+    }
 }
 
-impl<'s, S> Shape<'s> for SimpleObject<S>
+impl<S> Surface for SimpleObject<S>
 where
-    S: Shape<'s, Intersection = Hit<'s>> + Sync,
+    S: Shape<Intersection = Hit> + Surface + Sync + Send,
 {
-    type Intersection = Hit<'s>;
+    fn normal_at(&self, p: Vec3) -> Vec3 {
+        self.geom.normal_at(p)
+    }
+}
 
-    fn intersection(&'s self, ray: &Ray) -> Option<Self::Intersection> {
-        self.geom.intersection(ray)
+impl<S> Shape for SimpleObject<S>
+where
+    S: Shape<Intersection = Hit> + Sync + Send,
+{
+    type Intersection = Hit;
+
+    fn intersection(&self, ray: &Ray) -> Option<Self::Intersection> {
+        let mut h = self.geom.intersection(ray)?;
+        h.surface_id = self.surface_id;
+        Some(h)
     }
 
     fn bbox(&self) -> Aabb {

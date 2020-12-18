@@ -23,8 +23,8 @@ impl Surface for PlaneGeometry {
     }
 }
 
-impl<'s> Shape<'s> for PlaneGeometry {
-    type Intersection = Hit<'s>;
+impl Shape for PlaneGeometry {
+    type Intersection = Hit;
 
     fn bbox(&self) -> Aabb {
         plane::bbox()
@@ -34,13 +34,8 @@ impl<'s> Shape<'s> for PlaneGeometry {
         (self.origin, std::f64::INFINITY)
     }
 
-    fn intersection(&'s self, ray: &Ray) -> Option<Self::Intersection> {
+    fn intersection(&self, ray: &Ray) -> Option<Self::Intersection> {
         let t = plane::intersection(self.origin, self.normal, ray)?;
-
-        Some(Hit {
-            t,
-            surface: self,
-            point_and_normal: None,
-        })
+        Some(Hit::new(t, None))
     }
 }

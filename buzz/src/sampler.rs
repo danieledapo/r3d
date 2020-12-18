@@ -7,9 +7,9 @@ use geo::{vec3, Vec3};
 use crate::material::{dielectric_bounce, lambertian_bounce, metal_bounce, Material};
 use crate::{Environment, Object, RenderConfig, Scene};
 
-pub fn sample<'s, O: Object<'s> + 's>(
-    scene: &'s Scene<O>,
-    lights: &[&O],
+pub fn sample(
+    scene: &Scene,
+    lights: &[&dyn Object],
     ray: &Ray,
     depth: u32,
     rng: &mut impl Rng,
@@ -20,7 +20,7 @@ pub fn sample<'s, O: Object<'s> + 's>(
         Some((s, hit)) => {
             let (intersection, n) = hit.point_and_normal.unwrap_or_else(|| {
                 let intersection = ray.point_at(hit.t());
-                let n = hit.surface.normal_at(intersection);
+                let n = scene.surface(hit.surface_id).normal_at(intersection);
 
                 (intersection, n)
             });
@@ -42,9 +42,9 @@ pub fn sample<'s, O: Object<'s> + 's>(
     }
 }
 
-fn sample_material<'s, O: Object<'s> + 's>(
-    scene: &'s Scene<O>,
-    lights: &[&O],
+fn sample_material(
+    scene: &Scene,
+    lights: &[&dyn Object],
     ray: &Ray,
     depth: u32,
     material: &Material,
@@ -66,7 +66,7 @@ fn sample_material<'s, O: Object<'s> + 's>(
 
             let direct = lights
                 .iter()
-                .map(|l| sample_light(scene, l, ray, intersection, n, config, rng))
+                .map(|l| sample_light(scene, *l, ray, intersection, n, config, rng))
                 .sum::<Vec3>();
 
             albedo * (direct + indirect)
@@ -92,9 +92,9 @@ fn sample_material<'s, O: Object<'s> + 's>(
     }
 }
 
-fn sample_light<'s, O: Object<'s> + 's>(
-    scene: &'s Scene<O>,
-    light: &O,
+fn sample_light(
+    scene: &Scene,
+    light: &dyn Object,
     ray: &Ray,
     intersection: Vec3,
     n: Vec3,
@@ -138,7 +138,7 @@ fn sample_light<'s, O: Object<'s> + 's>(
     Vec3::zero()
 }
 
-fn sample_environment<'s, O: Object<'s> + 's>(scene: &Scene<O>, ray: &Ray) -> Vec3 {
+fn sample_environment(scene: &Scene, ray: &Ray) -> Vec3 {
     match scene.environment {
         Environment::Color(c) => c,
         Environment::LinearGradient(a, b) => {

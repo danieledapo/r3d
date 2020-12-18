@@ -37,7 +37,7 @@ enum Node<T> {
 
 impl<'s, T> Bvh<T>
 where
-    T: Shape<'s>,
+    T: Shape,
 {
     /// Iterator over all the elements.
     pub fn iter(&self) -> impl Iterator<Item = &T> {
@@ -83,7 +83,7 @@ pub struct Intersections<'s, T> {
 
 impl<'s, T> std::iter::Iterator for Intersections<'s, T>
 where
-    T: Shape<'s>,
+    T: Shape,
 {
     type Item = (&'s T, T::Intersection);
 
@@ -113,7 +113,7 @@ where
 
 impl<'s, T: 's> FromIterator<T> for Bvh<T>
 where
-    T: Shape<'s>,
+    T: Shape,
 {
     fn from_iter<I: IntoIterator<Item = T>>(it: I) -> Self {
         let elems = it
@@ -136,7 +136,7 @@ where
 
 impl<'s, T> Node<T>
 where
-    T: Shape<'s>,
+    T: Shape,
 {
     fn new(mut elems: Vec<(T, Aabb)>) -> Self {
         assert!(!elems.is_empty());
