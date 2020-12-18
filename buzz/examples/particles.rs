@@ -2,7 +2,7 @@
 
 use std::io::{self, BufRead, BufReader};
 
-use geo::{util::opener, Aabb, Vec3};
+use geo::{Aabb, Vec3};
 
 use buzz::*;
 
