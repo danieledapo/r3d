@@ -28,7 +28,7 @@ pub fn main() -> opener::Result<()> {
     let mut objects = SceneObjects::new();
     for t in tris {
         let t = t?;
-        objects.push(Facet::new(t, &MESH_MATERIAL, true));
+        objects.push(Facet::new(t.positions, &MESH_MATERIAL, true));
     }
 
     objects.push(SimpleObject::new(

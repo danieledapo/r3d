@@ -1,4 +1,4 @@
-use geo::{mesh::stl, ray::Ray, spatial_index::Shape, triangle, Aabb, Vec3};
+use geo::{ray::Ray, spatial_index::Shape, triangle, Aabb, Vec3};
 
 use crate::{Hit, Surface};
 

@@ -1,4 +1,4 @@
-use geo::{mesh::stl, ray::Ray, spatial_index::Shape, Aabb, Vec3};
+use geo::{ray::Ray, spatial_index::Shape, Aabb, Vec3};
 
 use crate::{material::Material, FacetGeometry, Hit, Object, Surface};
 
@@ -10,7 +10,7 @@ pub struct Facet<'a> {
 }
 
 impl<'a> Facet<'a> {
-    pub fn new(tri: stl::StlTriangle, material: &'a Material, flat_shading: bool) -> Self {
+    pub fn new(tri: [Vec3; 3], material: &'a Material, flat_shading: bool) -> Self {
         Facet {
             geom: FacetGeometry::new(tri, flat_shading),
             material,
