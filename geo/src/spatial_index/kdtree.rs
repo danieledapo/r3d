@@ -38,9 +38,9 @@ enum Node<T> {
     },
 }
 
-impl<'s, T> KdTree<T>
+impl<T> KdTree<T>
 where
-    T: Shape + 's,
+    T: Shape,
 {
     /// Create a new `KdTree` that contains all the given shapes.
     pub fn new(shapes: Vec<T>) -> Self {
@@ -54,7 +54,7 @@ where
     /// Find the intersection, if any, between the objects in the `KdTree` and a
     /// given `Ray`. The intersection is defined by the shape and its t
     /// parameter with respect to the ray.
-    pub fn intersection(&'s self, ray: &'s Ray) -> Option<(&'s T, <T as Shape>::Intersection)> {
+    pub fn intersection(&self, ray: &Ray) -> Option<(&T, <T as Shape>::Intersection)> {
         self.intersections(ray).next()
     }
 
@@ -63,16 +63,16 @@ where
     /// with respect to the ray. The intersections are sorted by their t
     /// parameter.
     pub fn intersections(
-        &'s self,
-        ray: &'s Ray,
-    ) -> impl Iterator<Item = (&'s T, <T as Shape>::Intersection)> + 's {
+        &self,
+        ray: &Ray,
+    ) -> impl Iterator<Item = (&T, <T as Shape>::Intersection)> {
         self.root.intersections(ray, 0.0, std::f64::INFINITY)
     }
 }
 
-impl<'s, T> Node<T>
+impl<T> Node<T>
 where
-    T: Shape + 's,
+    T: Shape,
 {
     fn new(shapes: Vec<Arc<T>>, bboxes: Vec<Aabb>) -> Self {
         if shapes.len() <= LEAF_SIZE {
@@ -96,16 +96,17 @@ where
     }
 
     fn intersections(
-        &'s self,
-        ray: &'s Ray,
+        &self,
+        ray: &Ray,
         tmin: f64,
         tmax: f64,
-    ) -> impl Iterator<Item = (&'s T, <T as Shape>::Intersection)> {
+    ) -> impl Iterator<Item = (&T, <T as Shape>::Intersection)> + '_ {
         let mut node_stack = vec![(self, tmin, tmax)];
 
-        let mut current_intersections: Vec<(&'s T, <T as Shape>::Intersection)> =
+        let mut current_intersections: Vec<(&T, <T as Shape>::Intersection)> =
             Vec::with_capacity(LEAF_SIZE);
 
+        let ray = ray.clone();
         std::iter::from_fn(move || {
             loop {
                 if let Some(r) = current_intersections.pop() {
@@ -118,7 +119,7 @@ where
                     Node::Leaf { data } => {
                         current_intersections.clear();
                         current_intersections.extend(data.iter().flat_map(|s| {
-                            let intersection = s.intersection(ray)?;
+                            let intersection = s.intersection(&ray)?;
                             let t = intersection.t();
 
                             if tmin <= t && tmax >= t {
@@ -143,7 +144,7 @@ where
                         // another one from tsplit to tmax.
                         let tsplit = (split_value - ray.origin[*split_axis]) / ray.dir[*split_axis];
 
-                        // if tsplit is not finite then there's not much sense in
+                        // if tsplit is not finite then therenot much sense in
                         // splitting the ray, just try to find the intersection in left
                         // and right with current tmin and tmax
                         if !tsplit.is_finite() {
@@ -193,7 +194,7 @@ where
 /// - (true, false) when the bbox is completely to the left
 /// - (false, true) when the bbox is completely to the right
 /// - (true, true) when the value is inside the bbox
-/// - (false, true) when there's no intersection
+/// - (false, true) when thereno intersection
 fn partition_bbox(bbox: &Aabb, axis: Axis, c: f64) -> (bool, bool) {
     (bbox.min()[axis] <= c, bbox.max()[axis] >= c)
 }
@@ -206,7 +207,7 @@ fn best_partitioning(bboxes: &[Aabb]) -> Option<(Axis, f64)> {
     // the idea here is to find the median X,Y,Z values for the centers which
     // partition the space almost equally by definition.
     //
-    // However, it's still possible to have the same median value multiple times
+    // However, itstill possible to have the same median value multiple times
     // which can result in a non ideal partitioning. To mitigate this issue,
     // iterate over all the median values and find the one that best partitions
     // the input.
@@ -260,7 +261,7 @@ fn best_partitioning(bboxes: &[Aabb]) -> Option<(Axis, f64)> {
 
 /// Partition the given `Shape`s and their `Aabb`s using the given `split_axis`
 /// and `split_value`.
-fn partition<'s, T: Shape>(
+fn partition<T: Shape>(
     mut shapes: Vec<Arc<T>>,
     mut bboxes: Vec<Aabb>,
     split_axis: Axis,
@@ -484,7 +485,7 @@ mod tests {
             } if split_axis == Axis::Z && split_value == 1.0 => {}
             _ => {
                 unreachable!(
-                    "this test does not make sense anymore, it's meant to test what happens when tsplit is not finite"
+                    "this test does not make sense anymore, itmeant to test what happens when tsplit is not finite"
                 );
             }
         }
