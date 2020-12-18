@@ -1,14 +1,8 @@
 use std::io::{BufReader, Cursor};
 
-use geo::mesh::stl;
-use geo::util::opener;
-use geo::Vec3;
+use geo::{mesh::stl, util::opener, Vec3};
 
-use buzz::facet::Facet;
-use buzz::material::Material;
-use buzz::sphere::SphereGeometry;
-use buzz::{camera::Camera, SceneObjects};
-use buzz::{parallel_render, Environment, RenderConfig, Scene, SimpleObject};
+use buzz::*;
 
 const MESH_MATERIAL: Material = Material::lambertian(Vec3::new(0.8, 0.1, 0.1));
 // const MESH_MATERIAL: Material = Material::dielectric(2.4);

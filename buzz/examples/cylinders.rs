@@ -1,15 +1,10 @@
-use geo::mat4::{Mat4, Transform};
-use geo::util::opener;
-use geo::{Aabb, Vec3};
+use geo::{
+    mat4::{Mat4, Transform},
+    util::opener,
+    Aabb, Vec3,
+};
 
-use buzz::cube::CubeGeometry;
-use buzz::cylinder::CylinderGeometry;
-use buzz::material::Material;
-use buzz::plane::PlaneGeometry;
-use buzz::sphere::SphereGeometry;
-use buzz::transformed::TransformedGeometry;
-use buzz::{camera::Camera, SceneObjects};
-use buzz::{parallel_render, Environment, RenderConfig, Scene, SimpleObject};
+use buzz::*;
 
 pub fn main() -> opener::Result<()> {
     let mut objects = SceneObjects::new();

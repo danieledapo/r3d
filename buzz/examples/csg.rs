@@ -1,13 +1,9 @@
-use geo::mat4::Mat4;
-use geo::util::opener;
-use geo::Vec3;
+use geo::{mat4::Mat4, util::opener, Vec3};
 
-use buzz::csg::{Cube, Cylinder, SdfGeometry, SignedDistanceFunction, Sphere};
-use buzz::material::Material;
-use buzz::plane::PlaneGeometry;
-use buzz::sphere::SphereGeometry;
-use buzz::{camera::Camera, SceneObjects};
-use buzz::{parallel_render, Environment, RenderConfig, Scene, SimpleObject};
+use buzz::{
+    csg::{self, SignedDistanceFunction},
+    *,
+};
 
 pub fn main() -> opener::Result<()> {
     let plane = SimpleObject::new(
@@ -24,8 +20,8 @@ pub fn main() -> opener::Result<()> {
         Material::light(Vec3::new(0.3, 0.3, 0.3)),
     );
 
-    let rounded_cube = Sphere::new(0.65).intersection(Cube::new(Vec3::replicate(1.0)));
-    let cylinder = Cylinder::new(0.25, 1.1);
+    let rounded_cube = csg::Sphere::new(0.65).intersection(csg::Cube::new(Vec3::replicate(1.0)));
+    let cylinder = csg::Cylinder::new(0.25, 1.1);
     let cylinder_a = cylinder.clone().transformed(Mat4::rotate(
         Vec3::new(1.0, 0.0, 0.0),
         90.0_f64.to_radians(),

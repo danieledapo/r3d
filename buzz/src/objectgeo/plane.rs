@@ -1,7 +1,4 @@
-use geo::plane;
-use geo::ray::Ray;
-use geo::spatial_index::Shape;
-use geo::{Aabb, Vec3};
+use geo::{plane, ray::Ray, spatial_index::Shape, Aabb, Vec3};
 
 use crate::{Hit, Surface};
 

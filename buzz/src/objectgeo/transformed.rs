@@ -1,5 +1,7 @@
-use geo::mat4::{Mat4, Transform};
-use geo::Aabb;
+use geo::{
+    mat4::{Mat4, Transform},
+    Aabb,
+};
 
 use crate::{Hit, Ray, Shape, Surface, Vec3};
 
