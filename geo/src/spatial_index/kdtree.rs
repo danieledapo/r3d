@@ -106,19 +106,13 @@ where
         let mut current_intersections: Vec<(&'s T, <T as Shape>::Intersection)> =
             Vec::with_capacity(LEAF_SIZE);
 
-        let mut tmin = tmin;
-        let mut tmax = tmax;
-
         std::iter::from_fn(move || {
             loop {
                 if let Some(r) = current_intersections.pop() {
                     return Some(r);
                 }
 
-                let (node, tmi, tma) = node_stack.pop()?;
-
-                tmin = tmi;
-                tmax = tma;
+                let (node, tmin, tmax) = node_stack.pop()?;
 
                 match node {
                     Node::Leaf { data } => {
