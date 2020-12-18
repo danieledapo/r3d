@@ -1,6 +1,6 @@
 use std::io::{BufReader, Cursor};
 
-use geo::{mesh::stl, util::opener, Vec3};
+use geo::{mesh::stl, Vec3};
 
 use buzz::*;
 
