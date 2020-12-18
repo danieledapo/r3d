@@ -1,14 +1,8 @@
 use std::io::{BufReader, Cursor};
 
-use geo::mesh::obj;
-use geo::util::opener;
-use geo::Vec3;
+use geo::{mesh::obj, Vec3};
 
-use buzz::camera::Camera;
-use buzz::facet::Facet;
-use buzz::material::Material;
-use buzz::sphere::SphereGeometry;
-use buzz::{parallel_render, Environment, Object, RenderConfig, Scene, SimpleObject};
+use buzz::*;
 
 const MESH_MATERIAL: Material = Material::lambertian(Vec3::new(1.0, 1.0, 0.95));
 
@@ -25,10 +19,10 @@ pub fn main() -> opener::Result<()> {
     )))
     .expect("cannot load teapot obj mesh");
 
-    let mut objects = mesh
-        .triangles()
-        .map(|t| Box::new(Facet::new(t, &MESH_MATERIAL, true)) as Box<dyn Object>)
-        .collect::<Vec<_>>();
+    let mut objects = SceneObjects::new();
+    for t in mesh.triangles() {
+        objects.push(Facet::new(t, &MESH_MATERIAL, true));
+    }
 
     objects.push(Box::new(SimpleObject::new(
         SphereGeometry::new(Vec3::new(2.0, 5.0, -3.0), 0.5),
@@ -45,12 +39,7 @@ pub fn main() -> opener::Result<()> {
 
     let img = parallel_render(
         &camera,
-        // FIXME: theoretically speaking, transmute should not be necessary
-        // because rustc should automatically figure out the proper lifetimes.
-        // In fact I assume it does so in the following call given that I'm not
-        // specifying any lifetimes. I think it's the "scope" of the evaluation
-        // that throws it off.
-        unsafe { std::mem::transmute::<_, &Scene<Box<dyn Object>>>(&scene) },
+        &scene,
         &RenderConfig {
             width: 1920,
             height: 1080,
