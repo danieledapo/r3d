@@ -1,12 +1,8 @@
 use rand::Rng;
 
-use geo::util::opener;
-use geo::Vec3;
+use geo::{util::opener, Vec3};
 
-use buzz::material::Material;
-use buzz::sphere::SphereGeometry;
-use buzz::{camera::Camera, SceneObjects};
-use buzz::{parallel_render, Environment, RenderConfig, Scene, SimpleObject};
+use buzz::*;
 
 const SKY_ENVIRONMENT: Environment =
     Environment::LinearGradient(Vec3::new(1.0, 1.0, 1.0), Vec3::new(0.5, 0.7, 1.0));

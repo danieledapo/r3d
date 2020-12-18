@@ -1,10 +1,6 @@
-use geo::util::opener;
-use geo::Vec3;
+use geo::{util::opener, Vec3};
 
-use buzz::material::Material;
-use buzz::sphere::SphereGeometry;
-use buzz::{camera::Camera, SceneObjects};
-use buzz::{render, Environment, RenderConfig, Scene, SimpleObject};
+use buzz::*;
 
 fn main() -> opener::Result<()> {
     let target = Vec3::new(0.0, 0.0, -1.0);

@@ -6,10 +6,12 @@
 //! http://www.iquilezles.org/www/articles/distfunctions/distfunctions.htm
 //!
 
-use geo::mat4::{Mat4, Transform};
-use geo::ray::Ray;
-use geo::spatial_index::Shape;
-use geo::{Aabb, Vec3};
+use geo::{
+    mat4::{Mat4, Transform},
+    ray::Ray,
+    spatial_index::Shape,
+    Aabb, Vec3,
+};
 
 use crate::{Hit, Surface};
 

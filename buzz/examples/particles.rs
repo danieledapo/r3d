@@ -1,16 +1,10 @@
 //! See <https://github.com/d-dorazio/dla> for an example on how to generate the particles.
 
-use std::io;
-use std::io::{BufRead, BufReader};
+use std::io::{self, BufRead, BufReader};
 
-use geo::util::opener;
-use geo::vec3;
-use geo::{Aabb, Vec3};
+use geo::{util::opener, Aabb, Vec3};
 
-use buzz::material::Material;
-use buzz::sphere::SphereGeometry;
-use buzz::{camera::Camera, SceneObjects};
-use buzz::{parallel_render, Environment, RenderConfig, Scene, SimpleObject};
+use buzz::*;
 
 pub fn main() -> opener::Result<()> {
     let input = BufReader::new(io::stdin());
@@ -39,7 +33,7 @@ pub fn main() -> opener::Result<()> {
         s.center = (s.center - *bbox.min()) / bbox.dimensions() * 2.0 - 1.0;
         s.radius /= w.min(h).min(d);
 
-        let c = vec3::lerp(
+        let c = Vec3::lerp(
             Vec3::new(0.34, 0.7, 0.03),
             Vec3::new(0.85, 0.84, 0.0),
             s.center.norm2(),

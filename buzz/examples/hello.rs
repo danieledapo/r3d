@@ -1,11 +1,6 @@
-use geo::util::opener;
-use geo::Vec3;
+use geo::{util::opener, Vec3};
 
-use buzz::material::Material;
-use buzz::plane::PlaneGeometry;
-use buzz::sphere::SphereGeometry;
-use buzz::{camera::Camera, SceneObjects};
-use buzz::{render, Environment, RenderConfig, Scene, SimpleObject};
+use buzz::*;
 
 pub fn main() -> opener::Result<()> {
     let mut objects = SceneObjects::new();
