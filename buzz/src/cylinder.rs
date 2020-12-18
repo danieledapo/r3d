@@ -22,10 +22,10 @@ impl CylinderGeometry {
     }
 }
 
-impl<'s> Shape<'s> for CylinderGeometry {
-    type Intersection = Hit<'s>;
+impl Shape for CylinderGeometry {
+    type Intersection = Hit;
 
-    fn intersection(&'s self, ray: &Ray) -> Option<Self::Intersection> {
+    fn intersection(&self, ray: &Ray) -> Option<Self::Intersection> {
         const EPS: f64 = 1e-6;
 
         let a = ray.dir.x.powi(2) + ray.dir.y.powi(2);
@@ -46,20 +46,12 @@ impl<'s> Shape<'s> for CylinderGeometry {
 
         let z0 = ray.origin.z + t0 * ray.dir.z;
         if t0 > EPS && self.zmin < z0 && self.zmax > z0 {
-            return Some(Hit {
-                surface: self,
-                t: t0,
-                point_and_normal: None,
-            });
+            return Some(Hit::new(t0, None));
         }
 
         let z1 = ray.origin.z + t1 * ray.dir.z;
         if t1 > EPS && self.zmin < z1 && self.zmax > z1 {
-            return Some(Hit {
-                surface: self,
-                t: t1,
-                point_and_normal: None,
-            });
+            return Some(Hit::new(t1, None));
         }
 
         None

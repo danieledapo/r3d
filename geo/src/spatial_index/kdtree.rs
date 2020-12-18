@@ -40,7 +40,7 @@ enum Node<T> {
 
 impl<'s, T> KdTree<T>
 where
-    T: Shape<'s> + 's,
+    T: Shape + 's,
 {
     /// Create a new `KdTree` that contains all the given shapes.
     pub fn new(shapes: Vec<T>) -> Self {
@@ -54,7 +54,7 @@ where
     /// Find the intersection, if any, between the objects in the `KdTree` and a
     /// given `Ray`. The intersection is defined by the shape and its t
     /// parameter with respect to the ray.
-    pub fn intersection(&'s self, ray: &'s Ray) -> Option<(&'s T, <T as Shape<'s>>::Intersection)> {
+    pub fn intersection(&'s self, ray: &'s Ray) -> Option<(&'s T, <T as Shape>::Intersection)> {
         self.intersections(ray).next()
     }
 
@@ -65,14 +65,14 @@ where
     pub fn intersections(
         &'s self,
         ray: &'s Ray,
-    ) -> impl Iterator<Item = (&'s T, <T as Shape<'s>>::Intersection)> + 's {
+    ) -> impl Iterator<Item = (&'s T, <T as Shape>::Intersection)> + 's {
         self.root.intersections(ray, 0.0, std::f64::INFINITY)
     }
 }
 
 impl<'s, T> Node<T>
 where
-    T: Shape<'s> + 's,
+    T: Shape + 's,
 {
     fn new(shapes: Vec<Arc<T>>, bboxes: Vec<Aabb>) -> Self {
         if shapes.len() <= LEAF_SIZE {
@@ -100,10 +100,10 @@ where
         ray: &'s Ray,
         tmin: f64,
         tmax: f64,
-    ) -> impl Iterator<Item = (&'s T, <T as Shape<'s>>::Intersection)> {
+    ) -> impl Iterator<Item = (&'s T, <T as Shape>::Intersection)> {
         let mut node_stack = vec![(self, tmin, tmax)];
 
-        let mut current_intersections: Vec<(&'s T, <T as Shape<'s>>::Intersection)> =
+        let mut current_intersections: Vec<(&'s T, <T as Shape>::Intersection)> =
             Vec::with_capacity(LEAF_SIZE);
 
         let mut tmin = tmin;
@@ -266,7 +266,7 @@ fn best_partitioning(bboxes: &[Aabb]) -> Option<(Axis, f64)> {
 
 /// Partition the given `Shape`s and their `Aabb`s using the given `split_axis`
 /// and `split_value`.
-fn partition<'s, T: Shape<'s>>(
+fn partition<'s, T: Shape>(
     mut shapes: Vec<Arc<T>>,
     mut bboxes: Vec<Aabb>,
     split_axis: Axis,

@@ -1,15 +1,14 @@
-use std::io;
 use std::io::{BufReader, Cursor};
 
 use geo::mesh::stl;
 use geo::util::opener;
 use geo::Vec3;
 
-use buzz::camera::Camera;
 use buzz::facet::Facet;
 use buzz::material::Material;
 use buzz::sphere::SphereGeometry;
-use buzz::{parallel_render, Environment, Object, RenderConfig, Scene, SimpleObject};
+use buzz::{camera::Camera, SceneObjects};
+use buzz::{parallel_render, Environment, RenderConfig, Scene, SimpleObject};
 
 const MESH_MATERIAL: Material = Material::lambertian(Vec3::new(0.8, 0.1, 0.1));
 // const MESH_MATERIAL: Material = Material::dielectric(2.4);
@@ -32,26 +31,24 @@ pub fn main() -> opener::Result<()> {
         &include_bytes!("../../data/suzanne.stl")[..],
     )))?;
 
-    let mut objects = tris
-        .into_iter()
-        .map(|t| {
-            let t = t?;
-            Ok(Box::new(Facet::new(t.positions, &MESH_MATERIAL, true)) as Box<dyn Object>)
-        })
-        .collect::<io::Result<Vec<_>>>()?;
+    let mut objects = SceneObjects::new();
+    for t in tris {
+        let t = t?;
+        objects.push(Facet::new(t, &MESH_MATERIAL, true));
+    }
 
-    objects.push(Box::new(SimpleObject::new(
+    objects.push(SimpleObject::new(
         SphereGeometry::new(Vec3::new(-0.5, -6.0, 0.0), 0.5),
         Material::light(Vec3::new(0.5, 0.5, 0.5)),
-    )));
-    objects.push(Box::new(SimpleObject::new(
+    ));
+    objects.push(SimpleObject::new(
         SphereGeometry::new(Vec3::new(0.0, 0.0, 6.0), 0.5),
         Material::light(Vec3::new(0.2, 0.2, 0.2)),
-    )));
-    objects.push(Box::new(SimpleObject::new(
+    ));
+    objects.push(SimpleObject::new(
         SphereGeometry::new(Vec3::new(0.0, 100.0, 0.0), 90.0),
         Material::lambertian(Vec3::new(0.2, 0.3, 0.36)),
-    )));
+    ));
 
     // let environment = Environment::Color(Vec3::new(0.8, 0.9, 0.8));
     let environment = Environment::Color(Vec3::zero());
@@ -60,12 +57,7 @@ pub fn main() -> opener::Result<()> {
 
     let img = parallel_render(
         &camera,
-        // FIXME: theoretically speaking, transmute should not be necessary
-        // because rustc should automatically figure out the proper lifetimes.
-        // In fact I assume it does so in the following call given that I'm not
-        // specifying any lifetimes. I think it's the "scope" of the evaluation
-        // that throws it off.
-        unsafe { std::mem::transmute::<_, &Scene<Box<dyn Object>>>(&scene) },
+        &scene,
         &RenderConfig {
             width: 1920,
             height: 1080,

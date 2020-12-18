@@ -73,14 +73,14 @@ impl<S: SignedDistanceFunction> Surface for SdfGeometry<S> {
     }
 }
 
-impl<'s, S: SignedDistanceFunction> Shape<'s> for SdfGeometry<S> {
-    type Intersection = Hit<'s>;
+impl<S: SignedDistanceFunction> Shape for SdfGeometry<S> {
+    type Intersection = Hit;
 
     fn bbox(&self) -> Aabb {
         self.sdf.bbox()
     }
 
-    fn intersection(&'s self, ray: &Ray) -> Option<Self::Intersection> {
+    fn intersection(&self, ray: &Ray) -> Option<Self::Intersection> {
         let epsilon = 0.00001;
         let jump_size = 0.001;
 
@@ -103,11 +103,7 @@ impl<'s, S: SignedDistanceFunction> Shape<'s> for SdfGeometry<S> {
             }
 
             if d < epsilon {
-                return Some(Hit {
-                    surface: self,
-                    t,
-                    point_and_normal: None,
-                });
+                return Some(Hit::new(t, None));
             }
 
             if jump && d < jump_size {

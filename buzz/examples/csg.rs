@@ -2,12 +2,12 @@ use geo::mat4::Mat4;
 use geo::util::opener;
 use geo::Vec3;
 
-use buzz::camera::Camera;
 use buzz::csg::{Cube, Cylinder, SdfGeometry, SignedDistanceFunction, Sphere};
 use buzz::material::Material;
 use buzz::plane::PlaneGeometry;
 use buzz::sphere::SphereGeometry;
-use buzz::{parallel_render, Environment, Object, RenderConfig, Scene, SimpleObject};
+use buzz::{camera::Camera, SceneObjects};
+use buzz::{parallel_render, Environment, RenderConfig, Scene, SimpleObject};
 
 pub fn main() -> opener::Result<()> {
     let plane = SimpleObject::new(
@@ -49,15 +49,13 @@ pub fn main() -> opener::Result<()> {
         Material::lambertian(Vec3::new(0.31, 0.46, 0.22)),
     );
 
-    let scene = Scene::new(
-        vec![
-            Box::new(light1) as Box<dyn Object>,
-            Box::new(light2) as Box<dyn Object>,
-            Box::new(plane) as Box<dyn Object>,
-            Box::new(csg) as Box<dyn Object>,
-        ],
-        Environment::Color(Vec3::zero()),
-    );
+    let mut objects = SceneObjects::new();
+    objects.push(light1);
+    objects.push(light2);
+    objects.push(plane);
+    objects.push(csg);
+
+    let scene = Scene::new(objects, Environment::Color(Vec3::zero()));
 
     let camera = Camera::look_at(
         Vec3::new(-3.0, 0.0, 1.0),
@@ -68,12 +66,7 @@ pub fn main() -> opener::Result<()> {
 
     let img = parallel_render(
         &camera,
-        // FIXME: theoretically speaking, transmute should not be necessary
-        // because rustc should automatically figure out the proper lifetimes.
-        // In fact I assume it does so in the following call given that I'm not
-        // specifying any lifetimes. I think it's the "scope" of the evaluation
-        // that throws it off.
-        unsafe { std::mem::transmute::<_, &Scene<Box<dyn Object>>>(&scene) },
+        &scene,
         &RenderConfig {
             width: 1920,
             height: 1080,

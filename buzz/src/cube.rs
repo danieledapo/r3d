@@ -13,10 +13,10 @@ impl CubeGeometry {
     }
 }
 
-impl<'s> Shape<'s> for CubeGeometry {
-    type Intersection = Hit<'s>;
+impl Shape for CubeGeometry {
+    type Intersection = Hit;
 
-    fn intersection(&'s self, ray: &Ray) -> Option<Self::Intersection> {
+    fn intersection(&self, ray: &Ray) -> Option<Self::Intersection> {
         let min = *self.bbox().min();
         let max = *self.bbox().max();
 
@@ -52,11 +52,7 @@ impl<'s> Shape<'s> for CubeGeometry {
         tmin = tmin.max(tzmin);
         tmax = tmax.min(tzmax);
 
-        Some(Hit {
-            t: tmin.min(tmax),
-            surface: self,
-            point_and_normal: None,
-        })
+        Some(Hit::new(tmin.min(tmax), None))
     }
 
     fn bbox(&self) -> Aabb {

@@ -22,13 +22,13 @@ impl<S> TransformedGeometry<S> {
     }
 }
 
-impl<'s, S> Shape<'s> for TransformedGeometry<S>
+impl<S> Shape for TransformedGeometry<S>
 where
-    S: Shape<'s, Intersection = Hit<'s>> + Surface,
+    S: Shape<Intersection = Hit> + Surface,
 {
-    type Intersection = Hit<'s>;
+    type Intersection = Hit;
 
-    fn intersection(&'s self, ray: &Ray) -> Option<Self::Intersection> {
+    fn intersection(&self, ray: &Ray) -> Option<Self::Intersection> {
         let transformed_ray = ray.transform(&self.inverse_trans);
         let hit = self.shape.intersection(&transformed_ray)?;
 
@@ -38,11 +38,7 @@ where
         let intersection = p.transform(&self.trans);
         let tn = self.inverse_trans.transform_normal(&n);
 
-        Some(Hit {
-            t: (p - ray.origin).norm(),
-            surface: self,
-            point_and_normal: Some((intersection, tn)),
-        })
+        Some(Hit::new((p - ray.origin).norm(), Some((intersection, tn))))
     }
 
     fn bbox(&self) -> Aabb {

@@ -3,16 +3,16 @@ use rand::Rng;
 use geo::util::opener;
 use geo::Vec3;
 
-use buzz::camera::Camera;
 use buzz::material::Material;
 use buzz::sphere::SphereGeometry;
+use buzz::{camera::Camera, SceneObjects};
 use buzz::{parallel_render, Environment, RenderConfig, Scene, SimpleObject};
 
 const SKY_ENVIRONMENT: Environment =
     Environment::LinearGradient(Vec3::new(1.0, 1.0, 1.0), Vec3::new(0.5, 0.7, 1.0));
 
 pub fn main() -> opener::Result<()> {
-    let mut objects = Vec::with_capacity(400);
+    let mut objects = SceneObjects::new();
     objects.push(SimpleObject::new(
         SphereGeometry::new(Vec3::new(0.0, -1000.0, 0.0), 1000.0),
         Material::lambertian(Vec3::new(0.5, 0.5, 0.5)),
