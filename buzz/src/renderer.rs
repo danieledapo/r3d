@@ -1,7 +1,10 @@
 use geo::{ray::Ray, spatial_index::Intersection, Vec3};
-use image::{Rgb, RgbImage};
 
+use std::convert::TryFrom;
+
+use image::{Rgb, RgbImage};
 use rand::prelude::*;
+use rand_xorshift::XorShiftRng;
 use rayon::prelude::*;
 
 use crate::{
@@ -45,7 +48,7 @@ pub fn render(camera: &Camera, scene: &Scene, config: &RenderConfig) -> image::R
         vec![]
     };
 
-    let mut rng = thread_rng();
+    let mut rng = XorShiftRng::seed_from_u64(thread_rng().gen());
     let mut img = RgbImage::new(config.width, config.height);
 
     for (x, y, pix) in img.enumerate_pixels_mut() {
@@ -66,24 +69,18 @@ pub fn parallel_render(camera: &Camera, scene: &Scene, config: &RenderConfig) ->
 
     let mut img = RgbImage::new(config.width, config.height);
 
-    img.par_chunks_mut(3)
-        .zip((0_u32..config.width * config.height).into_par_iter())
-        .for_each(|(pix, i)| {
-            let x = i % config.width;
-            let y = i / config.width;
+    img.par_chunks_mut(3 * usize::try_from(config.width).unwrap())
+        .zip((0_u32..config.height).into_par_iter())
+        .for_each(|(row, y)| {
+            let mut rng = XorShiftRng::seed_from_u64(thread_rng().gen());
 
-            let Rgb([r, g, b]) = render_pixel(
-                (x as u32, y as u32),
-                camera,
-                scene,
-                &lights,
-                &mut rand::thread_rng(),
-                config,
-            );
+            for (pix, x) in row.chunks_mut(3).zip(0..) {
+                let Rgb([r, g, b]) = render_pixel((x, y), camera, scene, &lights, &mut rng, config);
 
-            pix[0] = r;
-            pix[1] = g;
-            pix[2] = b;
+                pix[0] = r;
+                pix[1] = g;
+                pix[2] = b;
+            }
         });
 
     img
