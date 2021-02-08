@@ -3,7 +3,6 @@ use std::sync::Arc;
 
 use crate::ray::Ray;
 use crate::spatial_index::{Intersection, Shape};
-use crate::util::ksmallest_by;
 use crate::{Aabb, Axis};
 
 /// maximum number of elements each leaf can contain.
@@ -238,10 +237,8 @@ fn best_partitioning(bboxes: &[Aabb]) -> Option<(Axis, f64)> {
         .iter()
         .map(|axis| {
             let p = centers.len() / 2;
-            let mid = *ksmallest_by(&mut centers, p, |a, b| {
-                a[*axis].partial_cmp(&b[*axis]).unwrap()
-            })
-            .unwrap();
+            let (_, mid, _) =
+                centers.select_nth_unstable_by(p, |a, b| a[*axis].partial_cmp(&b[*axis]).unwrap());
 
             let value = mid[*axis];
 

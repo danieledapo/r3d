@@ -1,10 +1,7 @@
-use std::cmp::Ordering;
-use std::f64::EPSILON;
 use std::iter::FromIterator;
 
 use crate::ray::Ray;
 use crate::spatial_index::{Intersection, Shape};
-use crate::util::ksmallest_by;
 use crate::{Aabb, Axis, Vec3};
 
 /// A [Bounding volume hierarchy][0] is a tree data structure for collecting a
@@ -151,22 +148,14 @@ where
 
         let pivot = elems.len() / 2;
 
-        // ksmallest actually partitions the elems so that bboxes before pivot
+        // select_nth actually partitions the elems so that bboxes before pivot
         // have a smaller dimensions than the median dimension and bboxes after
         // pivot have a greater dimension.
-        ksmallest_by(&mut elems, pivot, |(_, b1), (_, b2)| {
+        elems.select_nth_unstable_by(pivot, |(_, b1), (_, b2)| {
             let c1 = b1.center()[partition_axis];
             let c2 = b2.center()[partition_axis];
 
-            if (c1 - c2).abs() < EPSILON {
-                return Ordering::Equal;
-            }
-
-            if c1 < c2 {
-                return Ordering::Less;
-            }
-
-            Ordering::Greater
+            c1.partial_cmp(&c2).unwrap()
         });
 
         let right_elems = elems.split_off(pivot);
@@ -296,7 +285,7 @@ mod tests {
         assert_eq!(
             bvh.intersections(&Ray::new(Vec3::zero(), Vec3::new(0.0, 1.0, 1.0)))
                 .collect::<Vec<_>>(),
-            vec![(&Vec3::new(0.0, 1.0, 1.0), 1.0), (&Vec3::zero(), 0.0)]
+            vec![(&Vec3::zero(), 0.0), (&Vec3::new(0.0, 1.0, 1.0), 1.0)]
         );
 
         assert_eq!(
