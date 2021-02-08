@@ -99,7 +99,7 @@ where
                 }
 
                 Node::Branch { bbox, left, right } => {
-                    if bbox.intersect(&self.ray) {
+                    if bbox.ray_intersection(&self.ray).is_some() {
                         self.stack.push(&right);
                         self.stack.push(&left);
                     }

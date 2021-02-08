@@ -86,10 +86,7 @@ impl<S: SignedDistanceFunction> Shape for SdfGeometry<S> {
         let epsilon = 0.00001;
         let jump_size = 0.001;
 
-        let (t1, t2) = box_intersect(&self.bbox(), ray);
-        if t2 < t1 || t2 < 0.0 {
-            return None;
-        }
+        let (t1, t2) = self.bbox().ray_intersection(ray)?;
 
         let mut t = t1.max(0.0001);
         let mut jump = true;
@@ -320,25 +317,4 @@ where
 
         ld.max(-rd)
     }
-}
-
-fn box_intersect(b: &Aabb, r: &Ray) -> (f64, f64) {
-    let mut x1 = (b.min().x - r.origin.x) / r.dir.x;
-    let mut y1 = (b.min().y - r.origin.y) / r.dir.y;
-    let mut z1 = (b.min().z - r.origin.z) / r.dir.z;
-    let mut x2 = (b.max().x - r.origin.x) / r.dir.x;
-    let mut y2 = (b.max().y - r.origin.y) / r.dir.y;
-    let mut z2 = (b.max().z - r.origin.z) / r.dir.z;
-
-    if x1 > x2 {
-        std::mem::swap(&mut x1, &mut x2);
-    }
-    if y1 > y2 {
-        std::mem::swap(&mut y1, &mut y2);
-    }
-    if z1 > z2 {
-        std::mem::swap(&mut z1, &mut z2);
-    }
-
-    (x1.max(y1).max(z1), x2.min(y2).min(z2))
 }
