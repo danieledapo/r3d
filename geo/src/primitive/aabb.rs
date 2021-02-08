@@ -129,14 +129,22 @@ impl Aabb {
             && self.max.z >= pt.z
     }
 
-    /// Check whether a `Ray` intersects a `Aabb`.
-    pub fn intersect(&self, ray: &Ray) -> bool {
+    /// Check whether a `Ray` intersects a `Aabb` and returns the t parameters
+    /// of the first and last point of intersections.
+    pub fn ray_intersection(&self, ray: &Ray) -> Option<(f64, f64)> {
         use std::f64::INFINITY;
 
         let mut tmax = INFINITY;
-        let mut tmin = 1e-9_f64;
+        let mut tmin = 0.0_f64;
 
         for axis in &[Axis::X, Axis::Y, Axis::Z] {
+            if ray.dir[*axis] == 0.0 {
+                if ray.origin[*axis] < self.min[*axis] || ray.origin[*axis] > self.max[*axis] {
+                    return None;
+                }
+                continue;
+            }
+
             let mut t0 = (self.min[*axis] - ray.origin[*axis]) / ray.dir[*axis];
             let mut t1 = (self.max[*axis] - ray.origin[*axis]) / ray.dir[*axis];
 
@@ -149,12 +157,12 @@ impl Aabb {
             tmin = tmin.max(t0);
             tmax = tmax.min(t1);
 
-            if tmax < tmin {
-                return false;
+            if tmax < tmin || tmax < 0.0 {
+                return None;
             }
         }
 
-        true
+        Some((tmin, tmax))
     }
 
     /// Get the bounding sphere of this `Aabb`.
@@ -321,33 +329,55 @@ mod tests {
     }
 
     #[test]
-    fn test_intersect() {
+    fn test_ray_intersection() {
         let aabb = Aabb::from_iter(vec![Vec3::zero(), Vec3::new(-10.0, 2.0, 3.0)]).unwrap();
 
-        assert!(aabb.intersect(&Ray::new(Vec3::zero(), Vec3::new(-1.0, 0.0, 1.0))));
-        assert!(aabb.intersect(&Ray::new(
-            Vec3::new(1.0, 1.0, 2.0),
-            Vec3::new(-2.0, -1.0, 0.0)
-        )));
-        assert!(aabb.intersect(&Ray::new(
-            Vec3::new(1.0, 1.0, 1.0),
-            Vec3::new(-1.0, 0.0, 1.0)
-        )));
+        assert_eq!(
+            aabb.ray_intersection(&Ray::new(Vec3::zero(), Vec3::new(-1.0, 0.0, 1.0))),
+            Some((0.0, 3.0))
+        );
+        assert_eq!(
+            aabb.ray_intersection(&Ray::new(
+                Vec3::new(1.0, 1.0, 2.0),
+                Vec3::new(-2.0, -1.0, 0.0)
+            )),
+            Some((0.5, 1.0))
+        );
+        assert_eq!(
+            aabb.ray_intersection(&Ray::new(
+                Vec3::new(1.0, 1.0, 1.0),
+                Vec3::new(-1.0, 0.0, 1.0)
+            )),
+            Some((1.0, 2.0))
+        );
 
-        assert!(!aabb.intersect(&Ray::new(
-            Vec3::new(1.0, 1.0, 1.0),
-            Vec3::new(1.0, 0.0, 1.0)
-        )));
-        assert!(!aabb.intersect(&Ray::new(
-            Vec3::new(-11.0, 6.0, 1.0),
-            Vec3::new(-1.0, 0.0, 1.0)
-        )));
+        assert!(aabb
+            .ray_intersection(&Ray::new(
+                Vec3::new(1.0, 1.0, 1.0),
+                Vec3::new(1.0, 0.0, 1.0)
+            ))
+            .is_none());
+        assert!(aabb
+            .ray_intersection(&Ray::new(
+                Vec3::new(-11.0, 6.0, 1.0),
+                Vec3::new(-1.0, 0.0, 1.0)
+            ))
+            .is_none());
 
         let aabb =
             Aabb::from_iter(vec![Vec3::new(-10.0, -1.0, -7.0), Vec3::new(0.0, 1.0, 1.0)]).unwrap();
-        assert!(aabb.intersect(&Ray::new(
-            Vec3::new(1.0, 0.0, 2.0),
-            Vec3::new(-1.0, 1.0, -1.0)
-        )));
+        assert_eq!(
+            aabb.ray_intersection(&Ray::new(
+                Vec3::new(1.0, 0.0, 2.0),
+                Vec3::new(-1.0, 1.0, -1.0)
+            )),
+            Some((1.0, 1.0))
+        );
+
+        let aabb = Aabb::from_iter(vec![Vec3::new(-7.0, -1.0, -3.0), Vec3::zero()]).unwrap();
+        assert_eq!(
+            aabb.ray_intersection(&Ray::new(Vec3::zero(), Vec3::new(1.0, 1.0, 1.0))),
+            Some((0.0, 0.0))
+        );
     }
 }
