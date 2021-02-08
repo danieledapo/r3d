@@ -109,6 +109,19 @@ impl Vec3 {
     pub fn lerp(self, b: Vec3, t: f64) -> Vec3 {
         self * (1.0 - t) + b * t
     }
+
+    /// Check whether a `Vec3` is not NaN or infinite.
+    ///
+    /// ```rust
+    /// # use geo::Vec3;
+    ///
+    /// assert!(Vec3::new(0.0, 1.0, 2.0).is_finite());
+    /// assert!(!Vec3::new(f64::NAN, 1.0, 2.0).is_finite());
+    /// assert!(!Vec3::new(f64::INFINITY, 1.0, 0.5).is_finite());
+    /// ```
+    pub fn is_finite(&self) -> bool {
+        self.x.is_finite() && self.y.is_finite() && self.z.is_finite()
+    }
 }
 
 macro_rules! impl_num_op {
