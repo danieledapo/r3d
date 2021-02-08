@@ -193,7 +193,7 @@ where
 /// - (true, false) when the bbox is completely to the left
 /// - (false, true) when the bbox is completely to the right
 /// - (true, true) when the value is inside the bbox
-/// - (false, true) when thereno intersection
+/// - (false, true) when there's no intersection
 fn partition_bbox(bbox: &Aabb, axis: Axis, c: f64) -> (bool, bool) {
     (bbox.min()[axis] <= c, bbox.max()[axis] >= c)
 }

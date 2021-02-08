@@ -16,6 +16,7 @@ use crate::{Aabb, Axis, Vec3};
 #[derive(Debug, Clone, PartialEq)]
 pub struct Bvh<T> {
     root: Option<Node<T>>,
+    infinite_objects: Vec<T>,
 }
 
 // TODO: it might be more efficient to store a Vec<T> in leaves because jumps in
@@ -39,8 +40,8 @@ where
     /// Iterator over all the elements.
     pub fn iter(&self) -> impl Iterator<Item = &T> {
         let mut stack = vec![];
-        if self.root.is_some() {
-            stack.push(self.root.as_ref().unwrap());
+        if let Some(n) = self.root.as_ref() {
+            stack.push(n);
         }
 
         std::iter::from_fn(move || {
@@ -56,20 +57,30 @@ where
 
             None
         })
+        .chain(&self.infinite_objects)
     }
 
     /// Return all the objects that intersect the given ray along with their t
     /// parameter.
-    pub fn intersections(&self, ray: &Ray) -> Intersections<T> {
+    pub fn intersections(&self, ray: &Ray) -> impl Iterator<Item = (&T, T::Intersection)> {
         let mut stack = vec![];
-        if self.root.is_some() {
-            stack.push(self.root.as_ref().unwrap());
+        if let Some(n) = self.root.as_ref() {
+            stack.push(n);
         }
 
+        let ray = ray.clone();
         Intersections {
             stack,
             ray: ray.clone(),
         }
+        .chain(self.infinite_objects.iter().filter_map(move |obj| {
+            let inter = obj.intersection(&ray)?;
+            if inter.t() >= 0.0 {
+                Some((obj, inter))
+            } else {
+                None
+            }
+        }))
     }
 }
 
@@ -113,15 +124,20 @@ where
     T: Shape,
 {
     fn from_iter<I: IntoIterator<Item = T>>(it: I) -> Self {
-        let elems = it
-            .into_iter()
-            .map(|e| {
-                let b = e.bbox();
-                (e, b)
-            })
-            .collect::<Vec<_>>();
+        let mut elems = vec![];
+        let mut infinite_objects = vec![];
+
+        for elem in it {
+            let bbox = elem.bbox();
+            if bbox.min().is_finite() && bbox.max().is_finite() {
+                elems.push((elem, bbox));
+            } else {
+                infinite_objects.push(elem);
+            }
+        }
 
         Bvh {
+            infinite_objects,
             root: if elems.is_empty() {
                 None
             } else {
@@ -216,6 +232,7 @@ mod tests {
         assert_eq!(
             bvh,
             Bvh {
+                infinite_objects: vec![],
                 root: Some(Node::Branch {
                     bbox: Aabb::from_iter(vec![
                         Vec3::new(0.0, -1.0, 0.0),
