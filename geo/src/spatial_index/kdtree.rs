@@ -482,7 +482,7 @@ mod tests {
             } if split_axis == Axis::Z && split_value == 1.0 => {}
             _ => {
                 unreachable!(
-                    "this test does not make sense anymore, itmeant to test what happens when tsplit is not finite"
+                    "this test does not make sense anymore, it's meant to test what happens when tsplit is not finite"
                 );
             }
         }
