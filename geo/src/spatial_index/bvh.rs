@@ -19,8 +19,6 @@ pub struct Bvh<T> {
     infinite_objects: Vec<T>,
 }
 
-// TODO: it might be more efficient to store a Vec<T> in leaves because jumps in
-// the heap can have more overhead? This could make construction faster too...
 #[derive(Debug, Clone, PartialEq)]
 enum Node<T> {
     Branch {
