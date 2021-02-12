@@ -4,7 +4,6 @@ pub mod camera;
 pub mod material;
 pub mod object;
 pub mod objectgeo;
-pub mod opener;
 
 mod renderer;
 

@@ -1,4 +1,4 @@
-use geo::Vec3;
+use geo::{util::opener, Vec3};
 
 use buzz::*;
 

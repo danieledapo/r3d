@@ -8,7 +8,6 @@ pub type Result<R> = std::result::Result<R, OpenError>;
 pub enum OpenError {
     IoError(io::Error),
     OpenerError,
-    ImageError(image::ImageError),
 }
 
 #[cfg(target_os = "linux")]
@@ -37,11 +36,5 @@ pub fn open(path: impl AsRef<OsStr>) -> Result<()> {
 impl From<io::Error> for OpenError {
     fn from(e: io::Error) -> Self {
         OpenError::IoError(e)
-    }
-}
-
-impl From<image::ImageError> for OpenError {
-    fn from(e: image::ImageError) -> Self {
-        OpenError::ImageError(e)
     }
 }
