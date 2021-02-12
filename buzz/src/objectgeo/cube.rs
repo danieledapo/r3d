@@ -17,41 +17,7 @@ impl Shape for CubeGeometry {
     type Intersection = Hit;
 
     fn intersection(&self, ray: &Ray) -> Option<Self::Intersection> {
-        let min = *self.bbox().min();
-        let max = *self.bbox().max();
-
-        let mut tmin = (min.x - ray.origin.x) / ray.dir.x;
-        let mut tmax = (max.x - ray.origin.x) / ray.dir.x;
-        if tmin > tmax {
-            std::mem::swap(&mut tmin, &mut tmax);
-        }
-
-        let mut tymin = (min.y - ray.origin.y) / ray.dir.y;
-        let mut tymax = (max.y - ray.origin.y) / ray.dir.y;
-        if tymin > tymax {
-            std::mem::swap(&mut tymin, &mut tymax);
-        }
-
-        if tmin > tymax || tymin > tmax {
-            return None;
-        }
-
-        tmin = tmin.max(tymin);
-        tmax = tmax.min(tymax);
-
-        let mut tzmin = (min.z - ray.origin.z) / ray.dir.z;
-        let mut tzmax = (max.z - ray.origin.z) / ray.dir.z;
-        if tzmin > tzmax {
-            std::mem::swap(&mut tzmin, &mut tzmax);
-        }
-
-        if tmin > tzmax || tzmin > tmax {
-            return None;
-        }
-
-        tmin = tmin.max(tzmin);
-        tmax = tmax.min(tzmax);
-
+        let (tmin, tmax) = self.bbox.ray_intersection(ray)?;
         Some(Hit::new(tmin.min(tmax), None))
     }
 

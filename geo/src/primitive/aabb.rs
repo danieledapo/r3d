@@ -1,6 +1,8 @@
-use crate::mat4::{Mat4, Transform};
-use crate::ray::Ray;
-use crate::{Axis, Vec3};
+use crate::{
+    mat4::{Mat4, Transform},
+    ray::Ray,
+    Vec3,
+};
 
 /// An [Axis aligned bounding box][0] useful for approximating the boundary of
 /// shapes.
@@ -130,37 +132,42 @@ impl Aabb {
     }
 
     /// Check whether a `Ray` intersects a `Aabb` and returns the t parameters
-    /// of the first and last point of intersections.
+    /// of the first and last point of intersections. Note that a negative t means
     pub fn ray_intersection(&self, ray: &Ray) -> Option<(f64, f64)> {
-        use std::f64::INFINITY;
+        let max = self.max;
+        let min = self.min;
 
-        let mut tmax = INFINITY;
-        let mut tmin = 0.0_f64;
-
-        for axis in &[Axis::X, Axis::Y, Axis::Z] {
-            if ray.dir[*axis] == 0.0 {
-                if ray.origin[*axis] < self.min[*axis] || ray.origin[*axis] > self.max[*axis] {
-                    return None;
-                }
-                continue;
-            }
-
-            let mut t0 = (self.min[*axis] - ray.origin[*axis]) / ray.dir[*axis];
-            let mut t1 = (self.max[*axis] - ray.origin[*axis]) / ray.dir[*axis];
-
-            if ray.dir[*axis] < 0.0 {
-                std::mem::swap(&mut t0, &mut t1);
-            }
-
-            // cap tmin and tmax to essentially ignore INFINITY, -INFINITY and
-            // NaN.
-            tmin = tmin.max(t0);
-            tmax = tmax.min(t1);
-
-            if tmax < tmin || tmax < 0.0 {
-                return None;
-            }
+        let mut tmin = (min.x - ray.origin.x) / ray.dir.x;
+        let mut tmax = (max.x - ray.origin.x) / ray.dir.x;
+        if tmin > tmax {
+            std::mem::swap(&mut tmin, &mut tmax);
         }
+
+        let mut tymin = (min.y - ray.origin.y) / ray.dir.y;
+        let mut tymax = (max.y - ray.origin.y) / ray.dir.y;
+        if tymin > tymax {
+            std::mem::swap(&mut tymin, &mut tymax);
+        }
+
+        if tmin > tymax || tymin > tmax {
+            return None;
+        }
+
+        tmin = tmin.max(tymin);
+        tmax = tmax.min(tymax);
+
+        let mut tzmin = (min.z - ray.origin.z) / ray.dir.z;
+        let mut tzmax = (max.z - ray.origin.z) / ray.dir.z;
+        if tzmin > tzmax {
+            std::mem::swap(&mut tzmin, &mut tzmax);
+        }
+
+        if tmin > tzmax || tzmin > tmax {
+            return None;
+        }
+
+        tmin = tmin.max(tzmin);
+        tmax = tmax.min(tzmax);
 
         Some((tmin, tmax))
     }
@@ -351,12 +358,13 @@ mod tests {
             Some((1.0, 2.0))
         );
 
-        assert!(aabb
-            .ray_intersection(&Ray::new(
+        assert_eq!(
+            aabb.ray_intersection(&Ray::new(
                 Vec3::new(1.0, 1.0, 1.0),
                 Vec3::new(1.0, 0.0, 1.0)
-            ))
-            .is_none());
+            )),
+            Some((-1.0, -1.0))
+        );
         assert!(aabb
             .ray_intersection(&Ray::new(
                 Vec3::new(-11.0, 6.0, 1.0),
@@ -377,7 +385,7 @@ mod tests {
         let aabb = Aabb::from_iter(vec![Vec3::new(-7.0, -1.0, -3.0), Vec3::zero()]).unwrap();
         assert_eq!(
             aabb.ray_intersection(&Ray::new(Vec3::zero(), Vec3::new(1.0, 1.0, 1.0))),
-            Some((0.0, 0.0))
+            Some((-1.0, 0.0))
         );
     }
 }

@@ -104,12 +104,13 @@ where
                     }
                 }
 
-                Node::Branch { bbox, left, right } => {
-                    if bbox.ray_intersection(&self.ray).is_some() {
+                Node::Branch { bbox, left, right } => match bbox.ray_intersection(&self.ray) {
+                    Some((t1, t2)) if t1 <= t2 && t2 >= 0.0 => {
                         self.stack.push(&right);
                         self.stack.push(&left);
                     }
-                }
+                    _ => {}
+                },
             }
         }
 
