@@ -87,6 +87,9 @@ impl<S: SignedDistanceFunction> Shape for SdfGeometry<S> {
         let jump_size = 0.001;
 
         let (t1, t2) = self.bbox().ray_intersection(ray)?;
+        if t2 < t1 || t2 < 0.0 {
+            return None;
+        }
 
         let mut t = t1.max(0.0001);
         let mut jump = true;
