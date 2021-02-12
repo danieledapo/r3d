@@ -1,4 +1,4 @@
-use geo::{mat4::Mat4, Vec3};
+use geo::{mat4::Mat4, util::opener, Vec3};
 
 use buzz::{
     csg::{self, SignedDistanceFunction},
