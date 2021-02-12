@@ -236,6 +236,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "l"
+version = "0.1.0"
+dependencies = [
+ "geo",
+ "rand 0.8.3",
+ "rayon",
+]
+
+[[package]]
 name = "lazy_static"
 version = "1.4.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"

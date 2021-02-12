@@ -2,4 +2,5 @@ target
 **/*.rs.bk
 *.ppm
 *.png
+*.svg
 !images/buzz/*

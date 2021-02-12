@@ -1,0 +1,12 @@
+[package]
+name = "l"
+version = "0.1.0"
+authors = ["Daniele D'Orazio <d.dorazio96@gmail.com>"]
+edition = "2018"
+
+[dependencies]
+geo = { path = "../geo"}
+rayon = "1.5"
+
+[dev-dependencies]
+rand = "0.8"
