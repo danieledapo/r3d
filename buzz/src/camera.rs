@@ -109,7 +109,7 @@ impl Camera {
                 focal_distance,
             }) => {
                 let focal_point = self.position + rd * focal_distance;
-                let angle = rng.gen::<f64>() * 2.0 * std::f64::consts::PI;
+                let angle = rng.gen::<f64>() * 2.0 * PI;
                 let radius = rng.gen::<f64>() * aperture_radius;
 
                 let p = self.position

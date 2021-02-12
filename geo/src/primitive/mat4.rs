@@ -1,7 +1,12 @@
 use crate::Vec3;
 
+pub trait Transform {
+    fn transform(&self, mat: &Mat4) -> Self;
+}
+
 #[derive(Debug, PartialEq, Clone)]
 pub struct Mat4 {
+    /// Raw coefficients in column-major order.
     pub data: [[f64; 4]; 4],
 }
 
@@ -133,10 +138,6 @@ impl Mat4 {
 
         Vec3::new(dx, dy, dz).normalized()
     }
-}
-
-pub trait Transform {
-    fn transform(&self, mat: &Mat4) -> Self;
 }
 
 impl Transform for Mat4 {
