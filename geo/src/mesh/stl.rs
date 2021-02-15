@@ -1,10 +1,13 @@
 //! This module contains functions to load [binary and ascii STL].
 
-use std::io::{BufRead, Seek, SeekFrom};
+use std::{
+    convert::TryFrom,
+    io::{BufRead, Seek, SeekFrom},
+};
 
 use byteorder::{LittleEndian, ReadBytesExt};
 
-use super::{Error, Result};
+use super::{Error, Mesh, Result};
 use crate::Vec3;
 
 /// A STL format type.
@@ -12,6 +15,14 @@ use crate::Vec3;
 pub enum StlFormat {
     Ascii,
     Binary,
+}
+
+/// STL mesh read from a STL file.
+///
+/// Both binary and ASCII STL files are supported.
+pub struct Stl {
+    header: Vec<u8>,
+    triangles: Vec<StlTriangle>,
 }
 
 /// A STL triangle.
@@ -22,11 +33,47 @@ pub struct StlTriangle {
     pub attributes: Vec<u8>,
 }
 
-/// An `Iterator` over a binary STL.
-#[derive(Debug)]
-pub struct BinaryStlIter<R> {
-    ntriangles: u32,
-    input: R,
+impl Stl {
+    /// Return the header of the STL file that is either the comment or the name
+    /// of the object.
+    pub fn header(&self) -> &[u8] {
+        &self.header
+    }
+
+    /// Try to load a `Stl` mesh from the given reader.
+    ///
+    /// The mesh format is automatically guessed from the contents of the
+    /// reader.
+    pub fn load(mut r: impl BufRead + Seek) -> Result<Self> {
+        let format = guess_stl_format(&mut r)?;
+
+        match format {
+            StlFormat::Ascii => {
+                let mut content = String::new();
+                r.read_to_string(&mut content)?;
+
+                let (header, triangles) = load_ascii_stl(&content)?;
+
+                Ok(Self {
+                    header: header.as_bytes().to_vec(),
+                    triangles,
+                })
+            }
+            StlFormat::Binary => {
+                let (header, triangles) = load_binary_stl(r)?;
+                Ok(Self {
+                    header: header.to_vec(),
+                    triangles,
+                })
+            }
+        }
+    }
+}
+
+impl Mesh for Stl {
+    fn triangles(&self) -> Box<dyn Iterator<Item = [Vec3; 3]> + '_> {
+        Box::new(self.triangles.iter().map(|t| t.positions))
+    }
 }
 
 /// Try to guess the format of a STL by looking at the first bytes. If they're
@@ -50,19 +97,40 @@ pub fn guess_stl_format<R: BufRead + Seek>(r: &mut R) -> Result<StlFormat> {
 /// STL header and an iterator over the triangles of the STL.
 ///
 /// [0]: https://en.wikipedia.org/wiki/STL_(file_format)#Binary_STL
-pub fn load_binary_stl<R: BufRead>(mut r: R) -> Result<([u8; 80], BinaryStlIter<R>)> {
+pub fn load_binary_stl<R: BufRead>(mut r: R) -> Result<([u8; 80], Vec<StlTriangle>)> {
     let mut header = [0; 80];
     r.read_exact(&mut header)?;
 
+    let read_vec3 = |r: &mut R| -> Result<Vec3> {
+        let x = r.read_f32::<LittleEndian>()?;
+        let y = r.read_f32::<LittleEndian>()?;
+        let z = r.read_f32::<LittleEndian>()?;
+
+        Ok(Vec3::new(f64::from(x), f64::from(y), f64::from(z)))
+    };
+
     let ntriangles = r.read_u32::<LittleEndian>()?;
 
-    Ok((
-        header,
-        BinaryStlIter {
-            ntriangles,
-            input: r,
-        },
-    ))
+    let mut triangles = Vec::with_capacity(usize::try_from(ntriangles).unwrap_or(0));
+    for _ in 0..ntriangles {
+        let normal = read_vec3(&mut r)?;
+        let v0 = read_vec3(&mut r)?;
+        let v1 = read_vec3(&mut r)?;
+        let v2 = read_vec3(&mut r)?;
+
+        let attribute_count = r.read_u16::<LittleEndian>()?;
+
+        let mut attributes = vec![0; usize::from(attribute_count)];
+        r.read_exact(&mut attributes)?;
+
+        triangles.push(StlTriangle {
+            attributes,
+            normal,
+            positions: [v0, v1, v2],
+        });
+    }
+
+    Ok((header, triangles))
 }
 
 /// Load a [ASCII STL][0] from a given string. Return a tuple composed of the
@@ -140,62 +208,6 @@ pub fn load_ascii_stl(stl: &str) -> Result<(&str, Vec<StlTriangle>)> {
     Ok((name, tris))
 }
 
-impl<R> Iterator for BinaryStlIter<R>
-where
-    R: BufRead,
-{
-    type Item = Result<StlTriangle>;
-
-    fn next(&mut self) -> Option<Self::Item> {
-        if self.ntriangles == 0 {
-            return None;
-        }
-
-        self.ntriangles -= 1;
-
-        Some(self.read_tri())
-    }
-
-    fn size_hint(&self) -> (usize, Option<usize>) {
-        if u64::from(self.ntriangles) <= usize::max_value() as u64 {
-            (self.ntriangles as usize, Some(self.ntriangles as usize))
-        } else {
-            (0, None)
-        }
-    }
-}
-
-impl<R> BinaryStlIter<R>
-where
-    R: BufRead,
-{
-    fn read_tri(&mut self) -> Result<StlTriangle> {
-        let normal = self.read_vec3()?;
-        let v0 = self.read_vec3()?;
-        let v1 = self.read_vec3()?;
-        let v2 = self.read_vec3()?;
-
-        let attribute_count = self.input.read_u16::<LittleEndian>()?;
-
-        let mut attributes = vec![0; usize::from(attribute_count)];
-        self.input.read_exact(&mut attributes)?;
-
-        Ok(StlTriangle {
-            attributes,
-            normal,
-            positions: [v0, v1, v2],
-        })
-    }
-
-    fn read_vec3(&mut self) -> Result<Vec3> {
-        let x = self.input.read_f32::<LittleEndian>()?;
-        let y = self.input.read_f32::<LittleEndian>()?;
-        let z = self.input.read_f32::<LittleEndian>()?;
-
-        Ok(Vec3::new(f64::from(x), f64::from(y), f64::from(z)))
-    }
-}
-
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -221,8 +233,6 @@ mod tests {
                 0, 0,
             ][..]
         );
-
-        let tris = tris.collect::<Result<Vec<_>>>().unwrap();
 
         assert_eq!(
             tris,

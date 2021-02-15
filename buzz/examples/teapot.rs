@@ -1,6 +1,6 @@
-use std::io::{BufReader, Cursor};
+use std::path::Path;
 
-use geo::{mesh::obj, util::opener, Vec3};
+use geo::{mesh::load_mesh, util::opener, Vec3};
 
 use buzz::*;
 
@@ -14,13 +14,17 @@ pub fn main() -> opener::Result<()> {
         35.0,
     );
 
-    let mesh = obj::load_obj(BufReader::new(Cursor::new(
-        &include_bytes!("../../data/teapot.obj")[..],
-    )))
-    .expect("cannot load teapot obj mesh");
-
     let mut objects = SceneObjects::new();
-    for t in mesh.triangles() {
+
+    let teapot = load_mesh(
+        Path::new(env!("CARGO_MANIFEST_DIR"))
+            .join("..")
+            .join("data")
+            .join("teapot.obj"),
+    )
+    .expect("cannot load teapot.obj");
+
+    for t in teapot.triangles() {
         objects.push(Facet::new(t, &MESH_MATERIAL, true));
     }
 
