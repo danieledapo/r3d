@@ -9,14 +9,17 @@ use geo::{ray::Ray, spatial_index::Intersection, Aabb, Vec3};
 
 use crate::{Camera, Polyline, Scene};
 
-pub fn render(camera: Camera, scene: &Scene) -> Vec<Polyline> {
+pub struct Settings {
+    pub eps: f64,
+}
+
+pub fn render(camera: Camera, scene: &Scene, settings: &Settings) -> Vec<Polyline> {
     // from (-1,-1,-1) to (1,1,1)
     let clip_box = Aabb::cube(Vec3::zero(), 2.0);
-    let eps = 0.001;
 
     let is_visible = |p: Vec3| {
         let d = camera.eye() - p;
-        let ray = Ray::new(p + d * eps, d);
+        let ray = Ray::new(p + d * settings.eps, d);
 
         match scene.intersection(&ray) {
             None => true,
@@ -54,7 +57,7 @@ pub fn render(camera: Camera, scene: &Scene) -> Vec<Polyline> {
                         path = vec![];
                     }
 
-                    l += eps;
+                    l += settings.eps;
                     if l > maxl {
                         break;
                     }
