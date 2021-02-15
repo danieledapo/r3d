@@ -23,11 +23,12 @@ pub fn main() -> opener::Result<()> {
 
     let (_, tris) = stl::load_binary_stl(BufReader::new(Cursor::new(
         &include_bytes!("../../data/suzanne.stl")[..],
-    )))?;
+    )))
+    .expect("cannot load suzanne.stl mesh");
 
     let mut objects = SceneObjects::new();
     for t in tris {
-        let t = t?;
+        let t = t.expect("cannot load suzanne.stl mesh data");
         objects.push(Facet::new(t.positions, &MESH_MATERIAL, true));
     }
 

@@ -1,9 +1,8 @@
-use std::convert::{From, TryFrom};
-use std::io;
-use std::io::BufRead;
-use std::num;
+use std::{convert::TryFrom, io::BufRead};
 
 use crate::Vec3;
+
+use super::{Error, Result};
 
 /// Obj mesh read from an obj file.
 ///
@@ -14,23 +13,6 @@ pub struct Obj {
     comments: Vec<String>,
     vertices: Vec<Vec3>,
     loops: Vec<Vec<isize>>,
-}
-
-/// Result type returned by `load_obj`.
-pub type Result<T> = std::result::Result<T, Error>;
-
-/// Possible errors returned by `load_obj`.
-#[derive(Debug)]
-pub enum Error {
-    /// The obj file was malformed or truncated, therefore it was not possible
-    /// to decode it.
-    BadFormat,
-
-    /// Error while parsing a number.
-    InvalidNumber,
-
-    /// IO error.
-    IoError(io::Error),
 }
 
 /// Try to load an `ObjMesh` from the given reader.
@@ -108,23 +90,5 @@ impl Obj {
 
             Some([get_v(l[0]), get_v(l[1]), get_v(l[2])])
         })
-    }
-}
-
-impl From<io::Error> for Error {
-    fn from(e: io::Error) -> Self {
-        Error::IoError(e)
-    }
-}
-
-impl From<num::ParseFloatError> for Error {
-    fn from(_e: num::ParseFloatError) -> Self {
-        Error::InvalidNumber
-    }
-}
-
-impl From<num::ParseIntError> for Error {
-    fn from(_e: num::ParseIntError) -> Self {
-        Error::InvalidNumber
     }
 }
