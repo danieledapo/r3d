@@ -1,9 +1,10 @@
 //! This module contains functions to load [binary and ascii STL].
 
-use std::io::{BufRead, Result, Seek, SeekFrom};
+use std::io::{BufRead, Seek, SeekFrom};
 
 use byteorder::{LittleEndian, ReadBytesExt};
 
+use super::{Error, Result};
 use crate::Vec3;
 
 /// A STL format type.
@@ -68,61 +69,61 @@ pub fn load_binary_stl<R: BufRead>(mut r: R) -> Result<([u8; 80], BinaryStlIter<
 /// solid name and the triangles of the STL.
 ///
 /// [0]: https://en.wikipedia.org/wiki/STL_(file_format)#ASCII_STL
-pub fn load_ascii_stl(stl: &str) -> Option<(&str, Vec<StlTriangle>)> {
+pub fn load_ascii_stl(stl: &str) -> Result<(&str, Vec<StlTriangle>)> {
     let mut tokens = stl.split_whitespace().peekable();
 
-    if tokens.next()? != "solid" {
-        return None;
+    if tokens.next() != Some("solid") {
+        return Err(Error::BadFormat);
     }
 
-    let name = if *tokens.peek()? != "facet" {
-        tokens.next().unwrap()
-    } else {
-        ""
+    let name = match tokens.peek() {
+        None => return Err(Error::BadFormat),
+        Some(&"facet") => "",
+        Some(_name) => tokens.next().unwrap(),
     };
 
     let mut tris = vec![];
 
     loop {
-        match tokens.next()? {
-            "endsolid" => break,
-            "facet" => (),
-            _ => return None,
+        match tokens.next() {
+            Some("endsolid") => break,
+            Some("facet") => (),
+            _ => return Err(Error::BadFormat),
         };
 
-        if tokens.next()? != "normal" {
-            return None;
+        if tokens.next() != Some("normal") {
+            return Err(Error::BadFormat);
         }
 
-        let nx: f64 = tokens.next()?.parse().ok()?;
-        let ny: f64 = tokens.next()?.parse().ok()?;
-        let nz: f64 = tokens.next()?.parse().ok()?;
+        let nx: f64 = tokens.next().ok_or(Error::BadFormat)?.parse()?;
+        let ny: f64 = tokens.next().ok_or(Error::BadFormat)?.parse()?;
+        let nz: f64 = tokens.next().ok_or(Error::BadFormat)?.parse()?;
 
-        if tokens.next()? != "outer" {
-            return None;
+        if tokens.next() != Some("outer") {
+            return Err(Error::BadFormat);
         }
 
-        if tokens.next()? != "loop" {
-            return None;
+        if tokens.next() != Some("loop") {
+            return Err(Error::BadFormat);
         }
 
         let mut vs = Vec::with_capacity(3);
         loop {
-            match tokens.next()? {
-                "endloop" => break,
-                "vertex" => (),
-                _ => return None,
+            match tokens.next() {
+                Some("endloop") => break,
+                Some("vertex") => (),
+                _ => return Err(Error::BadFormat),
             }
 
-            let vx: f64 = tokens.next()?.parse().ok()?;
-            let vy: f64 = tokens.next()?.parse().ok()?;
-            let vz: f64 = tokens.next()?.parse().ok()?;
+            let vx: f64 = tokens.next().ok_or(Error::BadFormat)?.parse()?;
+            let vy: f64 = tokens.next().ok_or(Error::BadFormat)?.parse()?;
+            let vz: f64 = tokens.next().ok_or(Error::BadFormat)?.parse()?;
 
             vs.push(Vec3::new(vx, vy, vz));
         }
 
         if vs.len() != 3 {
-            return None;
+            return Err(Error::BadFormat);
         }
 
         tris.push(StlTriangle {
@@ -131,12 +132,12 @@ pub fn load_ascii_stl(stl: &str) -> Option<(&str, Vec<StlTriangle>)> {
             attributes: vec![],
         });
 
-        if tokens.next()? != "endfacet" {
-            return None;
+        if tokens.next() != Some("endfacet") {
+            return Err(Error::BadFormat);
         }
     }
 
-    Some((name, tris))
+    Ok((name, tris))
 }
 
 impl<R> Iterator for BinaryStlIter<R>
@@ -197,9 +198,7 @@ where
 
 #[cfg(test)]
 mod tests {
-    use super::{
-        guess_stl_format, load_ascii_stl, load_binary_stl, Result, StlFormat, StlTriangle, Vec3,
-    };
+    use super::*;
 
     use std::io::{BufReader, Cursor};
 
