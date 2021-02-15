@@ -83,7 +83,11 @@ pub fn dump_svg(path: &str, paths: &[Polyline], (width, height): (f64, f64)) -> 
         return Ok(());
     }
 
-    writeln!(f, r#"<svg viewbox="0 0 {} {}">"#, width, height)?;
+    writeln!(
+        f,
+        r#"<svg xmlns="http://www.w3.org/2000/svg" viewbox="0 0 {} {}">"#,
+        width, height
+    )?;
     writeln!(
         f,
         r#"<rect x="0" y="0" width="{}" height="{}" stroke="none" stroke-width="0.01" fill="white"/>"#,
