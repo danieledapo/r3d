@@ -58,6 +58,42 @@ where
         .chain(&self.infinite_objects)
     }
 
+    pub fn bbox_intersections(&self, aabb: Aabb) -> impl Iterator<Item = &T> {
+        let mut stack = vec![];
+        if let Some(n) = self.root.as_ref() {
+            stack.push(n);
+        }
+
+        {
+            let aabb = aabb.clone();
+            std::iter::from_fn(move || {
+                while let Some(n) = stack.pop() {
+                    match n {
+                        Node::Leaf { data } => {
+                            if data.bbox().intersection(&aabb).is_none() {
+                                continue;
+                            }
+                            return Some(data);
+                        }
+                        Node::Branch { left, right, bbox } => {
+                            if bbox.intersection(&aabb).is_some() {
+                                stack.push(&right);
+                                stack.push(&left);
+                            }
+                        }
+                    }
+                }
+
+                None
+            })
+        }
+        .chain(
+            self.infinite_objects
+                .iter()
+                .filter(move |obj| obj.bbox().intersection(&aabb).is_some()),
+        )
+    }
+
     /// Return all the objects that intersect the given ray along with their t
     /// parameter.
     pub fn intersections(&self, ray: &Ray) -> impl Iterator<Item = (&T, T::Intersection)> {
