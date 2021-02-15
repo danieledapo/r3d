@@ -8,7 +8,7 @@ use std::{
     path::Path,
 };
 
-use crate::Vec3;
+use crate::{triangle, Aabb, Vec3};
 
 /// Result type returned by `Mesh::load`.
 pub type Result<T> = std::result::Result<T, Error>;
@@ -36,6 +36,20 @@ pub trait Mesh {
     ///
     /// Any non triangular loops are skipped.
     fn triangles(&self) -> Box<dyn Iterator<Item = [Vec3; 3]> + '_>;
+
+    /// Return the boundinx box of this mesh.
+    fn bbox(&self) -> Option<Aabb> {
+        let mut tris = self.triangles();
+
+        let tri = tris.next()?;
+        let mut aabb = triangle::bbox(tri[0], tri[1], tri[2]);
+
+        for tri in tris {
+            aabb.extend(&tri);
+        }
+
+        Some(aabb)
+    }
 }
 
 /// Load the mesh at `path` trying to guess the format by the file extension.

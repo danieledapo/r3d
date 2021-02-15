@@ -1,5 +1,5 @@
-use crate::ray::Ray;
 use crate::Vec3;
+use crate::{ray::Ray, Aabb};
 
 /// Calculate the area of a triangle. If it is made up by 3
 /// collinear points then the area is 0.
@@ -99,6 +99,14 @@ pub fn ray_intersection((v1, v2, v3): (Vec3, Vec3, Vec3), ray: &Ray) -> Option<f
     } else {
         Some(d)
     }
+}
+
+/// Return the bounding box of a triangle.
+pub fn bbox(a: Vec3, b: Vec3, c: Vec3) -> Aabb {
+    let mut aabb = Aabb::new(a);
+    aabb.expand(&b);
+    aabb.expand(&c);
+    aabb
 }
 
 #[cfg(test)]

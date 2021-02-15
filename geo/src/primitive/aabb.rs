@@ -181,6 +181,14 @@ impl Aabb {
     }
 }
 
+impl<'a> std::iter::Extend<&'a Vec3> for Aabb {
+    fn extend<T: IntoIterator<Item = &'a Vec3>>(&mut self, iter: T) {
+        for v in iter {
+            self.expand(v);
+        }
+    }
+}
+
 impl Transform for Aabb {
     fn transform(&self, m: &Mat4) -> Self {
         // http://dev.theomader.com/transform-bounding-boxes/
