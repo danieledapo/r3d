@@ -1,6 +1,6 @@
-use std::io::{BufReader, Cursor};
+use std::{env, path::Path};
 
-use geo::{mesh::stl, util::opener, Vec3};
+use geo::{mesh::load_mesh, util::opener, Vec3};
 
 use buzz::*;
 
@@ -21,15 +21,18 @@ pub fn main() -> opener::Result<()> {
     //     80.0,
     // );
 
-    let (_, tris) = stl::load_binary_stl(BufReader::new(Cursor::new(
-        &include_bytes!("../../data/suzanne.stl")[..],
-    )))
-    .expect("cannot load suzanne.stl mesh");
-
     let mut objects = SceneObjects::new();
-    for t in tris {
-        let t = t.expect("cannot load suzanne.stl mesh data");
-        objects.push(Facet::new(t.positions, &MESH_MATERIAL, true));
+
+    let suzanne = load_mesh(
+        Path::new(env!("CARGO_MANIFEST_DIR"))
+            .join("..")
+            .join("data")
+            .join("suzanne.stl"),
+    )
+    .expect("cannot load suzanne.stl");
+
+    for t in suzanne.triangles() {
+        objects.push(Facet::new(t, &MESH_MATERIAL, true));
     }
 
     objects.push(SimpleObject::new(
