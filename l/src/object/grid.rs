@@ -1,7 +1,7 @@
 use geo::{
     ray::Ray,
     spatial_index::{Bvh, Intersection, Shape},
-    Aabb, Vec3,
+    Aabb, Triangle, Vec3,
 };
 
 use crate::{Facet, Object, Polyline};
@@ -46,8 +46,8 @@ impl Grid {
                 let d = heightmap[(y + 1) * steps + x + 1];
 
                 bbox.extend(&[a, b, c, d]);
-                facets.push(Facet::new([a, c, b]));
-                facets.push(Facet::new([b, c, d]));
+                facets.push(Facet::new(Triangle::new(a, c, b)));
+                facets.push(Facet::new(Triangle::new(b, c, d)));
             }
         }
 

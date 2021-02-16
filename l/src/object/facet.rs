@@ -1,38 +1,37 @@
-use geo::{spatial_index::Shape, triangle, Vec3};
+use geo::{ray::Ray, spatial_index::Shape, Triangle};
 
 use crate::Object;
 
 #[derive(Debug)]
 pub struct Facet {
-    a: Vec3,
-    b: Vec3,
-    c: Vec3,
+    triangle: Triangle,
 }
 
 impl Facet {
-    pub fn new(triangle: [Vec3; 3]) -> Self {
-        Self {
-            a: triangle[0],
-            b: triangle[1],
-            c: triangle[2],
-        }
+    pub fn new(triangle: Triangle) -> Self {
+        Self { triangle }
     }
 }
 
 impl Shape for Facet {
     type Intersection = f64;
 
-    fn intersection(&self, ray: &geo::ray::Ray) -> Option<Self::Intersection> {
-        triangle::ray_intersection((self.a, self.b, self.c), ray)
+    fn intersection(&self, ray: &Ray) -> Option<Self::Intersection> {
+        self.triangle.intersection(ray)
     }
 
     fn bbox(&self) -> geo::Aabb {
-        triangle::bbox(self.a, self.b, self.c)
+        self.triangle.bbox()
     }
 }
 
 impl Object for Facet {
     fn paths(&self) -> Vec<crate::Polyline> {
-        vec![vec![self.a, self.b, self.c, self.a]]
+        vec![vec![
+            self.triangle.a,
+            self.triangle.b,
+            self.triangle.c,
+            self.triangle.a,
+        ]]
     }
 }

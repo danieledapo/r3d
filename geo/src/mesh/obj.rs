@@ -1,6 +1,6 @@
 use std::{convert::TryFrom, io::BufRead};
 
-use crate::Vec3;
+use crate::{Triangle, Vec3};
 
 use super::{Error, Mesh, Result};
 
@@ -73,7 +73,7 @@ impl Obj {
 }
 
 impl Mesh for Obj {
-    fn triangles(&self) -> Box<dyn Iterator<Item = [Vec3; 3]> + '_> {
+    fn triangles(&self) -> Box<dyn Iterator<Item = Triangle> + '_> {
         Box::new(self.loops.iter().filter_map(move |l| {
             if l.len() != 3 {
                 return None;
@@ -87,7 +87,7 @@ impl Mesh for Obj {
                 }]
             };
 
-            Some([get_v(l[0]), get_v(l[1]), get_v(l[2])])
+            Some(Triangle::new(get_v(l[0]), get_v(l[1]), get_v(l[2])))
         }))
     }
 }
