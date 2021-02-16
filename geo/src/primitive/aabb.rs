@@ -94,9 +94,11 @@ impl Aabb {
     }
 
     /// Expand the bounding box so that it covers another bounding box too.
-    pub fn union(&mut self, aabb: &Aabb) {
-        self.expand(&aabb.min);
-        self.expand(&aabb.max);
+    pub fn union(&self, aabb: &Aabb) -> Self {
+        let mut out = self.clone();
+        out.expand(&aabb.min);
+        out.expand(&aabb.max);
+        out
     }
 
     /// Expand the bounding box so that it covers another bounding box too.
@@ -271,7 +273,7 @@ mod tests {
     #[test]
     fn test_union() {
         let mut aabb = Aabb::new(Vec3::zero());
-        aabb.union(&Aabb::new(Vec3::new(1.0, 0.0, 2.0)));
+        aabb = aabb.union(&Aabb::new(Vec3::new(1.0, 0.0, 2.0)));
 
         assert_eq!(
             aabb,
@@ -281,7 +283,7 @@ mod tests {
             }
         );
 
-        aabb.union(&Aabb::new(Vec3::new(-5.0, -1.0, -3.0)));
+        aabb = aabb.union(&Aabb::new(Vec3::new(-5.0, -1.0, -3.0)));
         assert_eq!(
             aabb,
             Aabb {
