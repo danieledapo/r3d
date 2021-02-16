@@ -27,7 +27,7 @@ pub fn main() -> opener::Result<()> {
     .with_perspective_projection(60.0, 1.0, 0.01, 10000.0);
 
     let paths = render(camera, &scene, &Settings { eps: 0.001 });
-    dump_svg("trex.svg", &paths, (1024.0, 1024.0)).expect("cannot save trex.svg");
+    dump_svg("trex.svg", &paths, SvgSettings::new(2048.0, 2048.0)).expect("cannot save trex.svg");
 
     opener::open("trex.svg")
 }

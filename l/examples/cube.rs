@@ -35,7 +35,7 @@ pub fn main() -> opener::Result<()> {
     .with_perspective_projection(60.0, 1.0, 0.01, 100.0);
 
     let paths = render(camera, &scene, &Settings { eps: 0.001 });
-    dump_svg("cube.svg", &paths, (800.0, 800.0)).expect("cannot save cube.svg");
+    dump_svg("cube.svg", &paths, SvgSettings::new(2048.0, 2048.0)).expect("cannot save cube.svg");
 
     opener::open("cube.svg")
 }
