@@ -33,6 +33,6 @@ impl Shape for Facet {
 
 impl Object for Facet {
     fn paths(&self) -> Vec<crate::Polyline> {
-        vec![vec![self.a, self.b, self.c]]
+        vec![vec![self.a, self.b, self.c, self.a]]
     }
 }

@@ -50,6 +50,7 @@ impl Object for Cube {
                 Vec3::new(x0, y0, z1),
                 Vec3::new(x0, y1, z1),
                 Vec3::new(x0, y1, z0),
+                Vec3::new(x0, y0, z0),
             ],
             // right
             vec![
@@ -57,6 +58,7 @@ impl Object for Cube {
                 Vec3::new(x1, y0, z1),
                 Vec3::new(x1, y1, z1),
                 Vec3::new(x1, y1, z0),
+                Vec3::new(x1, y0, z0),
             ],
             // back
             vec![
@@ -64,6 +66,7 @@ impl Object for Cube {
                 Vec3::new(x1, y0, z0),
                 Vec3::new(x1, y1, z0),
                 Vec3::new(x0, y1, z0),
+                Vec3::new(x0, y0, z0),
             ],
             // front
             vec![
@@ -71,6 +74,7 @@ impl Object for Cube {
                 Vec3::new(x1, y0, z1),
                 Vec3::new(x1, y1, z1),
                 Vec3::new(x0, y1, z1),
+                Vec3::new(x0, y0, z1),
             ],
             // bottom
             vec![
@@ -78,6 +82,7 @@ impl Object for Cube {
                 Vec3::new(x1, y0, z0),
                 Vec3::new(x1, y0, z1),
                 Vec3::new(x0, y0, z1),
+                Vec3::new(x0, y0, z0),
             ],
             // top
             vec![
@@ -85,6 +90,7 @@ impl Object for Cube {
                 Vec3::new(x1, y1, z0),
                 Vec3::new(x1, y1, z1),
                 Vec3::new(x0, y1, z1),
+                Vec3::new(x0, y1, z0),
             ],
         ]
     }
