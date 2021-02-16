@@ -35,7 +35,7 @@ pub fn render(camera: Camera, scene: &Scene, settings: &Settings) -> Vec<Polylin
         .flat_map(|path: &Polyline| {
             let mut out = vec![];
 
-            for (&s, &e) in path.iter().zip(path.iter().cycle().skip(1)) {
+            for (&s, &e) in path.iter().zip(path.iter().skip(1)) {
                 let mut path = vec![];
 
                 let dir = (e - s).normalized();
