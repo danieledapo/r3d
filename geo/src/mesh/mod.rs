@@ -8,7 +8,7 @@ use std::{
     path::Path,
 };
 
-use crate::{triangle, Aabb, Vec3};
+use crate::{spatial_index::Shape, Aabb, Triangle};
 
 /// Result type returned by `Mesh::load`.
 pub type Result<T> = std::result::Result<T, Error>;
@@ -35,17 +35,17 @@ pub trait Mesh {
     /// Return all the triangular loops of the mesh.
     ///
     /// Any non triangular loops are skipped.
-    fn triangles(&self) -> Box<dyn Iterator<Item = [Vec3; 3]> + '_>;
+    fn triangles(&self) -> Box<dyn Iterator<Item = Triangle> + '_>;
 
     /// Return the boundinx box of this mesh.
     fn bbox(&self) -> Option<Aabb> {
         let mut tris = self.triangles();
 
         let tri = tris.next()?;
-        let mut aabb = triangle::bbox(tri[0], tri[1], tri[2]);
+        let mut aabb = tri.bbox();
 
         for tri in tris {
-            aabb.extend(&tri);
+            aabb.extend(&[tri.a, tri.b, tri.c]);
         }
 
         Some(aabb)

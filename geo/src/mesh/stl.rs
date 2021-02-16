@@ -8,7 +8,7 @@ use std::{
 use byteorder::{LittleEndian, ReadBytesExt};
 
 use super::{Error, Mesh, Result};
-use crate::Vec3;
+use crate::{Triangle, Vec3};
 
 /// A STL format type.
 #[derive(Debug, PartialEq, Eq, Clone, Copy)]
@@ -28,7 +28,7 @@ pub struct Stl {
 /// A STL triangle.
 #[derive(Debug, PartialEq)]
 pub struct StlTriangle {
-    pub positions: [Vec3; 3],
+    pub triangle: Triangle,
     pub normal: Vec3,
     pub attributes: Vec<u8>,
 }
@@ -71,8 +71,8 @@ impl Stl {
 }
 
 impl Mesh for Stl {
-    fn triangles(&self) -> Box<dyn Iterator<Item = [Vec3; 3]> + '_> {
-        Box::new(self.triangles.iter().map(|t| t.positions))
+    fn triangles(&self) -> Box<dyn Iterator<Item = Triangle> + '_> {
+        Box::new(self.triangles.iter().map(|t| t.triangle.clone()))
     }
 }
 
@@ -126,7 +126,7 @@ pub fn load_binary_stl<R: BufRead>(mut r: R) -> Result<([u8; 80], Vec<StlTriangl
         triangles.push(StlTriangle {
             attributes,
             normal,
-            positions: [v0, v1, v2],
+            triangle: Triangle::new(v0, v1, v2),
         });
     }
 
@@ -196,7 +196,7 @@ pub fn load_ascii_stl(stl: &str) -> Result<(&str, Vec<StlTriangle>)> {
 
         tris.push(StlTriangle {
             normal: Vec3::new(nx, ny, nz),
-            positions: [vs[0], vs[1], vs[2]],
+            triangle: Triangle::new(vs[0], vs[1], vs[2]),
             attributes: vec![],
         });
 
@@ -240,110 +240,110 @@ mod tests {
                 StlTriangle {
                     attributes: vec![],
                     normal: Vec3::new(-1.0, 0.0, 0.0),
-                    positions: [
+                    triangle: Triangle::new(
                         Vec3::new(-1.0, -1.0, -1.0),
                         Vec3::new(-1.0, -1.0, 1.0),
                         Vec3::new(-1.0, 1.0, 1.0),
-                    ],
+                    ),
                 },
                 StlTriangle {
                     attributes: vec![],
                     normal: Vec3::new(-1.0, 0.0, 0.0),
-                    positions: [
+                    triangle: Triangle::new(
                         Vec3::new(-1.0, 1.0, 1.0),
                         Vec3::new(-1.0, 1.0, -1.0),
                         Vec3::new(-1.0, -1.0, -1.0),
-                    ],
+                    ),
                 },
                 StlTriangle {
                     attributes: vec![],
                     normal: Vec3::new(0.0, 1.0, 0.0),
-                    positions: [
+                    triangle: Triangle::new(
                         Vec3::new(-1.0, 1.0, -1.0),
                         Vec3::new(-1.0, 1.0, 1.0),
                         Vec3::new(1.0, 1.0, 1.0),
-                    ],
+                    ),
                 },
                 StlTriangle {
                     attributes: vec![],
                     normal: Vec3::new(0.0, 1.0, 0.0),
-                    positions: [
+                    triangle: Triangle::new(
                         Vec3::new(1.0, 1.0, 1.0),
                         Vec3::new(1.0, 1.0, -1.0),
                         Vec3::new(-1.0, 1.0, -1.0),
-                    ],
+                    ),
                 },
                 StlTriangle {
                     attributes: vec![],
                     normal: Vec3::new(1.0, 0.0, 0.0),
-                    positions: [
+                    triangle: Triangle::new(
                         Vec3::new(1.0, 1.0, -1.0),
                         Vec3::new(1.0, 1.0, 1.0),
                         Vec3::new(1.0, -1.0, 1.0),
-                    ],
+                    ),
                 },
                 StlTriangle {
                     attributes: vec![],
                     normal: Vec3::new(1.0, 0.0, 0.0),
-                    positions: [
+                    triangle: Triangle::new(
                         Vec3::new(1.0, -1.0, 1.0),
                         Vec3::new(1.0, -1.0, -1.0),
                         Vec3::new(1.0, 1.0, -1.0),
-                    ],
+                    ),
                 },
                 StlTriangle {
                     attributes: vec![],
                     normal: Vec3::new(0.0, -1.0, 0.0),
-                    positions: [
+                    triangle: Triangle::new(
                         Vec3::new(-1.0, -1.0, 1.0),
                         Vec3::new(-1.0, -1.0, -1.0),
                         Vec3::new(1.0, -1.0, -1.0),
-                    ],
+                    ),
                 },
                 StlTriangle {
                     attributes: vec![],
                     normal: Vec3::new(0.0, -1.0, 0.0),
-                    positions: [
+                    triangle: Triangle::new(
                         Vec3::new(1.0, -1.0, -1.0),
                         Vec3::new(1.0, -1.0, 1.0),
                         Vec3::new(-1.0, -1.0, 1.0),
-                    ],
+                    ),
                 },
                 StlTriangle {
                     attributes: vec![],
                     normal: Vec3::new(0.0, 0.0, -1.0),
-                    positions: [
+                    triangle: Triangle::new(
                         Vec3::new(1.0, -1.0, -1.0),
                         Vec3::new(-1.0, -1.0, -1.0),
                         Vec3::new(-1.0, 1.0, -1.0),
-                    ],
+                    ),
                 },
                 StlTriangle {
                     attributes: vec![],
                     normal: Vec3::new(0.0, 0.0, -1.0),
-                    positions: [
+                    triangle: Triangle::new(
                         Vec3::new(-1.0, 1.0, -1.0),
                         Vec3::new(1.0, 1.0, -1.0),
                         Vec3::new(1.0, -1.0, -1.0),
-                    ],
+                    ),
                 },
                 StlTriangle {
                     attributes: vec![],
                     normal: Vec3::new(0.0, 0.0, 1.0),
-                    positions: [
+                    triangle: Triangle::new(
                         Vec3::new(1.0, 1.0, 1.0),
                         Vec3::new(-1.0, 1.0, 1.0),
                         Vec3::new(-1.0, -1.0, 1.0),
-                    ],
+                    ),
                 },
                 StlTriangle {
                     attributes: vec![],
                     normal: Vec3::new(0.0, 0.0, 1.0),
-                    positions: [
+                    triangle: Triangle::new(
                         Vec3::new(-1.0, -1.0, 1.0),
                         Vec3::new(1.0, -1.0, 1.0),
                         Vec3::new(1.0, 1.0, 1.0),
-                    ],
+                    ),
                 },
             ]
         );
@@ -397,38 +397,38 @@ mod tests {
                 StlTriangle {
                     attributes: vec![],
                     normal: Vec3::new(0.0, -1.0, 0.0),
-                    positions: [
+                    triangle: Triangle::new(
                         Vec3::zero(),
                         Vec3::new(1.0, 0.0, 0.0),
                         Vec3::new(0.0, 0.0, 1.0)
-                    ]
+                    )
                 },
                 StlTriangle {
                     attributes: vec![],
                     normal: Vec3::new(0.0, 0.0, -1.0),
-                    positions: [
+                    triangle: Triangle::new(
                         Vec3::zero(),
                         Vec3::new(0.0, 1.0, 0.0),
                         Vec3::new(1.0, 0.0, 0.0)
-                    ]
+                    )
                 },
                 StlTriangle {
                     attributes: vec![],
                     normal: Vec3::new(-1.0, 0.0, 0.0),
-                    positions: [
+                    triangle: Triangle::new(
                         Vec3::zero(),
                         Vec3::new(0.0, 0.0, 1.0),
                         Vec3::new(0.0, 1.0, 0.0)
-                    ]
+                    )
                 },
                 StlTriangle {
                     attributes: vec![],
                     normal: Vec3::new(0.577, 0.577, 0.577),
-                    positions: [
+                    triangle: Triangle::new(
                         Vec3::new(1.0, 0.0, 0.0),
                         Vec3::new(0.0, 1.0, 0.0),
                         Vec3::new(0.0, 0.0, 1.0)
-                    ]
+                    )
                 }
             ]
         )
