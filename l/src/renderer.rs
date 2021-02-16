@@ -19,6 +19,7 @@ pub struct SvgSettings {
     pub stroke_width: f64,
     pub stroke: &'static str,
     pub background: Option<&'static str>,
+    pub digits: usize,
 }
 
 pub fn render(camera: Camera, scene: &Scene, settings: &Settings) -> Vec<Polyline> {
@@ -102,8 +103,11 @@ pub fn dump_svg(path: &str, paths: &[Polyline], settings: SvgSettings) -> io::Re
     if let Some(background) = settings.background {
         writeln!(
             f,
-            r#"<rect x="0" y="0" width="{}" height="{}" stroke="none" fill="{}"/>"#,
-            settings.width, settings.height, background
+            r#"<rect x="0" y="0" width="{:.digits$}" height="{:.digits$}" stroke="none" fill="{}"/>"#,
+            settings.width,
+            settings.height,
+            background,
+            digits = settings.digits
         )?;
     }
 
@@ -117,9 +121,10 @@ pub fn dump_svg(path: &str, paths: &[Polyline], settings: SvgSettings) -> io::Re
             // ignore z value as it is meaningless at this point
             write!(
                 f,
-                "{},{} ",
+                "{:.digits$},{:.digits$} ",
                 (p.x + 1.0) * settings.width / 2.0,
                 (p.y + 1.0) * settings.height / 2.0,
+                digits = settings.digits
             )?;
         }
         writeln!(
@@ -142,6 +147,7 @@ impl SvgSettings {
             stroke_width: 1.0,
             stroke: "black",
             background: Some("white"),
+            digits: 3,
         }
     }
 }
