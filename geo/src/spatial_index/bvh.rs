@@ -228,7 +228,7 @@ where
         if elems.len() > 1 {
             for (_, b) in &elems[1..] {
                 ranges.expand(&b.center());
-                bbox.union(&b);
+                bbox = bbox.union(&b);
             }
         }
 

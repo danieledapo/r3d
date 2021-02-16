@@ -252,9 +252,7 @@ where
     S2: SignedDistanceFunction,
 {
     fn bbox(&self) -> Aabb {
-        let mut b = self.left.bbox();
-        b.union(&self.right.bbox());
-        b
+        self.left.bbox().union(&self.right.bbox())
     }
 
     fn dist(&self, p: &Vec3) -> f64 {
