@@ -35,6 +35,31 @@ impl<'s, T> Bvh<T>
 where
     T: Shape,
 {
+    /// Return the boundinx box for all the elements contained in the `Bvh`.
+    /// Return `None` if empty.
+    pub fn bbox(&self) -> Option<Aabb> {
+        let nodes_bbox = self.root.as_ref().map(|n| match n {
+            Node::Branch { bbox, .. } => bbox.clone(),
+            Node::Leaf { data } => data.bbox(),
+        });
+
+        let infinite_bbox = if self.infinite_objects.is_empty() {
+            None
+        } else {
+            let mut aabb = self.infinite_objects[0].bbox();
+            for o in &self.infinite_objects[1..] {
+                aabb = aabb.union(&o.bbox());
+            }
+            Some(aabb)
+        };
+
+        match (nodes_bbox, infinite_bbox) {
+            (Some(nodes_bbox), Some(infinite_bbox)) => Some(nodes_bbox.union(&infinite_bbox)),
+            (Some(bbox), None) | (None, Some(bbox)) => Some(bbox),
+            (None, None) => None,
+        }
+    }
+
     /// Iterator over all the elements.
     pub fn iter(&self) -> impl Iterator<Item = &T> {
         let mut stack = vec![];
@@ -58,6 +83,7 @@ where
         .chain(&self.infinite_objects)
     }
 
+    /// Returns all the objects that intersect the given `Aabb`.
     pub fn bbox_intersections(&self, aabb: Aabb) -> impl Iterator<Item = &T> {
         let mut stack = vec![];
         if let Some(n) = self.root.as_ref() {
