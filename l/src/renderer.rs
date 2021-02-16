@@ -45,12 +45,12 @@ pub fn render(camera: Camera, scene: &Scene, settings: &Settings) -> Vec<Polylin
         .flat_map(|path: &Polyline| {
             let mut out = vec![];
 
+            let mut cur = vec![];
             for (&s, &e) in path.iter().zip(path.iter().skip(1)) {
-                let mut path = vec![];
-
                 let dir = (e - s).normalized();
                 let maxl = (e - s).norm();
 
+                let prev_size = cur.len();
                 let mut l = 0.0;
                 loop {
                     let p = s + dir * l;
@@ -58,13 +58,13 @@ pub fn render(camera: Camera, scene: &Scene, settings: &Settings) -> Vec<Polylin
                     let projected = camera.project(p);
 
                     if is_visible(p) && clip_box.contains(&projected) {
-                        if path.len() > 1 {
-                            path.pop();
+                        if cur.len() - prev_size > 1 {
+                            cur.pop();
                         }
-                        path.push(projected);
-                    } else if !path.is_empty() {
-                        out.push(path);
-                        path = vec![];
+                        cur.push(projected);
+                    } else if !cur.is_empty() {
+                        out.push(cur);
+                        cur = vec![];
                     }
 
                     l += settings.eps;
@@ -72,10 +72,10 @@ pub fn render(camera: Camera, scene: &Scene, settings: &Settings) -> Vec<Polylin
                         break;
                     }
                 }
+            }
 
-                if !path.is_empty() {
-                    out.push(path);
-                }
+            if !cur.is_empty() {
+                out.push(cur);
             }
 
             out
