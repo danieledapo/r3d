@@ -1,10 +1,11 @@
 use geo::{
+    primitive::polyline::Polyline,
     ray::Ray,
     spatial_index::{Bvh, Intersection, Shape},
     Aabb, Triangle, Vec3,
 };
 
-use crate::{Facet, Object, Polyline};
+use crate::{Facet, Object};
 
 #[derive(Debug)]
 pub struct Grid {
@@ -80,7 +81,11 @@ impl Object for Grid {
         let mut out = Vec::with_capacity(2 * self.steps);
 
         for i in 0..self.steps {
-            out.push(self.heightmap[i * self.steps..(i + 1) * self.steps].to_vec());
+            out.push(
+                self.heightmap[i * self.steps..(i + 1) * self.steps]
+                    .to_vec()
+                    .into(),
+            );
             out.push(
                 (0..self.steps)
                     .map(|j| self.heightmap[j * self.steps + i])

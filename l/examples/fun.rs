@@ -21,7 +21,14 @@ pub fn main() -> opener::Result<()> {
     )
     .with_perspective_projection(30.0, 1.0, 0.01, 100.0);
 
-    let paths = render(camera, &scene, &Settings { eps: 0.01 });
+    let paths = render(
+        camera,
+        &scene,
+        &Settings {
+            chop_eps: 0.01,
+            simplify_eps: 0.001,
+        },
+    );
     dump_svg("fun.svg", &paths, SvgSettings::new(1024.0, 1024.0)).expect("cannot save fun.svg");
 
     opener::open("fun.svg")

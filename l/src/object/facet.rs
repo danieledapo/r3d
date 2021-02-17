@@ -1,4 +1,4 @@
-use geo::{ray::Ray, spatial_index::Shape, Triangle};
+use geo::{primitive::polyline::Polyline, ray::Ray, spatial_index::Shape, Triangle};
 
 use crate::Object;
 
@@ -26,12 +26,13 @@ impl Shape for Facet {
 }
 
 impl Object for Facet {
-    fn paths(&self) -> Vec<crate::Polyline> {
+    fn paths(&self) -> Vec<Polyline> {
         vec![vec![
             self.triangle.a,
             self.triangle.b,
             self.triangle.c,
             self.triangle.a,
-        ]]
+        ]
+        .into()]
     }
 }

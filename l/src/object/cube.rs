@@ -1,6 +1,6 @@
-use geo::{ray::Ray, spatial_index::Shape, Aabb, Vec3};
+use geo::{primitive::polyline::Polyline, ray::Ray, spatial_index::Shape, Aabb, Vec3};
 
-use crate::{Object, Polyline};
+use crate::Object;
 
 #[derive(Debug, Clone)]
 pub struct Cube {
@@ -51,7 +51,8 @@ impl Object for Cube {
                 Vec3::new(x0, y1, z1),
                 Vec3::new(x0, y1, z0),
                 Vec3::new(x0, y0, z0),
-            ],
+            ]
+            .into(),
             // right
             vec![
                 Vec3::new(x1, y0, z0),
@@ -59,7 +60,8 @@ impl Object for Cube {
                 Vec3::new(x1, y1, z1),
                 Vec3::new(x1, y1, z0),
                 Vec3::new(x1, y0, z0),
-            ],
+            ]
+            .into(),
             // back
             vec![
                 Vec3::new(x0, y0, z0),
@@ -67,7 +69,8 @@ impl Object for Cube {
                 Vec3::new(x1, y1, z0),
                 Vec3::new(x0, y1, z0),
                 Vec3::new(x0, y0, z0),
-            ],
+            ]
+            .into(),
             // front
             vec![
                 Vec3::new(x0, y0, z1),
@@ -75,7 +78,8 @@ impl Object for Cube {
                 Vec3::new(x1, y1, z1),
                 Vec3::new(x0, y1, z1),
                 Vec3::new(x0, y0, z1),
-            ],
+            ]
+            .into(),
             // bottom
             vec![
                 Vec3::new(x0, y0, z0),
@@ -83,7 +87,8 @@ impl Object for Cube {
                 Vec3::new(x1, y0, z1),
                 Vec3::new(x0, y0, z1),
                 Vec3::new(x0, y0, z0),
-            ],
+            ]
+            .into(),
             // top
             vec![
                 Vec3::new(x0, y1, z0),
@@ -91,7 +96,8 @@ impl Object for Cube {
                 Vec3::new(x1, y1, z1),
                 Vec3::new(x0, y1, z1),
                 Vec3::new(x0, y1, z0),
-            ],
+            ]
+            .into(),
         ]
     }
 }
