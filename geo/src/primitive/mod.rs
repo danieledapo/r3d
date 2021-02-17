@@ -1,6 +1,7 @@
 pub mod aabb;
 pub mod mat4;
 pub mod plane;
+pub mod polyline;
 pub mod ray;
 pub mod sphere;
 pub mod triangle;
