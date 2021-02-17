@@ -5,16 +5,14 @@ mod renderer;
 use std::sync::Arc;
 
 use geo::{
+    primitive::polyline::Polyline,
     ray::Ray,
     spatial_index::{Bvh, Intersection, Shape},
-    Vec3,
 };
 
 pub use camera::Camera;
 pub use object::*;
 pub use renderer::*;
-
-pub type Polyline = Vec<Vec3>;
 
 pub trait Object: Shape<Intersection = f64> + std::fmt::Debug + Send + Sync {
     /// Polylines that are part of this Object.

@@ -10,7 +10,8 @@ use geo::{ray::Ray, spatial_index::Intersection, Aabb, Vec3};
 use crate::{Camera, Polyline, Scene};
 
 pub struct Settings {
-    pub eps: f64,
+    pub chop_eps: f64,
+    pub simplify_eps: f64,
 }
 
 pub struct SvgSettings {
@@ -29,7 +30,7 @@ pub fn render(camera: Camera, scene: &Scene, settings: &Settings) -> Vec<Polylin
 
     let is_visible = |p: Vec3| {
         let d = camera.eye() - p;
-        let ray = Ray::new(p + d * settings.eps, d);
+        let ray = Ray::new(p + d * settings.chop_eps, d);
 
         match scene.intersection(&ray) {
             None => true,
@@ -45,37 +46,20 @@ pub fn render(camera: Camera, scene: &Scene, settings: &Settings) -> Vec<Polylin
         .flat_map(|path: &Polyline| {
             let mut out = vec![];
 
-            let mut cur = vec![];
-            for (&s, &e) in path.iter().zip(path.iter().skip(1)) {
-                let dir = (e - s).normalized();
-                let maxl = (e - s).norm();
+            let mut cur = Polyline::new();
+            for p in path.chop(settings.chop_eps).iter() {
+                let projected = camera.project(p);
 
-                let prev_size = cur.len();
-                let mut l = 0.0;
-                loop {
-                    let p = s + dir * l;
-
-                    let projected = camera.project(p);
-
-                    if is_visible(p) && clip_box.contains(&projected) {
-                        if cur.len() - prev_size > 1 {
-                            cur.pop();
-                        }
-                        cur.push(projected);
-                    } else if !cur.is_empty() {
-                        out.push(cur);
-                        cur = vec![];
-                    }
-
-                    l += settings.eps;
-                    if l > maxl {
-                        break;
-                    }
+                if is_visible(p) && clip_box.contains(&projected) {
+                    cur.push(projected);
+                } else if !cur.is_empty() {
+                    out.push(cur.simplified(settings.simplify_eps));
+                    cur = Polyline::new();
                 }
             }
 
             if !cur.is_empty() {
-                out.push(cur);
+                out.push(cur.simplified(settings.simplify_eps));
             }
 
             out
@@ -117,7 +101,7 @@ pub fn dump_svg(path: &str, paths: &[Polyline], settings: SvgSettings) -> io::Re
         }
 
         write!(f, r#"<polyline points=""#)?;
-        for p in path {
+        for p in path.iter() {
             // ignore z value as it is meaningless at this point
             write!(
                 f,
