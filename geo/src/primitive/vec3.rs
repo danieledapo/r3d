@@ -122,6 +122,24 @@ impl Vec3 {
     pub fn is_finite(&self) -> bool {
         self.x.is_finite() && self.y.is_finite() && self.z.is_finite()
     }
+
+    /// Return the distance from a `Vec3` to a line segment from `a` to `b`.
+    pub fn segment_dist(&self, v: Vec3, w: Vec3) -> f64 {
+        let l2 = v.dist2(&w);
+        if l2 == 0.0 {
+            return self.dist(&v);
+        }
+
+        let t = (*self - v).dot(&(w - v)) / l2;
+        if t < 0.0 {
+            return self.dist(&v);
+        }
+        if t > 1.0 {
+            return self.dist(&w);
+        }
+
+        (v + (w - v) * t).dist(self)
+    }
 }
 
 macro_rules! impl_num_op {
