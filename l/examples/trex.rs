@@ -13,25 +13,31 @@ pub fn main() -> opener::Result<()> {
     )
     .expect("cannot load t-rex-skull.stl");
 
+    let position = Vec3::new(-30.0, -10.0, 10.0);
+    let target = Vec3::zero();
+
     let scene = Scene::new(
         mesh.triangles()
-            .map(|f| Arc::new(Facet::new(f)) as Arc<dyn Object>)
+            .map(|f| {
+                Arc::new({
+                    let light = f64::max(0.0, f.normal().dot(&(position - target).normalized()));
+                    let lines = f64::floor(20.0 + (1.0 - light) * 10.0) as u16;
+
+                    Facet::new(f).with_hatching_lines(lines)
+                }) as Arc<dyn Object>
+            })
             .collect::<Vec<_>>(),
     );
 
-    let camera = Camera::look_at(
-        Vec3::new(-30.0, -10.0, 10.0),
-        Vec3::zero(),
-        Vec3::new(0.0, 0.0, -1.0),
-    )
-    .with_perspective_projection(60.0, 1.0, 0.01, 10000.0);
+    let camera = Camera::look_at(position, target, Vec3::new(0.0, 0.0, -1.0))
+        .with_perspective_projection(60.0, 1.0, 0.01, 10000.0);
 
     let paths = render(
         camera,
         &scene,
         &Settings {
-            chop_eps: 0.01,
-            simplify_eps: 0.001,
+            chop_eps: 0.001,
+            simplify_eps: 0.01,
         },
     );
     dump_svg("trex.svg", &paths, SvgSettings::new(2048.0, 2048.0)).expect("cannot save trex.svg");
