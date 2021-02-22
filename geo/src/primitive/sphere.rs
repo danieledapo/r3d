@@ -6,9 +6,9 @@ use crate::{Aabb, Vec3};
 pub fn ray_intersection(center: Vec3, radius: f64, ray: &Ray) -> Option<f64> {
     let oc = ray.origin - center;
 
-    let a = ray.dir.dot(&ray.dir);
-    let b = oc.dot(&ray.dir);
-    let c = oc.dot(&oc) - radius.powi(2);
+    let a = ray.dir.dot(ray.dir);
+    let b = oc.dot(ray.dir);
+    let c = oc.dot(oc) - radius.powi(2);
 
     let discr = b.powi(2) - a * c;
 
@@ -39,7 +39,7 @@ pub fn normal(center: Vec3, p: Vec3) -> Vec3 {
 /// Calculate the bounding box of a sphere.
 pub fn bounding_box(center: Vec3, radius: f64) -> Aabb {
     let mut aabb = Aabb::new(center - radius);
-    aabb.expand(&(center + radius));
+    aabb.expand(center + radius);
 
     aabb
 }
@@ -115,11 +115,11 @@ mod tests {
     #[test]
     fn test_bounding_box() {
         let bbox = bounding_box(Vec3::zero(), 5.0);
-        assert_eq!(bbox.min(), &Vec3::new(-5.0, -5.0, -5.0));
-        assert_eq!(bbox.max(), &Vec3::new(5.0, 5.0, 5.0));
+        assert_eq!(bbox.min(), Vec3::new(-5.0, -5.0, -5.0));
+        assert_eq!(bbox.max(), Vec3::new(5.0, 5.0, 5.0));
 
         let bbox = bounding_box(Vec3::new(1.0, -2.0, 3.0), 10.0);
-        assert_eq!(bbox.min(), &Vec3::new(-9.0, -12.0, -7.0));
-        assert_eq!(bbox.max(), &Vec3::new(11.0, 8.0, 13.0));
+        assert_eq!(bbox.min(), Vec3::new(-9.0, -12.0, -7.0));
+        assert_eq!(bbox.max(), Vec3::new(11.0, 8.0, 13.0));
     }
 }

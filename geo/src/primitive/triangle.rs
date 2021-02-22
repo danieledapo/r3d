@@ -20,7 +20,7 @@ impl Triangle {
         let e0 = self.b - self.a;
         let e1 = self.c - self.a;
 
-        e0.cross(&e1).norm() / 2.0
+        e0.cross(e1).norm() / 2.0
     }
 
     /// Calculate the normal of a triangle.
@@ -28,7 +28,7 @@ impl Triangle {
         let e0 = self.b - self.a;
         let e1 = self.c - self.a;
 
-        e0.cross(&e1).normalized()
+        e0.cross(e1).normalized()
     }
 
     /// Calculate the [centroid][0] of a triangle.
@@ -50,9 +50,9 @@ impl Triangle {
 
         let ep = *p - self.a;
 
-        let dot00 = e0.dot(&e0);
-        let dot01 = e0.dot(&e1);
-        let dot11 = e1.dot(&e1);
+        let dot00 = e0.dot(e0);
+        let dot01 = e0.dot(e1);
+        let dot11 = e1.dot(e1);
 
         let den = dot00 * dot11 - dot01 * dot01;
 
@@ -61,8 +61,8 @@ impl Triangle {
             return None;
         }
 
-        let dot12 = e1.dot(&ep);
-        let dot02 = e0.dot(&ep);
+        let dot12 = e1.dot(ep);
+        let dot02 = e0.dot(ep);
 
         let u = (dot11 * dot02 - dot01 * dot12) / den;
         let v = (dot00 * dot12 - dot01 * dot02) / den;
@@ -121,8 +121,8 @@ impl Shape for Triangle {
     /// Return the bounding box of a triangle.
     fn bbox(&self) -> Aabb {
         let mut aabb = Aabb::new(self.a);
-        aabb.expand(&self.b);
-        aabb.expand(&self.c);
+        aabb.expand(self.b);
+        aabb.expand(self.c);
         aabb
     }
 }

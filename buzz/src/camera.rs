@@ -41,8 +41,8 @@ impl Camera {
     /// [0]: https://en.wikipedia.org/wiki/Viewing_frustum
     pub fn look_at(position: Vec3, target: Vec3, vup: Vec3, fovy: f64) -> Self {
         let w = (target - position).normalized();
-        let u = w.cross(&vup).normalized();
-        let v = u.cross(&w).normalized();
+        let u = w.cross(vup).normalized();
+        let v = u.cross(w).normalized();
 
         let m = 1.0 / (fovy * PI / 360.0).tan();
 

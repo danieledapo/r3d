@@ -73,16 +73,16 @@ pub fn dielectric_bounce(
     let ref_ix;
     let cos;
 
-    if ray.dir.dot(&n) > 0.0 {
+    if ray.dir.dot(n) > 0.0 {
         outward_normal = -n;
         ref_ix = refraction_index;
 
         // cos = ref_ix * ray.dir.dot(&n) / ray.dir.norm();
-        cos = (1.0 - ref_ix.powi(2) * (1.0 - (ray.dir.dot(&n) / ray.dir.norm()).powi(2))).sqrt();
+        cos = (1.0 - ref_ix.powi(2) * (1.0 - (ray.dir.dot(n) / ray.dir.norm()).powi(2))).sqrt();
     } else {
         outward_normal = n;
         ref_ix = 1.0 / refraction_index;
-        cos = -ray.dir.dot(&n) / ray.dir.norm();
+        cos = -ray.dir.dot(n) / ray.dir.norm();
     }
 
     let dir = match Ray::new(ray.dir, outward_normal).refract(ref_ix) {

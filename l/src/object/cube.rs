@@ -36,12 +36,12 @@ impl Object for Cube {
             x: x0,
             y: y0,
             z: z0,
-        } = *self.bbox.min();
+        } = self.bbox.min();
         let Vec3 {
             x: x1,
             y: y1,
             z: z1,
-        } = *self.bbox.max();
+        } = self.bbox.max();
 
         vec![
             // left

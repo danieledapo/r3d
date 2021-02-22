@@ -20,7 +20,7 @@ pub fn main() -> opener::Result<()> {
         mesh.triangles()
             .map(|f| {
                 Arc::new({
-                    let light = f64::max(0.0, f.normal().dot(&(position - target).normalized()));
+                    let light = f64::max(0.0, f.normal().dot((position - target).normalized()));
                     let lines = f64::floor(20.0 + (1.0 - light) * 10.0) as u16;
 
                     Facet::new(f).with_hatching_lines(lines)

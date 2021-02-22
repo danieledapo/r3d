@@ -15,8 +15,8 @@ pub struct Camera {
 impl Camera {
     pub fn look_at(position: Vec3, target: Vec3, vup: Vec3) -> Self {
         let f = (target - position).normalized();
-        let s = f.cross(&vup).normalized();
-        let u = s.cross(&f).normalized();
+        let s = f.cross(vup).normalized();
+        let u = s.cross(f).normalized();
 
         let camera_to_world = Mat4 {
             data: [

@@ -45,7 +45,9 @@ pub trait Mesh {
         let mut aabb = tri.bbox();
 
         for tri in tris {
-            aabb.extend(&[tri.a, tri.b, tri.c]);
+            aabb.expand(tri.a);
+            aabb.expand(tri.b);
+            aabb.expand(tri.c);
         }
 
         Some(aabb)

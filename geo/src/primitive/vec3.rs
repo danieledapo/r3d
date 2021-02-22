@@ -45,12 +45,12 @@ impl Vec3 {
     }
 
     /// Calculate the distance between two `Vec3`.
-    pub fn dist(&self, other: &Vec3) -> f64 {
+    pub fn dist(&self, other: Vec3) -> f64 {
         self.dist2(other).sqrt()
     }
 
     /// Calculate the squared distance between two `Vec3`.
-    pub fn dist2(&self, other: &Vec3) -> f64 {
+    pub fn dist2(&self, other: Vec3) -> f64 {
         (self.x - other.x).powi(2) + (self.y - other.y).powi(2) + (self.z - other.z).powi(2)
     }
 
@@ -79,14 +79,14 @@ impl Vec3 {
     /// Calculate the [dot product][0] between two `Vec3`.
     ///
     /// [0]: https://en.wikipedia.org/wiki/Dot_product
-    pub fn dot(&self, v: &Vec3) -> f64 {
+    pub fn dot(&self, v: Vec3) -> f64 {
         self.x * v.x + self.y * v.y + self.z * v.z
     }
 
     /// Calculate the [cross product][0] between two `Vec3`.
     ///
     /// [0]: https://en.wikipedia.org/wiki/Cross_product
-    pub fn cross(&self, v: &Vec3) -> Self {
+    pub fn cross(&self, v: Vec3) -> Self {
         Vec3::new(
             self.y * v.z - self.z * v.y,
             self.z * v.x - self.x * v.z,
@@ -125,20 +125,20 @@ impl Vec3 {
 
     /// Return the distance from a `Vec3` to a line segment from `a` to `b`.
     pub fn segment_dist(&self, v: Vec3, w: Vec3) -> f64 {
-        let l2 = v.dist2(&w);
+        let l2 = v.dist2(w);
         if l2 == 0.0 {
-            return self.dist(&v);
+            return self.dist(v);
         }
 
-        let t = (*self - v).dot(&(w - v)) / l2;
+        let t = (*self - v).dot(w - v) / l2;
         if t < 0.0 {
-            return self.dist(&v);
+            return self.dist(v);
         }
         if t > 1.0 {
-            return self.dist(&w);
+            return self.dist(w);
         }
 
-        (v + (w - v) * t).dist(self)
+        (v + (w - v) * t).dist(*self)
     }
 }
 
@@ -273,8 +273,8 @@ mod tests {
         let o = Vec3::zero();
         let v2 = Vec3::new(3.0, 4.0, 0.0);
 
-        assert_eq!(o.dist(&v2), 5.0);
-        assert_eq!(o.dist2(&v2), 25.0);
+        assert_eq!(o.dist(v2), 5.0);
+        assert_eq!(o.dist2(v2), 25.0);
     }
 
     #[test]
@@ -292,11 +292,11 @@ mod tests {
 
     #[test]
     fn test_dot() {
-        assert_eq!(Vec3::zero().dot(&Vec3::new(-5.0, 3.0, 1.0)), 0.0);
-        assert_eq!(Vec3::new(-5.0, 3.0, 1.0).dot(&Vec3::zero()), 0.0);
+        assert_eq!(Vec3::zero().dot(Vec3::new(-5.0, 3.0, 1.0)), 0.0);
+        assert_eq!(Vec3::new(-5.0, 3.0, 1.0).dot(Vec3::zero()), 0.0);
 
         assert_eq!(
-            Vec3::new(1.0, 3.0, -5.0).dot(&Vec3::new(4.0, -2.0, -1.0)),
+            Vec3::new(1.0, 3.0, -5.0).dot(Vec3::new(4.0, -2.0, -1.0)),
             3.0
         );
     }
@@ -307,8 +307,8 @@ mod tests {
         let up = Vec3::new(0.0, 1.0, 0.0);
         let forward = Vec3::new(0.0, 0.0, 1.0);
 
-        assert_eq!(right.cross(&up), forward);
-        assert_eq!(up.cross(&right), -forward);
+        assert_eq!(right.cross(up), forward);
+        assert_eq!(up.cross(right), -forward);
     }
 
     #[test]

@@ -158,7 +158,7 @@ impl Cube {
 impl SignedDistanceFunction for Cube {
     fn bbox(&self) -> Aabb {
         let d = self.size / 2.0;
-        Aabb::new(-d).expanded(&d)
+        Aabb::new(-d).expanded(d)
     }
 
     fn dist(&self, p: &Vec3) -> f64 {
@@ -195,7 +195,7 @@ impl Cylinder {
 
 impl SignedDistanceFunction for Cylinder {
     fn bbox(&self) -> Aabb {
-        Aabb::new(Vec3::new(-self.radius, -self.height / 2.0, -self.radius)).expanded(&Vec3::new(
+        Aabb::new(Vec3::new(-self.radius, -self.height / 2.0, -self.radius)).expanded(Vec3::new(
             self.radius,
             self.height / 2.0,
             self.radius,

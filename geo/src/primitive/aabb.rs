@@ -39,20 +39,20 @@ impl Aabb {
         let mut aabb = Aabb::new(p0);
 
         for v in it {
-            aabb.expand(&v);
+            aabb.expand(v);
         }
 
         Some(aabb)
     }
 
     /// Return the lowest point of the bounding box.
-    pub fn min(&self) -> &Vec3 {
-        &self.min
+    pub fn min(&self) -> Vec3 {
+        self.min
     }
 
     /// Return the highest point of the bounding box.
-    pub fn max(&self) -> &Vec3 {
-        &self.max
+    pub fn max(&self) -> Vec3 {
+        self.max
     }
 
     /// Return the center of the bounding box.
@@ -66,7 +66,7 @@ impl Aabb {
     }
 
     /// Expand the bounding box so that it covers the given point too.
-    pub fn expand(&mut self, p: &Vec3) {
+    pub fn expand(&mut self, p: Vec3) {
         if p.x < self.min.x {
             self.min.x = p.x;
         } else if p.x > self.max.x {
@@ -88,7 +88,7 @@ impl Aabb {
 
     /// Consume the bounding box and return a new one that also covers the
     /// passed point.
-    pub fn expanded(mut self, p: &Vec3) -> Self {
+    pub fn expanded(mut self, p: Vec3) -> Self {
         self.expand(p);
         self
     }
@@ -96,8 +96,8 @@ impl Aabb {
     /// Expand the bounding box so that it covers another bounding box too.
     pub fn union(&self, aabb: &Aabb) -> Self {
         let mut out = self.clone();
-        out.expand(&aabb.min);
-        out.expand(&aabb.max);
+        out.expand(aabb.min);
+        out.expand(aabb.max);
         out
     }
 
@@ -177,14 +177,14 @@ impl Aabb {
     /// Get the bounding sphere of this `Aabb`.
     pub fn bounding_sphere(&self) -> (Vec3, f64) {
         let c = self.center();
-        let r = self.min().dist(&c);
+        let r = self.min().dist(c);
 
         (c, r)
     }
 }
 
-impl<'a> std::iter::Extend<&'a Vec3> for Aabb {
-    fn extend<T: IntoIterator<Item = &'a Vec3>>(&mut self, iter: T) {
+impl std::iter::Extend<Vec3> for Aabb {
+    fn extend<T: IntoIterator<Item = Vec3>>(&mut self, iter: T) {
         for v in iter {
             self.expand(v);
         }
@@ -206,9 +206,9 @@ impl Transform for Aabb {
         let za = b * self.min.z;
         let zb = b * self.max.z;
 
-        let Aabb { min: xa, max: xb } = Aabb::new(xa).expanded(&xb);
-        let Aabb { min: ya, max: yb } = Aabb::new(ya).expanded(&yb);
-        let Aabb { min: za, max: zb } = Aabb::new(za).expanded(&zb);
+        let Aabb { min: xa, max: xb } = Aabb::new(xa).expanded(xb);
+        let Aabb { min: ya, max: yb } = Aabb::new(ya).expanded(yb);
+        let Aabb { min: za, max: zb } = Aabb::new(za).expanded(zb);
 
         Aabb {
             min: xa + ya + za + t,
@@ -225,18 +225,18 @@ mod tests {
     fn test_basic_operations() {
         let mut aabb = Aabb::new(Vec3::zero());
 
-        assert_eq!(aabb.min(), &Vec3::zero());
-        assert_eq!(aabb.max(), &Vec3::zero());
+        assert_eq!(aabb.min(), Vec3::zero());
+        assert_eq!(aabb.max(), Vec3::zero());
         assert_eq!(aabb.center(), Vec3::zero());
 
-        aabb.expand(&Vec3::new(-2.0, 0.0, 1.0));
-        assert_eq!(aabb.min(), &Vec3::new(-2.0, 0.0, 0.0),);
-        assert_eq!(aabb.max(), &Vec3::new(0.0, 0.0, 1.0));
+        aabb.expand(Vec3::new(-2.0, 0.0, 1.0));
+        assert_eq!(aabb.min(), Vec3::new(-2.0, 0.0, 0.0),);
+        assert_eq!(aabb.max(), Vec3::new(0.0, 0.0, 1.0));
         assert_eq!(aabb.center(), Vec3::new(-1.0, 0.0, 0.5));
 
-        aabb.expand(&Vec3::new(8.0, 8.0, -5.0));
-        assert_eq!(aabb.min(), &Vec3::new(-2.0, 0.0, -5.0));
-        assert_eq!(aabb.max(), &Vec3::new(8.0, 8.0, 1.0));
+        aabb.expand(Vec3::new(8.0, 8.0, -5.0));
+        assert_eq!(aabb.min(), Vec3::new(-2.0, 0.0, -5.0));
+        assert_eq!(aabb.max(), Vec3::new(8.0, 8.0, 1.0));
         assert_eq!(aabb.center(), Vec3::new(3.0, 4.0, -2.0));
     }
 
@@ -297,7 +297,7 @@ mod tests {
     fn test_intersection() {
         let mut aabb = Aabb::new(Vec3::zero());
         assert_eq!(aabb.intersection(&aabb), Some(aabb.clone()));
-        aabb.expand(&Vec3::new(10.0, 20.0, 10.0));
+        aabb.expand(Vec3::new(10.0, 20.0, 10.0));
 
         assert_eq!(
             aabb.intersection(&Aabb::cube(Vec3::new(5.0, 10.0, 5.0), 6.0)),
