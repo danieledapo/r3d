@@ -72,17 +72,16 @@ pub fn dump_svg(path: &str, paths: &[Polyline], settings: SvgSettings) -> io::Re
     let f = File::create(path)?;
     let mut f = BufWriter::new(f);
 
-    writeln!(f, r#"<?xml version="1.0" encoding="UTF-8"?>"#)?;
-
-    if paths.is_empty() {
-        return Ok(());
-    }
-
     writeln!(
         f,
-        r#"<svg xmlns="http://www.w3.org/2000/svg" viewbox="0 0 {} {}">"#,
+        r#"<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewbox="0 0 {} {}">"#,
         settings.width, settings.height
     )?;
+
+    if paths.is_empty() {
+        return writeln!(f, "</svg>");
+    }
 
     if let Some(background) = settings.background {
         writeln!(
@@ -94,6 +93,15 @@ pub fn dump_svg(path: &str, paths: &[Polyline], settings: SvgSettings) -> io::Re
             digits = settings.digits
         )?;
     }
+
+    // all the lines share the same attributes hence using a group allows to
+    // save a lot of space in the final SVG given that such attributes are not
+    // repeated.
+    writeln!(
+        f,
+        r#"<g stroke="{}" stroke-width="{}" fill="none" >"#,
+        settings.stroke, settings.stroke_width
+    )?;
 
     for path in paths {
         if path.is_empty() {
@@ -111,14 +119,10 @@ pub fn dump_svg(path: &str, paths: &[Polyline], settings: SvgSettings) -> io::Re
                 digits = settings.digits
             )?;
         }
-        writeln!(
-            f,
-            r#"" fill="none" stroke="{}" stroke-width="{}" />"#,
-            settings.stroke, settings.stroke_width
-        )?;
+        writeln!(f, r#"" />"#)?;
     }
 
-    writeln!(f, "</svg>")?;
+    writeln!(f, "</g>\n</svg>")?;
 
     Ok(())
 }
