@@ -30,7 +30,7 @@ pub fn main() -> opener::Result<()> {
     for mut s in spheres {
         let Vec3 { x: w, y: h, z: d } = bbox.dimensions();
 
-        s.center = (s.center - *bbox.min()) / bbox.dimensions() * 2.0 - 1.0;
+        s.center = (s.center - bbox.min()) / bbox.dimensions() * 2.0 - 1.0;
         s.radius /= w.min(h).min(d);
 
         let c = Vec3::lerp(

@@ -58,7 +58,7 @@ impl Shape for CylinderGeometry {
     }
 
     fn bbox(&self) -> Aabb {
-        Aabb::new(Vec3::new(-self.radius, -self.radius, self.zmin)).expanded(&Vec3::new(
+        Aabb::new(Vec3::new(-self.radius, -self.radius, self.zmin)).expanded(Vec3::new(
             self.radius,
             self.radius,
             self.zmax,

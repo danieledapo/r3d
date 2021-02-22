@@ -35,6 +35,14 @@ impl Polyline {
         self.points.iter().cloned()
     }
 
+    pub fn norm(&self) -> f64 {
+        self.points
+            .iter()
+            .zip(self.points.iter().skip(1))
+            .map(|(p0, p1)| p0.dist(*p1))
+            .sum()
+    }
+
     /// Return a new Polyline where every point is `eps` distance from the
     /// previous point.
     pub fn chop(&self, eps: f64) -> Self {

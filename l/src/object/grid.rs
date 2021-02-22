@@ -46,7 +46,11 @@ impl Grid {
                 let c = heightmap[(y + 1) * steps + x];
                 let d = heightmap[(y + 1) * steps + x + 1];
 
-                bbox.extend(&[a, b, c, d]);
+                bbox.expand(a);
+                bbox.expand(b);
+                bbox.expand(c);
+                bbox.expand(d);
+
                 facets.push(Facet::new(Triangle::new(a, c, b)));
                 facets.push(Facet::new(Triangle::new(b, c, d)));
             }

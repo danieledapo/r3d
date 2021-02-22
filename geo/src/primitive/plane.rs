@@ -5,19 +5,19 @@ use crate::{Aabb, Vec3};
 pub fn bbox() -> Aabb {
     use std::f64::{INFINITY, NEG_INFINITY};
 
-    Aabb::new(Vec3::replicate(NEG_INFINITY)).expanded(&Vec3::replicate(INFINITY))
+    Aabb::new(Vec3::replicate(NEG_INFINITY)).expanded(Vec3::replicate(INFINITY))
 }
 
 /// Calculate the intersection between an infinite plane defined by a point and
 /// a normal. The t parameter is returned if an intersection is found.
 pub fn intersection(origin: Vec3, normal: Vec3, ray: &Ray) -> Option<f64> {
-    let d = normal.dot(&ray.dir);
+    let d = normal.dot(ray.dir);
     if d.abs() < 1e-6 {
         return None;
     }
 
     let a = origin - ray.origin;
-    let t = a.dot(&normal) / d;
+    let t = a.dot(normal) / d;
     if t < 1e-6 {
         return None;
     }

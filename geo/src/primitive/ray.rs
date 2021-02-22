@@ -57,7 +57,7 @@ impl Ray {
 
     /// Reflect this `Ray` and return the reflected direction.
     pub fn reflect(&self) -> Vec3 {
-        self.origin - self.dir * self.origin.dot(&self.dir) * 2.0
+        self.origin - self.dir * self.origin.dot(self.dir) * 2.0
     }
 
     /// Try to refract this ray using [Snell's law][0] given a refractive index.
@@ -65,7 +65,7 @@ impl Ray {
     /// [0]: https://en.wikipedia.org/wiki/Snell%27s_law
     pub fn refract(&self, refraction_index: f64) -> Option<Vec3> {
         let uv = self.origin.normalized();
-        let dt = uv.dot(&self.dir);
+        let dt = uv.dot(self.dir);
         let discriminant = 1.0 - refraction_index.powi(2) * (1.0 - dt.powi(2));
 
         if discriminant >= 0.0 {

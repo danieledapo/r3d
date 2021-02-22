@@ -370,9 +370,9 @@ mod tests {
     fn test_best_partitioning() {
         assert_eq!(
             best_partitioning(&[
-                Aabb::new(Vec3::new(5.0, 0.0, 0.0)).expanded(&Vec3::new(10.0, 10.0, 10.0)),
-                Aabb::new(Vec3::new(1.0, 2.0, 3.0)).expanded(&Vec3::new(7.0, 2.0, 7.0)),
-                Aabb::new(Vec3::new(-1.0, -2.0, 3.0)).expanded(&Vec3::new(1.0, 1.0, 3.0)),
+                Aabb::new(Vec3::new(5.0, 0.0, 0.0)).expanded(Vec3::new(10.0, 10.0, 10.0)),
+                Aabb::new(Vec3::new(1.0, 2.0, 3.0)).expanded(Vec3::new(7.0, 2.0, 7.0)),
+                Aabb::new(Vec3::new(-1.0, -2.0, 3.0)).expanded(Vec3::new(1.0, 1.0, 3.0)),
             ]),
             Some((Axis::X, 4.0))
         );
@@ -498,23 +498,23 @@ mod tests {
     fn test_best_partitioning_no_better() {
         let bboxes = vec![
             Aabb::new(Vec3::new(-0.1640625, -0.6953125, -0.9453125))
-                .expanded(&Vec3::new(0.0, -0.6328125, -0.8828125)),
+                .expanded(Vec3::new(0.0, -0.6328125, -0.8828125)),
             Aabb::new(Vec3::new(-0.1640625, -0.7109375, -0.9296875))
-                .expanded(&Vec3::new(-0.0625, -0.6328125, -0.8359375)),
+                .expanded(Vec3::new(-0.0625, -0.6328125, -0.8359375)),
             Aabb::new(Vec3::new(-0.234375, -0.7109375, -0.9296875))
-                .expanded(&Vec3::new(-0.1171875, -0.6328125, -0.8359375)),
+                .expanded(Vec3::new(-0.1171875, -0.6328125, -0.8359375)),
             Aabb::new(Vec3::new(-0.234375, -0.734375, -0.9140625))
-                .expanded(&Vec3::new(-0.109375, -0.6328125, -0.71875)),
+                .expanded(Vec3::new(-0.109375, -0.6328125, -0.71875)),
             Aabb::new(Vec3::new(-0.265625, -0.734375, -0.9140625))
-                .expanded(&Vec3::new(-0.109375, -0.6328125, -0.71875)),
+                .expanded(Vec3::new(-0.109375, -0.6328125, -0.71875)),
             Aabb::new(Vec3::new(-0.265625, -0.734375, -0.8203125))
-                .expanded(&Vec3::new(-0.109375, -0.6640625, -0.703125)),
+                .expanded(Vec3::new(-0.109375, -0.6640625, -0.703125)),
             Aabb::new(Vec3::new(-0.1171875, -0.734375, -0.8359375))
-                .expanded(&Vec3::new(-0.09375, -0.7109375, -0.71875)),
+                .expanded(Vec3::new(-0.09375, -0.7109375, -0.71875)),
             Aabb::new(Vec3::new(-0.1171875, -0.7265625, -0.8359375))
-                .expanded(&Vec3::new(-0.09375, -0.7109375, -0.7421875)),
+                .expanded(Vec3::new(-0.09375, -0.7109375, -0.7421875)),
             Aabb::new(Vec3::new(-0.1171875, -0.7109375, -0.8828125))
-                .expanded(&Vec3::new(-0.0625, -0.6953125, -0.8203125)),
+                .expanded(Vec3::new(-0.0625, -0.6953125, -0.8203125)),
         ];
 
         assert!(best_partitioning(&bboxes).is_none());

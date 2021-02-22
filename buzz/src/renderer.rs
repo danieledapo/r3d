@@ -182,7 +182,7 @@ fn sample_material(
         Material::Metal { albedo, fuzziness } => {
             let r = metal_bounce(ray, intersection, n, fuzziness, rng);
 
-            if r.dir.dot(&n) < 0.0 {
+            if r.dir.dot(n) < 0.0 {
                 return Vec3::zero();
             }
 
@@ -218,8 +218,8 @@ fn sample_light(
 
             if x.powi(2) + y.powi(2) <= 1.0 {
                 let l = (light_pos - ray.origin).normalized();
-                let u = l.cross(&Vec3::random_unit(rng)).normalized();
-                let v = l.cross(&u);
+                let u = l.cross(Vec3::random_unit(rng)).normalized();
+                let v = l.cross(u);
 
                 break light_pos + (u * (x * light_radius)) + (v * (y * light_radius));
             }
@@ -230,7 +230,7 @@ fn sample_light(
 
     // if `light_ray` goes in the opposite direction wrt `n` then it doesn't
     // reach the light for sure
-    let diffuse = light_ray.dir.dot(&n);
+    let diffuse = light_ray.dir.dot(n);
     if diffuse <= 0.0 {
         return Vec3::zero();
     }
