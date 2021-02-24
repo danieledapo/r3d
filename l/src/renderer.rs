@@ -103,6 +103,11 @@ pub fn dump_svg(path: &str, paths: &[Polyline], settings: SvgSettings) -> io::Re
         settings.stroke, settings.stroke_width
     )?;
 
+    // subtract the stroke width from the available dimensions so that the
+    // rendered lines are all inside the requested dimensions
+    let w2 = (settings.width - settings.stroke_width) / 2.0;
+    let h2 = (settings.height - settings.stroke_width) / 2.0;
+
     for path in paths {
         if path.is_empty() {
             continue;
@@ -110,12 +115,13 @@ pub fn dump_svg(path: &str, paths: &[Polyline], settings: SvgSettings) -> io::Re
 
         write!(f, r#"<polyline points=""#)?;
         for p in path.iter() {
-            // ignore z value as it is meaningless at this point
+            // ignore z value as it is meaningless at this point given that the
+            // 3d point has already been projected to a 2d point
             write!(
                 f,
                 "{:.digits$},{:.digits$} ",
-                (p.x + 1.0) * settings.width / 2.0,
-                (p.y + 1.0) * settings.height / 2.0,
+                (p.x + 1.0) * w2,
+                (p.y + 1.0) * h2,
                 digits = settings.digits
             )?;
         }
