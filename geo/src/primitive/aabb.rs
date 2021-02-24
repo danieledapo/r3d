@@ -24,10 +24,15 @@ impl Aabb {
     /// Create a bounding box that covers the cube centered at `center` with a
     /// given `size`.
     pub fn cube(center: Vec3, size: f64) -> Self {
-        Aabb {
-            min: center - Vec3::replicate(size / 2.0),
-            max: center + Vec3::replicate(size / 2.0),
-        }
+        Self::with_dimensions(center - size / 2.0, Vec3::replicate(size))
+    }
+
+    /// Create a bounding box that starts at th given min point with the given
+    /// dimensions.
+    pub fn with_dimensions(min: Vec3, dim: Vec3) -> Self {
+        let mut aabb = Self::new(min);
+        aabb.expand(min + dim);
+        aabb
     }
 
     /// Build a bounding box that covers all the points in the given iterator.
