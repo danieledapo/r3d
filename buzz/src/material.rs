@@ -32,7 +32,7 @@ impl Material {
     }
 
     /// Clear materials like glass and diamond are of type Dielectric and are
-    /// identified by a refracion index. For example, glass has a refraction
+    /// identified by a refraction index. For example, glass has a refraction
     /// index in [1.3, 1.7] while diamond is 2.4.
     pub const fn dielectric(refraction_index: f64) -> Self {
         Material::Dielectric { refraction_index }
@@ -45,10 +45,22 @@ impl Material {
     }
 }
 
+/// Calculate the bouncing of a ray coming to `intersection` on a Lambertian
+/// material.
+///
+/// To calculate the `Ray` the normal at the `intersection` is required
+/// alongside a RNG to slightly perturb the ray.
 pub fn lambertian_bounce(intersection: Vec3, n: Vec3, rng: &mut impl Rng) -> Ray {
     Ray::new(intersection, n + Vec3::random_unit(rng))
 }
 
+/// Calculate the bouncing of a ray coming to `intersection` on a metallic
+/// material.
+///
+/// To calculate the `Ray` the normal at the `intersection` is required
+/// alongside the `fuzziness` of the metallic material.
+///
+/// Lastly, a RNG to slightly perturb the ray.
 pub fn metal_bounce(
     ray: &Ray,
     intersection: Vec3,
@@ -62,6 +74,13 @@ pub fn metal_bounce(
     )
 }
 
+/// Calculate the bouncing of a ray coming to `intersection` on a dielectric
+/// material.
+///
+/// To calculate the `Ray` the normal at the `intersection` is required
+/// alongside the `refraction_index` of the dielectric material.
+///
+/// Lastly, a RNG to slightly perturb the ray.
 pub fn dielectric_bounce(
     ray: &Ray,
     intersection: Vec3,

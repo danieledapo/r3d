@@ -36,7 +36,7 @@ impl Camera {
     /// degrees to know how much space it can see. Lastly it needs a vector
     /// `vup` that represents the up axis to properly orient the camera.
     ///
-    /// These paremeters define the [viewing frustrum][0] of the camera.
+    /// These parameters define the [viewing frustum][0] of the camera.
     ///
     /// [0]: https://en.wikipedia.org/wiki/Viewing_frustum
     pub fn look_at(position: Vec3, target: Vec3, vup: Vec3, fovy: f64) -> Self {

@@ -24,13 +24,15 @@ pub trait Object: Shape<Intersection = Hit> + Surface + Sync + Send {
     fn set_surface_id(&mut self, id: usize);
 }
 
+/// A `Surface` is an object that can be shaded.
 pub trait Surface: std::fmt::Debug {
     /// Calculate the normal for the given point `p`. This method should never
     /// be called if the `Surface` does not intersect it.
     fn normal_at(&self, p: Vec3) -> Vec3;
 }
 
-/// An `Hit` represents an intersection between a `Ray` and the shapes in a `Scene`.
+/// An `Hit` represents an intersection between a `Ray` and the shapes in a
+/// `Scene`.
 #[derive(Debug)]
 pub struct Hit {
     /// `t` parameter wrt the `Ray` that generated this `Hit`
