@@ -58,8 +58,8 @@ pub fn render(camera: &Camera, scene: &Scene, config: &RenderConfig) -> image::R
     img
 }
 
-/// Render a `Scene` from a `Camera` to a new `RgbImage` of the given
-/// dimensions concurrently.
+/// Render a `Scene` from a `Camera` to a new `RgbImage` of the given dimensions
+/// concurrently.
 pub fn parallel_render(camera: &Camera, scene: &Scene, config: &RenderConfig) -> image::RgbImage {
     let lights = if config.direct_lighting {
         scene.lights().collect::<Vec<_>>()
@@ -115,7 +115,7 @@ pub fn render_pixel(
     ])
 }
 
-pub fn sample(
+fn sample(
     scene: &Scene,
     lights: &[&dyn Object],
     ray: &Ray,

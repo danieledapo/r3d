@@ -67,6 +67,7 @@ impl Scene {
             .map(|(s, t)| (s.as_ref(), t))
     }
 
+    /// Get the `Surface` with the given id.
     pub fn surface(&self, id: usize) -> &dyn Object {
         self.objects[id].as_ref()
     }
