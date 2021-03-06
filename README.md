@@ -15,17 +15,17 @@ and render 3D objects using the Constructive Solid Geometry approach.
 It has been heavily inspired by
 https://github.com/petershirley/raytracinginoneweekend.
 
-To run yourself some of the examples:
-
-```bash
-$ cargo run --release --example hello
-$ cargo run --release --example suzanne
-$ cargo run --release --example rtiw-cover
-$ cargo run --release --example csg
-```
-
-
 ![hello](images/buzz/hello.png)
 ![ray-tracing-in-a-weekend-cover](images/buzz/ray-tracing-in-a-weekend-cover.png)
 ![suzanne](images/buzz/suzanne.png)
 ![csg](images/buzz/csg.png)
+
+## L, the line renderer
+
+`l` is a simple line renderer that is able to render lines lying on 3D objects
+with hidden line removal. It supports very basic geometries like cubes, but also
+functions and triangle meshes.
+
+![trex](images/l/trex.png)
+![skyscrapers](images/l/skyscrapers.png)
+![fun](images/l/fun.png)
