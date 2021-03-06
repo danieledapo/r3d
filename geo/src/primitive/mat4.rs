@@ -1,9 +1,14 @@
 use crate::Vec3;
 
+/// Trait for geometric objects that can be transformed by a `Mat4` affine
+/// matrix.
 pub trait Transform {
     fn transform(&self, mat: &Mat4) -> Self;
 }
 
+/// A 3D [affine transformation][0] matrix in homogeneous coordinates.
+///
+/// [0]: https://en.wikipedia.org/wiki/Affine_transformation
 #[derive(Debug, PartialEq, Clone)]
 pub struct Mat4 {
     /// Raw coefficients in column-major order.
@@ -11,6 +16,7 @@ pub struct Mat4 {
 }
 
 impl Mat4 {
+    /// Create the identity transformation matrix.
     pub fn identity() -> Self {
         Mat4 {
             data: [
@@ -22,6 +28,7 @@ impl Mat4 {
         }
     }
 
+    /// Create a translation matrix from the given translation.
     pub fn translate(v: Vec3) -> Self {
         Mat4 {
             data: [
@@ -33,6 +40,7 @@ impl Mat4 {
         }
     }
 
+    /// Create a scale matrix from the given scale factors.
     pub fn scale(v: Vec3) -> Self {
         Mat4 {
             data: [
@@ -44,6 +52,7 @@ impl Mat4 {
         }
     }
 
+    /// Create a rotation matrix from the given direction and angle.
     pub fn rotate(mut v: Vec3, a: f64) -> Self {
         v.normalize();
         let c = a.cos();
@@ -75,6 +84,7 @@ impl Mat4 {
         }
     }
 
+    /// Return the transpose of the matrix.
     pub fn transpose(&self) -> Self {
         let mut data = [[0.0; 4]; 4];
 
@@ -87,24 +97,7 @@ impl Mat4 {
         Mat4 { data }
     }
 
-    #[rustfmt::skip]
-    pub fn determinant(&self) -> f64 {
-        let d = &self.data;
-
-        d[0][0]*d[1][1]*d[2][2]*d[3][3] - d[0][0]*d[1][1]*d[2][3]*d[3][2] +
-        d[0][0]*d[1][2]*d[2][3]*d[3][1] - d[0][0]*d[1][2]*d[2][1]*d[3][3] +
-        d[0][0]*d[1][3]*d[2][1]*d[3][2] - d[0][0]*d[1][3]*d[2][2]*d[3][1] -
-        d[0][1]*d[1][2]*d[2][3]*d[3][0] + d[0][1]*d[1][2]*d[2][0]*d[3][3] -
-        d[0][1]*d[1][3]*d[2][0]*d[3][2] + d[0][1]*d[1][3]*d[2][2]*d[3][0] -
-        d[0][1]*d[1][0]*d[2][2]*d[3][3] + d[0][1]*d[1][0]*d[2][3]*d[3][2] +
-        d[0][2]*d[1][3]*d[2][0]*d[3][1] - d[0][2]*d[1][3]*d[2][1]*d[3][0] +
-        d[0][2]*d[1][0]*d[2][1]*d[3][3] - d[0][2]*d[1][0]*d[2][3]*d[3][1] +
-        d[0][2]*d[1][1]*d[2][3]*d[3][0] - d[0][2]*d[1][1]*d[2][0]*d[3][3] -
-        d[0][3]*d[1][0]*d[2][1]*d[3][2] + d[0][3]*d[1][0]*d[2][2]*d[3][1] -
-        d[0][3]*d[1][1]*d[2][2]*d[3][0] + d[0][3]*d[1][1]*d[2][0]*d[3][2] -
-        d[0][3]*d[1][2]*d[2][0]*d[3][1] + d[0][3]*d[1][2]*d[2][1]*d[3][0]
-    }
-
+    /// Return the inverse of the matrix.
     #[rustfmt::skip]
     pub fn inverse(&self) -> Self {
         let m = &self.data;
@@ -131,6 +124,26 @@ impl Mat4 {
         Mat4 {data}
     }
 
+    /// Return the determinant of the matrix.
+    #[rustfmt::skip]
+    pub fn determinant(&self) -> f64 {
+        let d = &self.data;
+
+        d[0][0]*d[1][1]*d[2][2]*d[3][3] - d[0][0]*d[1][1]*d[2][3]*d[3][2] +
+        d[0][0]*d[1][2]*d[2][3]*d[3][1] - d[0][0]*d[1][2]*d[2][1]*d[3][3] +
+        d[0][0]*d[1][3]*d[2][1]*d[3][2] - d[0][0]*d[1][3]*d[2][2]*d[3][1] -
+        d[0][1]*d[1][2]*d[2][3]*d[3][0] + d[0][1]*d[1][2]*d[2][0]*d[3][3] -
+        d[0][1]*d[1][3]*d[2][0]*d[3][2] + d[0][1]*d[1][3]*d[2][2]*d[3][0] -
+        d[0][1]*d[1][0]*d[2][2]*d[3][3] + d[0][1]*d[1][0]*d[2][3]*d[3][2] +
+        d[0][2]*d[1][3]*d[2][0]*d[3][1] - d[0][2]*d[1][3]*d[2][1]*d[3][0] +
+        d[0][2]*d[1][0]*d[2][1]*d[3][3] - d[0][2]*d[1][0]*d[2][3]*d[3][1] +
+        d[0][2]*d[1][1]*d[2][3]*d[3][0] - d[0][2]*d[1][1]*d[2][0]*d[3][3] -
+        d[0][3]*d[1][0]*d[2][1]*d[3][2] + d[0][3]*d[1][0]*d[2][2]*d[3][1] -
+        d[0][3]*d[1][1]*d[2][2]*d[3][0] + d[0][3]*d[1][1]*d[2][0]*d[3][2] -
+        d[0][3]*d[1][2]*d[2][0]*d[3][1] + d[0][3]*d[1][2]*d[2][1]*d[3][0]
+    }
+
+    /// Transform the given normalized `Vec3` to another normalized `Vec3`.
     pub fn transform_normal(&self, p: &Vec3) -> Vec3 {
         let dx = self.data[0][0] * p.x + self.data[0][1] * p.y + self.data[0][2] * p.z;
         let dy = self.data[1][0] * p.x + self.data[1][1] * p.y + self.data[1][2] * p.z;
@@ -141,6 +154,7 @@ impl Mat4 {
 }
 
 impl Transform for Mat4 {
+    /// Matrix composition.
     fn transform(&self, other: &Mat4) -> Self {
         let mut data = [[0.0; 4]; 4];
 

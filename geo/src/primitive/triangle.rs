@@ -1,6 +1,7 @@
 use crate::{ray::Ray, Aabb};
 use crate::{spatial_index::Shape, Vec3};
 
+/// A `Triangle` defined by three vertices.
 #[derive(Debug, Clone, PartialEq)]
 pub struct Triangle {
     pub a: Vec3,
@@ -34,16 +35,15 @@ impl Triangle {
     /// Calculate the [centroid][0] of a triangle.
     ///
     /// [0]: https://en.wikipedia.org/wiki/Centroid
-    ///
     pub fn centroid(&self) -> Vec3 {
         (self.a + self.b + self.c) / 3.0
     }
 
-    /// Compute the [barycentric coordinates][0] of a point `p` inside a triangle
-    /// and return them in a `Vec3`. Return `None` if `p` lies outside the triangle.
+    /// Compute the [barycentric coordinates][0] of a point `p` inside a
+    /// triangle and return them in a `Vec3`. Return `None` if `p` lies outside
+    /// the triangle.
     ///
     /// [0]: https://en.wikipedia.org/wiki/Barycentric_coordinate_system
-    ///
     pub fn barycentric(&self, p: &Vec3) -> Option<Vec3> {
         let e0 = self.c - self.a;
         let e1 = self.b - self.a;
@@ -80,8 +80,8 @@ impl Triangle {
 impl Shape for Triangle {
     type Intersection = f64;
 
-    /// Return the parameter t of the intersection between the ray and a triangle if
-    /// any.
+    /// Return the parameter t of the intersection between the ray and a
+    /// triangle if any.
     fn intersection(&self, ray: &Ray) -> Option<Self::Intersection> {
         let e1 = self.b - self.a;
         let e2 = self.c - self.a;

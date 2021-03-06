@@ -139,7 +139,8 @@ impl Aabb {
     }
 
     /// Check whether a `Ray` intersects a `Aabb` and returns the t parameters
-    /// of the first and last point of intersections. Note that a negative t means
+    /// of the first and last point of intersections. Note that a negative t
+    /// means
     pub fn ray_intersection(&self, ray: &Ray) -> Option<(f64, f64)> {
         let max = self.max;
         let min = self.min;

@@ -5,7 +5,10 @@ use crate::{Axis, Vec3};
 /// direction.
 #[derive(Debug, PartialEq, Clone)]
 pub struct Ray {
+    /// The origin of the `Ray`.
     pub origin: Vec3,
+
+    /// The direction, possibly not normalized, of the `Ray`.
     pub dir: Vec3,
 }
 

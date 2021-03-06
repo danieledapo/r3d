@@ -2,30 +2,30 @@ use std::iter;
 
 use crate::Vec3;
 
-/// A Polyline object represented by a series of points.
+/// A `Polyline` object represented by a series of points.
 #[derive(Debug, Clone, PartialEq)]
 pub struct Polyline {
-    /// The points that make this Polyline object.
+    /// The points that make this `Polyline` object.
     pub points: Vec<Vec3>,
 }
 
 impl Polyline {
-    /// Create a new empty Polyline.
+    /// Create a new empty `Polyline`.
     pub fn new() -> Self {
         Self { points: vec![] }
     }
 
-    /// Return the number of points the Polyline is made of.
+    /// Return the number of points the `Polyline` is made of.
     pub fn len(&self) -> usize {
         self.points.len()
     }
 
-    /// Return whether the the Polyline is empty or not.
+    /// Return whether the the `Polyline` is empty or not.
     pub fn is_empty(&self) -> bool {
         self.points.is_empty()
     }
 
-    /// Add a new point to the Polyline.
+    /// Add a new point to the `Polyline`.
     pub fn push(&mut self, v: Vec3) {
         self.points.push(v);
     }
@@ -35,6 +35,7 @@ impl Polyline {
         self.points.iter().cloned()
     }
 
+    /// Return the total length of the `Polyline`.
     pub fn norm(&self) -> f64 {
         self.points
             .iter()
@@ -43,7 +44,7 @@ impl Polyline {
             .sum()
     }
 
-    /// Return a new Polyline where every point is `eps` distance from the
+    /// Return a new `Polyline` where every point is `eps` distance from the
     /// previous point.
     pub fn chop(&self, eps: f64) -> Self {
         let mut out = Self::new();
