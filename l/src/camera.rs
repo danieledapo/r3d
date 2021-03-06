@@ -5,14 +5,23 @@ use geo::{
     Vec3,
 };
 
+/// A `Camera` is an object that allows to cast rays towards a 3D point in world
+/// space that is calculated from a 2D point in screen space.
 #[derive(Debug)]
 pub struct Camera {
-    eye: Vec3,
+    position: Vec3,
     camera_to_world: Mat4,
     matrix: Mat4,
 }
 
 impl Camera {
+    /// Create a `Camera` positioned at `position` pointed towards the given
+    /// `target`. Lastly it needs a vector `vup` that represents the up axis to
+    /// properly orient the camera.
+    ///
+    /// These parameters define the [viewing frustrum][0] of the camera.
+    ///
+    /// [0]: https://en.wikipedia.org/wiki/Viewing_frustum
     pub fn look_at(position: Vec3, target: Vec3, vup: Vec3) -> Self {
         let f = (target - position).normalized();
         let s = f.cross(vup).normalized();
@@ -28,12 +37,21 @@ impl Camera {
         };
 
         Self {
-            eye: position,
+            position,
             matrix: camera_to_world.clone(),
             camera_to_world,
         }
     }
 
+    /// Set the `Camera` to use [Perspective projection][0] when projecting 3D
+    /// points to 2D.
+    ///
+    /// To create the perspective projection matrix the vertical field of view
+    /// is required along with the desired aspect ratio of the projection.
+    /// Moreover, the values for the near and far plane are required and not in
+    /// between of these planes are not projected.
+    ///
+    /// [0]: https://en.wikipedia.org/wiki/3D_projection#Perspective_projection
     #[rustfmt::skip]
     pub fn with_perspective_projection(
         mut self,
@@ -63,10 +81,12 @@ impl Camera {
         self
     }
 
-    pub fn eye(&self) -> Vec3 {
-        self.eye
+    /// Return the position where the camera is located.
+    pub fn position(&self) -> Vec3 {
+        self.position
     }
 
+    /// Project the given point in 3D space to 2D as seen by this `Camera`.
     pub fn project(&self, v: Vec3) -> Vec3 {
         let p = v.transform(&self.matrix);
 
