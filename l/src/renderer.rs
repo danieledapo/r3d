@@ -114,9 +114,14 @@ pub fn dump_svg(path: &str, paths: &[Polyline], settings: SvgSettings) -> io::Re
         }
 
         write!(f, r#"<polyline points=""#)?;
-        for p in path.iter() {
+        for mut p in path.iter() {
+            // invert y coordinate because in world space (0, 0) lies at the
+            // center and the y axis grows upwards while in image space (0, 0)
+            // is at the top left and y grows downwards.
+            p.y = -p.y;
+
             // ignore z value as it is meaningless at this point given that the
-            // 3d point has already been projected to a 2d point
+            // 3d point has already been projected to a 2d point.
             write!(
                 f,
                 "{:.digits$},{:.digits$} ",

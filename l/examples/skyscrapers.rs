@@ -105,7 +105,7 @@ pub fn main() -> opener::Result<()> {
     let camera = Camera::look_at(
         Vec3::new(5.0, -3.0, 20.0),
         Vec3::zero(),
-        Vec3::new(0.0, 0.0, -1.0),
+        Vec3::new(0.0, 0.0, 1.0),
     )
     .with_perspective_projection(45.0, 1.0, 0.01, 100.0);
 

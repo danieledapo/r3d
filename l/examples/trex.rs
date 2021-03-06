@@ -29,7 +29,7 @@ pub fn main() -> opener::Result<()> {
             .collect::<Vec<_>>(),
     );
 
-    let camera = Camera::look_at(position, target, Vec3::new(0.0, 0.0, -1.0))
+    let camera = Camera::look_at(position, target, Vec3::new(0.0, 0.0, 1.0))
         .with_perspective_projection(60.0, 1.0, 0.01, 10000.0);
 
     let paths = render(
