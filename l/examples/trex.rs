@@ -33,7 +33,7 @@ pub fn main() -> opener::Result<()> {
         .with_perspective_projection(60.0, 1.0, 0.01, 10000.0);
 
     let paths = render(
-        camera,
+        &camera,
         &scene,
         &Settings {
             chop_eps: 0.001,

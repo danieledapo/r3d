@@ -9,27 +9,53 @@ use geo::{ray::Ray, spatial_index::Intersection, Aabb, Vec3};
 
 use crate::{Camera, Polyline, Scene};
 
+/// Simple struct to hold the rendering params together.
+#[derive(Debug, PartialEq, Clone)]
 pub struct Settings {
+    /// the epsilon used to sample the paths in the scene to check for
+    /// visibility.
     pub chop_eps: f64,
+
+    /// the epsilon used to simplify the lines after having checked for point
+    /// visibility.
     pub simplify_eps: f64,
 }
 
-pub struct SvgSettings {
+/// The settings to render a set of `Polyline`s as returned by `render` to a
+/// SVG.
+///
+/// Note that the input `Polyline`s are automatically scaled and translated so
+/// that their bounding box matches the SVG viewport of the given `width` and
+/// `height`.
+#[derive(Debug, PartialEq, Clone)]
+pub struct SvgSettings<'s> {
+    /// width of the SVG viewbox
     pub width: f64,
+
+    /// height of the viewbox
     pub height: f64,
+
+    /// stroke width of all the lines
     pub stroke_width: f64,
-    pub stroke: &'static str,
-    pub background: Option<&'static str>,
+
+    /// stroke color of all the lines
+    pub stroke: &'s str,
+
+    /// optional background color of the SVG
+    pub background: Option<&'s str>,
+
+    /// how many digits to keep in the floating point numbers dumped to the SVG
     pub digits: usize,
 }
 
-pub fn render(camera: Camera, scene: &Scene, settings: &Settings) -> Vec<Polyline> {
+/// Render the given `Scene` using the given `Camera` and `Settings`.
+pub fn render(camera: &Camera, scene: &Scene, settings: &Settings) -> Vec<Polyline> {
     // the projection matrix returns points from (-1,-1,-1) to (1,1,1), points
     // outside this area are outside of the clipping region
     let clip_box = Aabb::cube(Vec3::zero(), 2.0);
 
     let is_visible = |p: Vec3| {
-        let d = camera.eye() - p;
+        let d = camera.position() - p;
         let ray = Ray::new(p + d * settings.chop_eps, d);
 
         match scene.intersection(&ray) {
@@ -67,8 +93,10 @@ pub fn render(camera: Camera, scene: &Scene, settings: &Settings) -> Vec<Polylin
         .collect()
 }
 
-/// Note: The input paths must be in [-1, 1].
-pub fn dump_svg(path: &str, paths: &[Polyline], settings: SvgSettings) -> io::Result<()> {
+/// Dump to `path` the given `Polyline`s with the given settings.
+///
+/// Note: The input `Polyline`s must be in [-1, 1].
+pub fn dump_svg(path: &str, poylines: &[Polyline], settings: SvgSettings) -> io::Result<()> {
     let f = File::create(path)?;
     let mut f = BufWriter::new(f);
 
@@ -79,7 +107,7 @@ pub fn dump_svg(path: &str, paths: &[Polyline], settings: SvgSettings) -> io::Re
         settings.width, settings.height
     )?;
 
-    if paths.is_empty() {
+    if poylines.is_empty() {
         return writeln!(f, "</svg>");
     }
 
@@ -108,7 +136,7 @@ pub fn dump_svg(path: &str, paths: &[Polyline], settings: SvgSettings) -> io::Re
     let w2 = (settings.width - settings.stroke_width) / 2.0;
     let h2 = (settings.height - settings.stroke_width) / 2.0;
 
-    for path in paths {
+    for path in poylines {
         if path.is_empty() {
             continue;
         }
@@ -138,7 +166,7 @@ pub fn dump_svg(path: &str, paths: &[Polyline], settings: SvgSettings) -> io::Re
     Ok(())
 }
 
-impl SvgSettings {
+impl SvgSettings<'_> {
     pub fn new(width: f64, height: f64) -> Self {
         Self {
             width,
