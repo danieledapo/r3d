@@ -5,3 +5,4 @@ target
 *.svg
 !images/buzz/*
 !images/l/*
+!images/r3d.png
