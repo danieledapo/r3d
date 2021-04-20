@@ -2,6 +2,8 @@
 
 My Rust playground to learn more about 3D graphics and renderers.
 
+![r3d.png](images/r3d.png)
+
 ## Buzz, the ray tracer
 
 `buzz` is a simple ray tracer that is able to render simple geometric primitives
