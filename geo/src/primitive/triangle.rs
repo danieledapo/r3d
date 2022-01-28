@@ -1,5 +1,5 @@
+use crate::{primitive::polyline::Polyline, spatial_index::Shape, Vec3};
 use crate::{ray::Ray, Aabb};
-use crate::{spatial_index::Shape, Vec3};
 
 /// A `Triangle` defined by three vertices.
 #[derive(Debug, Clone, PartialEq)]
@@ -74,6 +74,11 @@ impl Triangle {
         } else {
             Some(Vec3::new(1.0 - u - v, v, u))
         }
+    }
+
+    /// Return the closed boundary of the triangle.
+    pub fn boundary(&self) -> Polyline {
+        vec![self.a, self.b, self.c, self.a].into()
     }
 }
 
