@@ -1,3 +1,5 @@
+use rand::Rng;
+
 use crate::{primitive::polyline::Polyline, spatial_index::Shape, Vec3};
 use crate::{ray::Ray, Aabb};
 
@@ -79,6 +81,21 @@ impl Triangle {
     /// Return the closed boundary of the triangle.
     pub fn boundary(&self) -> Polyline {
         vec![self.a, self.b, self.c, self.a].into()
+    }
+
+    /// Generate a random point guaranteed to be inside the triangle.
+    pub fn random_pt(&self, rng: &mut impl Rng) -> Vec3 {
+        let mut u = rng.gen::<f64>();
+        let mut v = rng.gen::<f64>();
+        if u + v >= 1.0 {
+            u = 1.0 - u;
+            v = 1.0 - v;
+        }
+
+        let ab = self.b - self.a;
+        let ac = self.c - self.a;
+
+        self.a + ab * u + ac * v
     }
 }
 
