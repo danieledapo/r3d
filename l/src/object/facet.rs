@@ -36,13 +36,7 @@ impl Shape for Facet {
 
 impl Object for Facet {
     fn paths(&self) -> Vec<Polyline> {
-        let mut paths = vec![vec![
-            self.triangle.a,
-            self.triangle.b,
-            self.triangle.c,
-            self.triangle.a,
-        ]
-        .into()];
+        let mut paths = vec![self.triangle.boundary()];
 
         if self.hatching_lines > 0 {
             let Triangle { a, b, c } = self.triangle;
