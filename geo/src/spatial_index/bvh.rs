@@ -72,8 +72,8 @@ where
                 match n {
                     Node::Leaf { data } => return Some(data),
                     Node::Branch { left, right, .. } => {
-                        stack.push(&right);
-                        stack.push(&left);
+                        stack.push(right);
+                        stack.push(left);
                     }
                 }
             }
@@ -103,8 +103,8 @@ where
                         }
                         Node::Branch { left, right, bbox } => {
                             if bbox.intersection(&aabb).is_some() {
-                                stack.push(&right);
-                                stack.push(&left);
+                                stack.push(right);
+                                stack.push(left);
                             }
                         }
                     }
@@ -168,8 +168,8 @@ where
 
                 Node::Branch { bbox, left, right } => match bbox.ray_intersection(&self.ray) {
                     Some((t1, t2)) if t1 <= t2 && t2 >= 0.0 => {
-                        self.stack.push(&right);
-                        self.stack.push(&left);
+                        self.stack.push(right);
+                        self.stack.push(left);
                     }
                     _ => {}
                 },
@@ -254,7 +254,7 @@ where
         if elems.len() > 1 {
             for (_, b) in &elems[1..] {
                 ranges.expand(b.center());
-                bbox = bbox.union(&b);
+                bbox = bbox.union(b);
             }
         }
 
