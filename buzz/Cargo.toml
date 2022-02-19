@@ -2,7 +2,7 @@
 name = "buzz"
 version = "0.1.0"
 authors = ["Daniele D'Orazio <d.dorazio96@gmail.com>"]
-edition = "2018"
+edition = "2021"
 
 [dependencies]
 geo = { path = "../geo"}
