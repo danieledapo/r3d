@@ -96,6 +96,12 @@ impl SceneObjects {
     }
 }
 
+impl Default for SceneObjects {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl std::ops::Index<usize> for SceneObjects {
     type Output = Arc<dyn Object>;
 
