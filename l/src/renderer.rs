@@ -103,7 +103,7 @@ pub fn dump_svg(path: &str, poylines: &[Polyline], settings: SvgSettings) -> io:
     writeln!(
         f,
         r#"<?xml version="1.0" encoding="UTF-8"?>
-<svg xmlns="http://www.w3.org/2000/svg" viewbox="0 0 {} {}">"#,
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 {} {}">"#,
         settings.width, settings.height
     )?;
 
