@@ -124,7 +124,13 @@ fn sample(
     config: &RenderConfig,
 ) -> Vec3 {
     match scene.intersection(ray) {
+        // doesn't intersect any object, just sample the environment
+        None => sample_environment(scene, ray),
+
+        // intersected the scene too many times, bail out
         Some(_) if depth >= config.max_bounces => Vec3::zero(),
+
+        // hits an object, sample its material
         Some((s, hit)) => {
             let (intersection, n) = hit.point_and_normal.unwrap_or_else(|| {
                 let intersection = ray.point_at(hit.t());
@@ -133,70 +139,44 @@ fn sample(
                 (intersection, n)
             });
 
-            sample_material(
-                scene,
-                lights,
-                &ray,
-                depth,
-                s.material(),
-                intersection,
-                n,
-                rng,
-                config,
-            )
-        }
+            match *s.material() {
+                Material::Lambertian { albedo } => {
+                    let indirect = sample(
+                        scene,
+                        lights,
+                        &lambertian_bounce(intersection, n, rng),
+                        depth + 1,
+                        rng,
+                        config,
+                    );
 
-        None => sample_environment(scene, &ray),
-    }
-}
+                    let direct = lights
+                        .iter()
+                        .map(|l| sample_light(scene, *l, ray, intersection, n, config, rng))
+                        .sum::<Vec3>();
 
-fn sample_material(
-    scene: &Scene,
-    lights: &[&dyn Object],
-    ray: &Ray,
-    depth: u32,
-    material: &Material,
-    intersection: Vec3,
-    n: Vec3,
-    rng: &mut impl Rng,
-    config: &RenderConfig,
-) -> Vec3 {
-    match *material {
-        Material::Lambertian { albedo } => {
-            let indirect = sample(
-                scene,
-                lights,
-                &lambertian_bounce(intersection, n, rng),
-                depth + 1,
-                rng,
-                config,
-            );
+                    albedo * (direct + indirect)
+                }
+                Material::Metal { albedo, fuzziness } => {
+                    let r = metal_bounce(ray, intersection, n, fuzziness, rng);
 
-            let direct = lights
-                .iter()
-                .map(|l| sample_light(scene, *l, ray, intersection, n, config, rng))
-                .sum::<Vec3>();
+                    if r.dir.dot(n) < 0.0 {
+                        return Vec3::zero();
+                    }
 
-            albedo * (direct + indirect)
-        }
-        Material::Metal { albedo, fuzziness } => {
-            let r = metal_bounce(ray, intersection, n, fuzziness, rng);
-
-            if r.dir.dot(n) < 0.0 {
-                return Vec3::zero();
+                    albedo * sample(scene, lights, &r, depth + 1, rng, config)
+                }
+                Material::Dielectric { refraction_index } => sample(
+                    scene,
+                    lights,
+                    &dielectric_bounce(ray, intersection, n, refraction_index, rng),
+                    depth + 1,
+                    rng,
+                    config,
+                ),
+                Material::Light { emittance } => emittance,
             }
-
-            albedo * sample(scene, lights, &r, depth + 1, rng, config)
         }
-        Material::Dielectric { refraction_index } => sample(
-            scene,
-            lights,
-            &dielectric_bounce(ray, intersection, n, refraction_index, rng),
-            depth + 1,
-            rng,
-            config,
-        ),
-        Material::Light { emittance } => emittance,
     }
 }
 
