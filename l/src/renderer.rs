@@ -76,7 +76,7 @@ pub fn render(camera: &Camera, scene: &Scene, settings: &Settings) -> Vec<Polyli
             for p in path.chop(settings.chop_eps).iter() {
                 let projected = camera.project(p);
 
-                if is_visible(p) && clip_box.contains(&projected) {
+                if clip_box.contains(&projected) && is_visible(p) {
                     cur.push(projected);
                 } else if !cur.is_empty() {
                     out.push(cur.simplified(settings.simplify_eps));
