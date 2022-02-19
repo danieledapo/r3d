@@ -396,7 +396,7 @@ mod tests {
         fn prop_kdtree_of_points_intersects_its_points_at_t0(
             pts in vec3::distinct_vec3(2..100)
         ) {
-            let bbox = Aabb::from_iter(pts.iter().cloned()).unwrap();
+            let bbox = Aabb::from_points(pts.iter().cloned()).unwrap();
             let center = bbox.center();
 
             let tree = KdTree::new(pts.clone());

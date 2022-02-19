@@ -295,7 +295,7 @@ mod tests {
             Bvh {
                 infinite_objects: vec![],
                 root: Some(Node::Branch {
-                    bbox: Aabb::from_iter(vec![
+                    bbox: Aabb::from_points(vec![
                         Vec3::new(0.0, -1.0, 0.0),
                         Vec3::new(10.0, 2.0, 7.0)
                     ])
@@ -306,7 +306,7 @@ mod tests {
                     }),
 
                     right: Box::new(Node::Branch {
-                        bbox: Aabb::from_iter(vec![
+                        bbox: Aabb::from_points(vec![
                             Vec3::new(8.0, -1.0, 4.0),
                             Vec3::new(10.0, 1.0, 7.0)
                         ])
