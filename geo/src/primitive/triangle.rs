@@ -71,7 +71,7 @@ impl Triangle {
 
         // valid barycentric coordinates must always sum to 1 and each component
         // should be in [0, 1], if they do not then`p` is outside the triangle
-        if u < 0.0 || u > 1.0 || v < 0.0 || v > 1.0 {
+        if !(0.0..=1.0).contains(&u) || !(0.0..=1.0).contains(&v) {
             None
         } else {
             Some(Vec3::new(1.0 - u - v, v, u))
@@ -120,7 +120,7 @@ impl Shape for Triangle {
         let inv = 1.0 / det;
         let t = ray.origin - self.a;
         let u = (t.x * px + t.y * py + t.z * pz) * inv;
-        if u < 0.0 || u > 1.0 {
+        if !(0.0..=1.0).contains(&u) {
             return None;
         }
 
