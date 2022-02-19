@@ -44,8 +44,8 @@ impl Object for Facet {
             let &(s, e1, e2) = [(a, b, c), (b, c, a), (c, a, b)]
                 .iter()
                 .max_by(|(a1, b1, c1), (a2, b2, c2)| {
-                    let d1 = f64::from(a1.dist2(*b1) - a1.dist2(*c1));
-                    let d2 = f64::from(a2.dist2(*b2) - a2.dist2(*c2));
+                    let d1 = a1.dist2(*b1) - a1.dist2(*c1);
+                    let d2 = a2.dist2(*b2) - a2.dist2(*c2);
                     d1.partial_cmp(&d2).unwrap()
                 })
                 .unwrap();
