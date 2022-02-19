@@ -76,13 +76,7 @@ impl Scene {
     pub fn lights(&self) -> impl Iterator<Item = &dyn Object> {
         self.objects
             .iter()
-            .filter(|o| {
-                if let Material::Light { .. } = o.material() {
-                    true
-                } else {
-                    false
-                }
-            })
+            .filter(|o| matches!(o.material(), Material::Light { .. }))
             .map(|o| o.as_ref())
     }
 }
