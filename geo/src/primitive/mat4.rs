@@ -85,6 +85,7 @@ impl Mat4 {
     }
 
     /// Return the transpose of the matrix.
+    #[allow(clippy::needless_range_loop)]
     pub fn transpose(&self) -> Self {
         let mut data = [[0.0; 4]; 4];
 
@@ -155,6 +156,7 @@ impl Mat4 {
 
 impl Transform for Mat4 {
     /// Matrix composition.
+    #[allow(clippy::needless_range_loop)]
     fn transform(&self, other: &Mat4) -> Self {
         let mut data = [[0.0; 4]; 4];
 
