@@ -9,4 +9,4 @@ byteorder = "1.4"
 rand = "0.8"
 
 [dev-dependencies]
-proptest = "0.10"
+proptest = "1.0"
