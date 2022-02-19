@@ -258,6 +258,7 @@ fn best_partitioning(bboxes: &[Aabb]) -> Option<(Axis, f64)> {
 
 /// Partition the given `Shape`s and their `Aabb`s using the given `split_axis`
 /// and `split_value`.
+#[allow(clippy::type_complexity)]
 fn partition<T: Shape>(
     mut shapes: Vec<Arc<T>>,
     mut bboxes: Vec<Aabb>,
