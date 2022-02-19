@@ -37,7 +37,7 @@ impl Aabb {
 
     /// Build a bounding box that covers all the points in the given iterator.
     /// Returns `None` if there are no points to cover.
-    pub fn from_iter(it: impl IntoIterator<Item = Vec3>) -> Option<Self> {
+    pub fn from_points(it: impl IntoIterator<Item = Vec3>) -> Option<Self> {
         let mut it = it.into_iter();
 
         let p0 = it.next()?;
@@ -261,10 +261,10 @@ mod tests {
 
     #[test]
     fn test_from_iter() {
-        assert_eq!(Aabb::from_iter(vec![]), None);
+        assert_eq!(Aabb::from_points(vec![]), None);
 
         assert_eq!(
-            Aabb::from_iter(vec![
+            Aabb::from_points(vec![
                 Vec3::zero(),
                 Vec3::new(-2.0, 10.0, 2.0),
                 Vec3::new(0.0, 1.0, -2.0)
@@ -327,7 +327,7 @@ mod tests {
         assert_eq!(Aabb::new(Vec3::zero()).dimensions(), Vec3::zero());
 
         assert_eq!(
-            Aabb::from_iter(vec![
+            Aabb::from_points(vec![
                 Vec3::new(1.0, 2.0, 3.0),
                 Vec3::zero(),
                 Vec3::new(-1.0, 0.0, 0.0)
@@ -340,7 +340,7 @@ mod tests {
 
     #[test]
     fn test_contains() {
-        let aabb = Aabb::from_iter(vec![Vec3::zero(), Vec3::new(-10.0, 2.0, 3.0)]).unwrap();
+        let aabb = Aabb::from_points(vec![Vec3::zero(), Vec3::new(-10.0, 2.0, 3.0)]).unwrap();
 
         assert!(aabb.contains(&Vec3::zero()));
         assert!(aabb.contains(&Vec3::new(-10.0, 2.0, 3.0)));
@@ -353,7 +353,7 @@ mod tests {
 
     #[test]
     fn test_ray_intersection() {
-        let aabb = Aabb::from_iter(vec![Vec3::zero(), Vec3::new(-10.0, 2.0, 3.0)]).unwrap();
+        let aabb = Aabb::from_points(vec![Vec3::zero(), Vec3::new(-10.0, 2.0, 3.0)]).unwrap();
 
         assert_eq!(
             aabb.ray_intersection(&Ray::new(Vec3::zero(), Vec3::new(-1.0, 0.0, 1.0))),
@@ -388,8 +388,8 @@ mod tests {
             ))
             .is_none());
 
-        let aabb =
-            Aabb::from_iter(vec![Vec3::new(-10.0, -1.0, -7.0), Vec3::new(0.0, 1.0, 1.0)]).unwrap();
+        let aabb = Aabb::from_points(vec![Vec3::new(-10.0, -1.0, -7.0), Vec3::new(0.0, 1.0, 1.0)])
+            .unwrap();
         assert_eq!(
             aabb.ray_intersection(&Ray::new(
                 Vec3::new(1.0, 0.0, 2.0),
@@ -398,7 +398,7 @@ mod tests {
             Some((1.0, 1.0))
         );
 
-        let aabb = Aabb::from_iter(vec![Vec3::new(-7.0, -1.0, -3.0), Vec3::zero()]).unwrap();
+        let aabb = Aabb::from_points(vec![Vec3::new(-7.0, -1.0, -3.0), Vec3::zero()]).unwrap();
         assert_eq!(
             aabb.ray_intersection(&Ray::new(Vec3::zero(), Vec3::new(1.0, 1.0, 1.0))),
             Some((-1.0, 0.0))

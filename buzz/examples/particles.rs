@@ -23,7 +23,7 @@ pub fn main() -> opener::Result<()> {
         .collect::<Vec<_>>();
 
     // scale input in [-1,1] range so that camera positioning is easy
-    let bbox = Aabb::from_iter(spheres.iter().map(|s| s.center))
+    let bbox = Aabb::from_points(spheres.iter().map(|s| s.center))
         .unwrap_or_else(|| Aabb::new(Vec3::zero()));
 
     let mut objects = SceneObjects::new();
