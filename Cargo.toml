@@ -1,6 +1,7 @@
 [workspace]
 members = [
-    "geo",
     "buzz",
+    "geo",
+    "isovoxel",
     "l",
 ]
