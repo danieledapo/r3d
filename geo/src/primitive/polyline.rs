@@ -105,6 +105,12 @@ impl Polyline {
     }
 }
 
+impl Default for Polyline {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl std::convert::From<Vec<Vec3>> for Polyline {
     fn from(v: Vec<Vec3>) -> Self {
         Polyline { points: v }
