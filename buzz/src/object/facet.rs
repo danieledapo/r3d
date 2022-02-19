@@ -21,7 +21,7 @@ impl<'a> Facet<'a> {
 
 impl Object for Facet<'_> {
     fn material(&self) -> &Material {
-        &self.material
+        self.material
     }
 
     fn set_surface_id(&mut self, sfid: usize) {
