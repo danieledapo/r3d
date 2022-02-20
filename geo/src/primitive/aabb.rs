@@ -21,9 +21,9 @@ impl Aabb {
         Aabb { min: p, max: p }
     }
 
-    /// Create a bounding box that covers the cube centered at `center` with a
+    /// Create a bounding box that covers the cuboid centered at `center` with a
     /// given `size`.
-    pub fn cube(center: Vec3, size: f64) -> Self {
+    pub fn cuboid(center: Vec3, size: f64) -> Self {
         Self::with_dimensions(center - size / 2.0, Vec3::replicate(size))
     }
 
@@ -256,7 +256,7 @@ mod tests {
 
     #[test]
     fn test_cube() {
-        let aabb = Aabb::cube(Vec3::new(0.0, 1.0, -1.0), 2.0);
+        let aabb = Aabb::cuboid(Vec3::new(0.0, 1.0, -1.0), 2.0);
         assert_eq!(
             aabb,
             Aabb {
@@ -314,7 +314,7 @@ mod tests {
         aabb.expand(Vec3::new(10.0, 20.0, 10.0));
 
         assert_eq!(
-            aabb.intersection(&Aabb::cube(Vec3::new(5.0, 10.0, 5.0), 6.0)),
+            aabb.intersection(&Aabb::cuboid(Vec3::new(5.0, 10.0, 5.0), 6.0)),
             Some(Aabb {
                 min: Vec3::new(2.0, 7.0, 2.0),
                 max: Vec3::new(8.0, 13.0, 8.0),
@@ -322,7 +322,7 @@ mod tests {
         );
 
         assert_eq!(
-            aabb.intersection(&Aabb::cube(Vec3::new(-5.0, -5.0, -5.0), 20.0)),
+            aabb.intersection(&Aabb::cuboid(Vec3::new(-5.0, -5.0, -5.0), 20.0)),
             Some(Aabb {
                 min: Vec3::zero(),
                 max: Vec3::replicate(5.0),

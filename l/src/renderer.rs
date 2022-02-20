@@ -52,7 +52,7 @@ pub struct SvgSettings<'s> {
 pub fn render(camera: &Camera, scene: &Scene, settings: &Settings) -> Vec<Polyline> {
     // the projection matrix returns points from (-1,-1,-1) to (1,1,1), points
     // outside this area are outside of the clipping region
-    let clip_box = Aabb::cube(Vec3::zero(), 2.0);
+    let clip_box = Aabb::cuboid(Vec3::zero(), 2.0);
 
     let is_visible = |p: Vec3| {
         let d = camera.position() - p;

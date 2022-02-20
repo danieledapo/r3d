@@ -29,7 +29,7 @@ pub fn main() -> opener::Result<()> {
         Material::lambertian(Vec3::new(0.31, 0.46, 0.22)),
     ));
     objects.push(SimpleObject::new(
-        CubeGeometry::new(Aabb::cube(Vec3::zero(), 1.0)),
+        CubeGeometry::new(Aabb::cuboid(Vec3::zero(), 1.0)),
         Material::lambertian(Vec3::new(0.88, 0.1, 0.1)),
     ));
 

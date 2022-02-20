@@ -17,7 +17,7 @@ pub fn main() -> opener::Result<()> {
                     continue;
                 }
 
-                objects.push(Arc::new(Cube::new(Aabb::cube(
+                objects.push(Arc::new(Cube::new(Aabb::cuboid(
                     Vec3::new(x.into(), y.into(), z.into()),
                     1.0,
                 ))) as Arc<dyn Object>);
