@@ -1,5 +1,6 @@
 pub mod mesh;
 pub mod primitive;
+pub mod sdf;
 pub mod spatial_index;
 pub mod util;
 
