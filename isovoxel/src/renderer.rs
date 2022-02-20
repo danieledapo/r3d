@@ -5,7 +5,7 @@ use std::{
     io::{self, BufWriter, Write},
 };
 
-use crate::{Orientation, Triangle, Voxel, IJ, P3, XY};
+use crate::{Orientation, Scene, Triangle, Voxel, IJ, XY};
 
 pub struct SvgSettings<'s> {
     pub background: Option<&'s str>,
@@ -16,7 +16,7 @@ pub struct SvgSettings<'s> {
     pub padding: f64,
 }
 
-fn project_ij((x, y, z): P3) -> IJ {
+fn project_ij((x, y, z): Voxel) -> IJ {
     (x - z, y - z)
 }
 
@@ -32,21 +32,20 @@ fn project_iso((i, j): IJ) -> XY {
     (i * dx - j * dx, i * dy + j * dy)
 }
 
-fn nearness(vox: &Voxel) -> i32 {
-    let (x, y, z) = vox.0;
+fn nearness((x, y, z): Voxel) -> i32 {
     x + y + z
 }
 
-pub fn render(voxels: impl IntoIterator<Item = Voxel>) -> Vec<Triangle<XY>> {
+pub fn render(scene: &Scene) -> Vec<Triangle<XY>> {
     let mut faces = HashMap::new();
 
-    for vox in voxels {
-        match faces.entry(project_ij(vox.0)) {
+    for &vox in scene.voxels() {
+        match faces.entry(project_ij(vox)) {
             Entry::Vacant(v) => {
                 v.insert(vox);
             }
             Entry::Occupied(mut o) => {
-                if nearness(&vox) > nearness(o.get()) {
+                if nearness(vox) > nearness(*o.get()) {
                     o.insert(vox);
                 }
             }
@@ -54,10 +53,10 @@ pub fn render(voxels: impl IntoIterator<Item = Voxel>) -> Vec<Triangle<XY>> {
     }
 
     let mut voxels = faces.values().collect::<Vec<_>>();
-    voxels.sort_unstable_by_key(|v| Reverse(nearness(v)));
+    voxels.sort_unstable_by_key(|v| Reverse(nearness(**v)));
 
     // TODO: this is relatively slow, but fast enough for now...
-    let spatial_ix = voxels.iter().map(|v| v.0).collect::<HashSet<_>>();
+    let spatial_ix = voxels.iter().map(|v| **v).collect::<HashSet<_>>();
 
     let mut drawn = HashSet::new();
     let mut res = vec![];
@@ -162,9 +161,7 @@ pub fn dump_svg(path: &str, triangles: &[Triangle<XY>], settings: &SvgSettings) 
     Ok(())
 }
 
-fn triangulate(vox: &Voxel, voxels: &HashSet<P3>) -> [Triangle<P3>; 6] {
-    let (x, y, z) = vox.0;
-
+fn triangulate(&(x, y, z): &Voxel, voxels: &HashSet<Voxel>) -> [Triangle<Voxel>; 6] {
     let right = voxels.contains(&(x + 1, y, z));
     let front = voxels.contains(&(x, y + 1, z));
     let back = voxels.contains(&(x, y - 1, z));
