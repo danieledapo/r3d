@@ -6,13 +6,6 @@ use crate::{
 use super::Sdf;
 
 #[derive(Debug)]
-pub struct Transformed<S> {
-    pub(super) sdf: S,
-    pub(super) matrix: Mat4,
-    pub(super) inverse_matrix: Mat4,
-}
-
-#[derive(Debug)]
 pub struct Union<S1, S2> {
     pub(super) left: S1,
     pub(super) right: S2,
@@ -30,15 +23,11 @@ pub struct Difference<S1, S2> {
     pub(super) right: S2,
 }
 
-impl<S: Sdf> Sdf for Transformed<S> {
-    fn bbox(&self) -> Aabb {
-        self.sdf.bbox().transform(&self.matrix)
-    }
-
-    fn dist(&self, p: &Vec3) -> f64 {
-        let q = p.transform(&self.inverse_matrix);
-        self.sdf.dist(&q)
-    }
+#[derive(Debug)]
+pub struct Transformed<S> {
+    pub(super) sdf: S,
+    pub(super) matrix: Mat4,
+    pub(super) inverse_matrix: Mat4,
 }
 
 impl<S1, S2> Sdf for Union<S1, S2>
@@ -90,5 +79,16 @@ where
         let rd = self.right.dist(p);
 
         ld.max(-rd)
+    }
+}
+
+impl<S: Sdf> Sdf for Transformed<S> {
+    fn bbox(&self) -> Aabb {
+        self.sdf.bbox().transform(&self.matrix)
+    }
+
+    fn dist(&self, p: &Vec3) -> f64 {
+        let q = p.transform(&self.inverse_matrix);
+        self.sdf.dist(&q)
     }
 }
