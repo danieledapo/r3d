@@ -8,7 +8,7 @@ use crate::{mat4::Mat4, ray::Ray, Aabb, Vec3};
 mod combinations;
 pub mod primitives;
 
-pub use self::combinations::{Difference, Intersection, Transformed, Union};
+pub use self::combinations::{Difference, Intersection, Transformed, Translate, Union};
 pub use primitives::*;
 
 /// An SDF is a function that when called with a point it returns the distance
@@ -54,6 +54,11 @@ pub trait Sdf: std::fmt::Debug + Sized {
             left: self,
             right: other,
         }
+    }
+
+    /// Translate the Sdf by the given amount.
+    fn translate(self, xlate: Vec3) -> Translate<Self> {
+        Translate { sdf: self, xlate }
     }
 
     /// Return the current Sdf transformed with the given transformation matrix.
