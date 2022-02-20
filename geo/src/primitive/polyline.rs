@@ -124,3 +124,9 @@ impl iter::FromIterator<Vec3> for Polyline {
         }
     }
 }
+
+impl iter::Extend<Vec3> for Polyline {
+    fn extend<T: IntoIterator<Item = Vec3>>(&mut self, iter: T) {
+        self.points.extend(iter)
+    }
+}
