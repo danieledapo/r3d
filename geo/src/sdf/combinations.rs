@@ -24,6 +24,12 @@ pub struct Difference<S1, S2> {
 }
 
 #[derive(Debug)]
+pub struct Translate<S> {
+    pub(super) sdf: S,
+    pub(super) xlate: Vec3,
+}
+
+#[derive(Debug)]
 pub struct Transformed<S> {
     pub(super) sdf: S,
     pub(super) matrix: Mat4,
@@ -79,6 +85,16 @@ where
         let rd = self.right.dist(p);
 
         ld.max(-rd)
+    }
+}
+
+impl<S: Sdf> Sdf for Translate<S> {
+    fn dist(&self, p: &Vec3) -> f64 {
+        self.sdf.dist(&(*p - self.xlate))
+    }
+
+    fn bbox(&self) -> Aabb {
+        self.sdf.bbox().translated(self.xlate)
     }
 }
 
