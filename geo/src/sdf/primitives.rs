@@ -8,7 +8,7 @@ pub struct Sphere {
 }
 
 #[derive(Debug, Clone)]
-pub struct Cube {
+pub struct Cuboid {
     size: Vec3,
 }
 
@@ -24,9 +24,9 @@ impl Sphere {
     }
 }
 
-impl Cube {
+impl Cuboid {
     pub fn new(size: Vec3) -> Self {
-        Cube { size }
+        Cuboid { size }
     }
 }
 
@@ -46,7 +46,7 @@ impl Sdf for Sphere {
     }
 }
 
-impl Sdf for Cube {
+impl Sdf for Cuboid {
     fn bbox(&self) -> Aabb {
         let d = self.size / 2.0;
         Aabb::new(-d).expanded(d)
