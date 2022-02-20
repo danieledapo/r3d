@@ -98,6 +98,14 @@ impl Aabb {
         self
     }
 
+    /// Translate this `Aabb` by the given amount.
+    pub fn translated(&self, p: Vec3) -> Self {
+        Self {
+            min: self.min + p,
+            max: self.max + p,
+        }
+    }
+
     /// Expand the bounding box so that it covers another bounding box too.
     pub fn union(&self, aabb: &Aabb) -> Self {
         let mut out = self.clone();
