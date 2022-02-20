@@ -1,9 +1,11 @@
-use geo::{mat4::Mat4, util::opener, Vec3};
-
-use buzz::{
-    csg::{self, SignedDistanceFunction},
-    *,
+use geo::{
+    mat4::Mat4,
+    sdf::{self, Sdf},
+    util::opener,
+    Vec3,
 };
+
+use buzz::{csg::SdfGeometry, *};
 
 pub fn main() -> opener::Result<()> {
     let plane = SimpleObject::new(
@@ -20,8 +22,8 @@ pub fn main() -> opener::Result<()> {
         Material::light(Vec3::new(0.3, 0.3, 0.3)),
     );
 
-    let rounded_cube = csg::Sphere::new(0.65).intersection(csg::Cube::new(Vec3::replicate(1.0)));
-    let cylinder = csg::Cylinder::new(0.25, 1.1);
+    let rounded_cube = sdf::Sphere::new(0.65).intersection(sdf::Cube::new(Vec3::replicate(1.0)));
+    let cylinder = sdf::Cylinder::new(0.25, 1.1);
     let cylinder_a = cylinder.clone().transformed(Mat4::rotate(
         Vec3::new(1.0, 0.0, 0.0),
         90.0_f64.to_radians(),

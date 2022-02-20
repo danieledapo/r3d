@@ -1,14 +1,10 @@
 //! Simple [Constructive Solid Geometry][0] framework.
 //!
 //! [0]: https://en.wikipedia.org/wiki/Constructive_solid_geometry
-//!
-//! The distance functions are based on
-//! http://www.iquilezles.org/www/articles/distfunctions/distfunctions.htm
-//!
 
 use geo::{
-    mat4::{Mat4, Transform},
     ray::Ray,
+    sdf::{self, Sdf},
     spatial_index::Shape,
     Aabb, Vec3,
 };
@@ -20,62 +16,19 @@ pub struct SdfGeometry<S> {
     sdf: S,
 }
 
-impl<S: SignedDistanceFunction> SdfGeometry<S> {
+impl<S: Sdf> SdfGeometry<S> {
     pub fn new(sdf: S) -> Self {
         SdfGeometry { sdf }
     }
 }
 
-pub trait SignedDistanceFunction: Sized + std::fmt::Debug {
-    fn dist(&self, p: &Vec3) -> f64;
-    fn bbox(&self) -> Aabb;
-
-    fn transformed(self, xform: Mat4) -> Transformed<Self> {
-        let inverse_matrix = xform.inverse();
-        Transformed {
-            sdf: self,
-            matrix: xform,
-            inverse_matrix,
-        }
-    }
-
-    fn union<S: SignedDistanceFunction>(self, other: S) -> Union<Self, S> {
-        Union {
-            left: self,
-            right: other,
-        }
-    }
-
-    fn intersection<S: SignedDistanceFunction>(self, other: S) -> Intersection<Self, S> {
-        Intersection {
-            left: self,
-            right: other,
-        }
-    }
-
-    fn difference<S: SignedDistanceFunction>(self, other: S) -> Difference<Self, S> {
-        Difference {
-            left: self,
-            right: other,
-        }
-    }
-}
-
-impl<S: SignedDistanceFunction> Surface for SdfGeometry<S> {
+impl<S: Sdf> Surface for SdfGeometry<S> {
     fn normal_at(&self, p: Vec3) -> Vec3 {
-        let e = 0.000001;
-        let Vec3 { x, y, z } = p;
-        let s = &self.sdf;
-        let n = Vec3::new(
-            s.dist(&Vec3::new(x + e, y, z)) - s.dist(&Vec3::new(x - e, y, z)),
-            s.dist(&Vec3::new(x, y + e, z)) - s.dist(&Vec3::new(x, y - e, z)),
-            s.dist(&Vec3::new(x, y, z + e)) - s.dist(&Vec3::new(x, y, z - e)),
-        );
-        n.normalized()
+        sdf::normal_at(&self.sdf, p)
     }
 }
 
-impl<S: SignedDistanceFunction> Shape for SdfGeometry<S> {
+impl<S: Sdf> Shape for SdfGeometry<S> {
     type Intersection = Hit;
 
     fn bbox(&self) -> Aabb {
@@ -83,239 +36,7 @@ impl<S: SignedDistanceFunction> Shape for SdfGeometry<S> {
     }
 
     fn intersection(&self, ray: &Ray) -> Option<Self::Intersection> {
-        let epsilon = 0.00001;
-        let jump_size = 0.001;
-
-        let (t1, t2) = self.bbox().ray_intersection(ray)?;
-        if t2 < t1 || t2 < 0.0 {
-            return None;
-        }
-
-        let mut t = t1.max(0.0001);
-        let mut jump = true;
-
-        // ray marching
-        for _ in 0..1000 {
-            let mut d = self.sdf.dist(&ray.point_at(t));
-
-            if jump && d < 0.0 {
-                t -= jump_size;
-                jump = false;
-                continue;
-            }
-
-            if d < epsilon {
-                return Some(Hit::new(t, None));
-            }
-
-            if jump && d < jump_size {
-                d = jump_size;
-            }
-
-            t += d;
-
-            if t > t2 {
-                break;
-            }
-        }
-
-        None
-    }
-}
-
-#[derive(Debug, Clone)]
-pub struct Sphere {
-    radius: f64,
-}
-
-impl Sphere {
-    pub fn new(r: f64) -> Self {
-        Sphere { radius: r }
-    }
-}
-
-impl SignedDistanceFunction for Sphere {
-    fn bbox(&self) -> Aabb {
-        geo::sphere::bounding_box(Vec3::zero(), self.radius)
-    }
-
-    fn dist(&self, p: &Vec3) -> f64 {
-        p.norm() - self.radius
-    }
-}
-
-#[derive(Debug, Clone)]
-pub struct Cube {
-    size: Vec3,
-}
-
-impl Cube {
-    pub fn new(size: Vec3) -> Self {
-        Cube { size }
-    }
-}
-
-impl SignedDistanceFunction for Cube {
-    fn bbox(&self) -> Aabb {
-        let d = self.size / 2.0;
-        Aabb::new(-d).expanded(d)
-    }
-
-    fn dist(&self, p: &Vec3) -> f64 {
-        let mut x = if p.x < 0.0 { -p.x } else { p.x };
-        let mut y = if p.y < 0.0 { -p.y } else { p.y };
-        let mut z = if p.z < 0.0 { -p.z } else { p.z };
-
-        x -= self.size.x / 2.0;
-        y -= self.size.y / 2.0;
-        z -= self.size.z / 2.0;
-
-        let a = x.max(y).max(z).min(0.0);
-
-        x = x.max(0.0);
-        y = y.max(0.0);
-        z = z.max(0.0);
-
-        let b = (x.powi(2) + y.powi(2) + z.powi(2)).sqrt();
-        a + b
-    }
-}
-
-#[derive(Debug, Clone)]
-pub struct Cylinder {
-    radius: f64,
-    height: f64,
-}
-
-impl Cylinder {
-    pub fn new(radius: f64, height: f64) -> Self {
-        Cylinder { radius, height }
-    }
-}
-
-impl SignedDistanceFunction for Cylinder {
-    fn bbox(&self) -> Aabb {
-        Aabb::new(Vec3::new(-self.radius, -self.height / 2.0, -self.radius)).expanded(Vec3::new(
-            self.radius,
-            self.height / 2.0,
-            self.radius,
-        ))
-    }
-
-    fn dist(&self, p: &Vec3) -> f64 {
-        let mut x = (p.x.powi(2) + p.z.powi(2)).sqrt();
-        if x < 0.0 {
-            x = -x;
-        }
-
-        let mut y = if p.y < 0.0 { -p.y } else { p.y };
-
-        x -= self.radius;
-        y -= self.height / 2.0;
-        let a = x.max(y).min(0.0);
-
-        x = x.max(0.0);
-        y = y.max(0.0);
-        let b = (x.powi(2) + y.powi(2)).sqrt();
-
-        a + b
-    }
-}
-
-#[derive(Debug)]
-pub struct Transformed<S> {
-    sdf: S,
-    matrix: Mat4,
-    inverse_matrix: Mat4,
-}
-
-impl<S: SignedDistanceFunction> SignedDistanceFunction for Transformed<S> {
-    fn bbox(&self) -> Aabb {
-        self.sdf.bbox().transform(&self.matrix)
-    }
-
-    fn dist(&self, p: &Vec3) -> f64 {
-        let q = p.transform(&self.inverse_matrix);
-        self.sdf.dist(&q)
-    }
-}
-
-#[derive(Debug)]
-pub struct Union<S1, S2> {
-    left: S1,
-    right: S2,
-}
-
-impl<S1, S2> SignedDistanceFunction for Union<S1, S2>
-where
-    S1: SignedDistanceFunction,
-    S2: SignedDistanceFunction,
-{
-    fn bbox(&self) -> Aabb {
-        self.left.bbox().union(&self.right.bbox())
-    }
-
-    fn dist(&self, p: &Vec3) -> f64 {
-        let ld = self.left.dist(p);
-        let rd = self.right.dist(p);
-
-        ld.min(rd)
-    }
-}
-
-#[derive(Debug)]
-pub struct Intersection<S1, S2> {
-    left: S1,
-    right: S2,
-}
-
-impl<S1, S2> SignedDistanceFunction for Intersection<S1, S2>
-where
-    S1: SignedDistanceFunction,
-    S2: SignedDistanceFunction,
-{
-    fn bbox(&self) -> Aabb {
-        let bbox = self.left.bbox().intersection(&self.right.bbox());
-
-        match bbox {
-            Some(b) => b,
-            None => {
-                println!(
-                    "no intersection between shapes {:?} {:?}",
-                    self.left, self.right
-                );
-                Aabb::new(Vec3::zero())
-            }
-        }
-    }
-
-    fn dist(&self, p: &Vec3) -> f64 {
-        let ld = self.left.dist(p);
-        let rd = self.right.dist(p);
-
-        ld.max(rd)
-    }
-}
-
-#[derive(Debug)]
-pub struct Difference<S1, S2> {
-    left: S1,
-    right: S2,
-}
-
-impl<S1, S2> SignedDistanceFunction for Difference<S1, S2>
-where
-    S1: SignedDistanceFunction,
-    S2: SignedDistanceFunction,
-{
-    fn bbox(&self) -> Aabb {
-        self.left.bbox()
-    }
-
-    fn dist(&self, p: &Vec3) -> f64 {
-        let ld = self.left.dist(p);
-        let rd = self.right.dist(p);
-
-        ld.max(-rd)
+        let t = sdf::ray_marching(&self.sdf, ray, 1000)?;
+        Some(Hit::new(t, None))
     }
 }
