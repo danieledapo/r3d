@@ -94,7 +94,7 @@ impl Vec3 {
         )
     }
 
-    /// [Linear interpolation][0] between two `Vec3`.
+    /// Linear interpolation between two `Vec3`.
     ///
     /// ```rust
     /// # use geo::Vec3;

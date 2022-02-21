@@ -5,8 +5,9 @@ use std::{
     io::{self, BufWriter, Write},
 };
 
-use crate::{Orientation, Scene, Triangle, Voxel, IJ, XY};
+use crate::{Orientation, Scene, Triangle, Voxel};
 
+/// Svg settings to use when serializing the Triangles in Svg.
 pub struct SvgSettings<'s> {
     pub background: Option<&'s str>,
     pub scale: f64,
@@ -16,10 +17,18 @@ pub struct SvgSettings<'s> {
     pub padding: f64,
 }
 
+/// A point in the IJ coordinate space.
+pub type IJ = (i32, i32);
+
+/// A point in the XY cartesian plane.
+pub type XY = (f64, f64);
+
+/// Project the given Voxel in 3D space to the IJ coordinate space.
 fn project_ij((x, y, z): Voxel) -> IJ {
     (x - z, y - z)
 }
 
+/// Project the given point in IJ space to the final XY cartesian plane.
 fn project_iso((i, j): IJ) -> XY {
     let (i, j) = (f64::from(i), f64::from(j));
 
@@ -32,13 +41,24 @@ fn project_iso((i, j): IJ) -> XY {
     (i * dx - j * dx, i * dy + j * dy)
 }
 
+/// Return a nearness score for the given voxel.
+///
+/// The higher the value the closest the voxel.
 fn nearness((x, y, z): Voxel) -> i32 {
     x + y + z
 }
 
+/// Render the Scene in 3D space into a set of Triangles in the cartesian XY
+/// plane.
+///
+/// The returned triangles are always visible, but the edges of such triangles
+/// may not be. Be sure to check Triangle::visibility to understand which edges
+/// are visible and which are not.
 pub fn render(scene: &Scene) -> Vec<Triangle<XY>> {
     let mut faces = HashMap::new();
 
+    // remove voxels that when projected end up in the same spot,
+    // keep only the nearest one.
     for &vox in scene.voxels() {
         match faces.entry(project_ij(vox)) {
             Entry::Vacant(v) => {
@@ -52,6 +72,9 @@ pub fn render(scene: &Scene) -> Vec<Triangle<XY>> {
         }
     }
 
+    // Draw the voxels from closest to farthest, skipping triangles that were
+    // already drawn previously by another voxel that, by construction, is on
+    // top of the new one.
     let mut voxels = faces.values().collect::<Vec<_>>();
     voxels.sort_unstable_by_key(|v| Reverse(nearness(**v)));
 
@@ -161,6 +184,11 @@ pub fn dump_svg(path: &str, triangles: &[Triangle<XY>], settings: &SvgSettings) 
     Ok(())
 }
 
+/// Triangulate the left, top and right quadrilateral faces of a given Voxel
+/// into a set of triangles.
+///
+/// This step also calculates which segments are visible or not according to the
+/// other voxels in the Scene.
 fn triangulate(&(x, y, z): &Voxel, voxels: &HashSet<Voxel>) -> [Triangle<Voxel>; 6] {
     let right = voxels.contains(&(x + 1, y, z));
     let front = voxels.contains(&(x, y + 1, z));
