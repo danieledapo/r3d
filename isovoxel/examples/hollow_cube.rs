@@ -18,7 +18,6 @@ pub fn main() {
             .difference(
                 sdf::Cuboid::new(Vec3::replicate(15.0)).translate(Vec3::new(10.0, 10.0, 10.0)),
             ),
-        1.0,
     );
 
     let triangles = render(&scene);
