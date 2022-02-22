@@ -114,6 +114,7 @@ pub type Voxel = (i32, i32, i32);
 #[derive(Debug)]
 pub struct Scene {
     voxels: Vec<Voxel>,
+    sdf_step: f64,
 }
 
 /// Enum over the possible orientations a Triangle can have.
@@ -156,7 +157,10 @@ pub struct Triangle<T> {
 impl Scene {
     /// Create an empty scene.
     pub fn new() -> Self {
-        Self { voxels: vec![] }
+        Self {
+            voxels: vec![],
+            sdf_step: 1.0,
+        }
     }
 
     /// Iterator over all the voxels in the scene.
@@ -183,7 +187,7 @@ impl Scene {
 
     /// Add all the voxels that are contained in the given sdf by sampling the
     /// sdf by the given step.
-    pub fn sdf(&mut self, sdf: &impl Sdf, step: f64) {
+    pub fn sdf(&mut self, sdf: &impl Sdf) {
         let bbox = sdf.bbox();
         let (tl, br) = (bbox.min(), bbox.max());
 
@@ -193,9 +197,11 @@ impl Scene {
             tl.z.round() as i32,
         );
 
-        for (z, zi) in arange(tl.z.floor() + 0.5, br.z.ceil() - 0.5, step).zip(0..) {
-            for (y, yi) in arange(tl.y.floor() + 0.5, br.y.ceil() - 0.5, step).zip(0..) {
-                for (x, xi) in arange(tl.x.floor() + 0.5, br.x.ceil() - 0.5, step).zip(0..) {
+        let (s, e) = (tl.floor() + 0.5, br.ceil() - 0.5);
+
+        for (z, zi) in arange(s.z, e.z, self.sdf_step).zip(0..) {
+            for (y, yi) in arange(s.y, e.y, self.sdf_step).zip(0..) {
+                for (x, xi) in arange(s.x, e.x, self.sdf_step).zip(0..) {
                     let d = sdf.dist(&Vec3::new(x, y, z));
                     if d > 0.0 {
                         continue;

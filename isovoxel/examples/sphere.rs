@@ -16,7 +16,6 @@ pub fn main() {
             )
             .difference(sdf::Cuboid::new(Vec3::new(20.0, 200.0, 200.0)))
             .difference(sdf::Cuboid::new(Vec3::new(200.0, 20.0, 200.0))),
-        1.0,
     );
 
     let triangles = render(&scene);
