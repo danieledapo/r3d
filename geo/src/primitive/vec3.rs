@@ -142,6 +142,22 @@ impl Vec3 {
     }
 }
 
+macro_rules! forward_num_fn {
+    ($fn:ident) => {
+        impl Vec3 {
+            pub fn $fn(&self) -> Self {
+                Self::new(self.x.$fn(), self.y.$fn(), self.z.$fn())
+            }
+        }
+    };
+}
+
+forward_num_fn!(abs);
+forward_num_fn!(floor);
+forward_num_fn!(ceil);
+forward_num_fn!(round);
+forward_num_fn!(signum);
+
 macro_rules! impl_num_op {
     ($tr:ident, $fn:ident, $op:tt, $assign_tr:ident, $assign_fn:ident) => {
         impl $tr for Vec3 {
