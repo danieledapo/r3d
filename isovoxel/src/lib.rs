@@ -187,16 +187,15 @@ impl Scene {
         let bbox = sdf.bbox();
         let (tl, br) = (bbox.min(), bbox.max());
 
-        // TODO: here rounding is likely off
         let (x0, y0, z0) = (
             tl.x.round() as i32,
             tl.y.round() as i32,
             tl.z.round() as i32,
         );
 
-        for (z, zi) in arange(tl.z, br.z, step).zip(0..) {
-            for (y, yi) in arange(tl.y, br.y, step).zip(0..) {
-                for (x, xi) in arange(tl.x, br.x, step).zip(0..) {
+        for (z, zi) in arange(tl.z.floor() + 0.5, br.z.ceil() - 0.5, step).zip(0..) {
+            for (y, yi) in arange(tl.y.floor() + 0.5, br.y.ceil() - 0.5, step).zip(0..) {
+                for (x, xi) in arange(tl.x.floor() + 0.5, br.x.ceil() - 0.5, step).zip(0..) {
                     let d = sdf.dist(&Vec3::new(x, y, z));
                     if d > 0.0 {
                         continue;
