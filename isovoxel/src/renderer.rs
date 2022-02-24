@@ -88,9 +88,7 @@ pub fn render(scene: &Scene) -> Vec<Triangle<XY>> {
         for triangle in triangulate(vox, &spatial_ix) {
             let triangle = triangle.map(project_ij);
 
-            let mut k = triangle.pts;
-            k.sort_unstable();
-            if !drawn.insert(k) {
+            if !drawn.insert(triangle.pts) {
                 continue;
             }
 
@@ -189,6 +187,15 @@ pub fn dump_svg(path: &str, triangles: &[Triangle<XY>], settings: &SvgSettings) 
 ///
 /// This step also calculates which segments are visible or not according to the
 /// other voxels in the Scene.
+///
+/// The triangles are scaled by a factor of 2 (i.e. each voxel is considered to
+/// have side length 2 instead of 1) so that each coordinate can be represented
+/// as an integer.
+///
+/// The edges of the triangles are always sorted in the following order:
+/// vertical edge, u-parallel edge and v-parallel edge. This sorting can be used
+/// for shading.
+///
 fn triangulate(&(x, y, z): &Voxel, voxels: &HashSet<Voxel>) -> [Triangle<Voxel>; 6] {
     let right = voxels.contains(&(x + 1, y, z));
     let front = voxels.contains(&(x, y + 1, z));
@@ -221,46 +228,46 @@ fn triangulate(&(x, y, z): &Voxel, voxels: &HashSet<Voxel>) -> [Triangle<Voxel>;
             Orientation::Top,
             [
                 (x + 1, y + 1, z + 1),
-                (x + 1, y - 1, z + 1),
                 (x - 1, y - 1, z + 1),
-            ],
-            [!right, !back, false],
-        ),
-        Triangle::new(
-            Orientation::Right,
-            [
-                (x + 1, y - 1, z - 1),
                 (x + 1, y - 1, z + 1),
-                (x + 1, y + 1, z + 1),
             ],
-            [!back || back_right, !up || up_right, false],
+            [false, !back, !right],
         ),
         Triangle::new(
             Orientation::Right,
             [
+                (x + 1, y - 1, z + 1),
+                (x + 1, y - 1, z - 1),
+                (x + 1, y + 1, z + 1),
+            ],
+            [!back || back_right, false, !up || up_right],
+        ),
+        Triangle::new(
+            Orientation::Right,
+            [
+                (x + 1, y + 1, z - 1),
                 (x + 1, y + 1, z + 1),
                 (x + 1, y - 1, z - 1),
-                (x + 1, y + 1, z - 1),
             ],
-            [false, !down || down_right, !front],
+            [!front, false, !down || down_right],
+        ),
+        Triangle::new(
+            Orientation::Left,
+            [
+                (x + 1, y + 1, z + 1),
+                (x + 1, y + 1, z - 1),
+                (x - 1, y + 1, z - 1),
+            ],
+            [!right, !down || front_down, false],
         ),
         Triangle::new(
             Orientation::Left,
             [
                 (x - 1, y + 1, z - 1),
-                (x + 1, y + 1, z - 1),
-                (x + 1, y + 1, z + 1),
-            ],
-            [!down || front_down, !right, false],
-        ),
-        Triangle::new(
-            Orientation::Left,
-            [
-                (x + 1, y + 1, z + 1),
                 (x - 1, y + 1, z + 1),
-                (x - 1, y + 1, z - 1),
+                (x + 1, y + 1, z + 1),
             ],
-            [!up || front_up, !left || front_left, false],
+            [!left || front_left, !up || front_up, false],
         ),
     ]
 }
