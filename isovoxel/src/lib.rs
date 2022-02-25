@@ -108,6 +108,15 @@ use geo::{sdf::Sdf, util::arange, Vec3};
 /// A Voxel identified by its x, y, z coordinates.
 pub type Voxel = (i32, i32, i32);
 
+/// A point in the IJ coordinate space.
+pub type IJ = (i32, i32);
+
+/// A point in the XY cartesian plane.
+pub type XY = (f64, f64);
+
+/// A line in the cartesian plane.
+pub type Line = Vec<XY>;
+
 /// A Scene that can be rendered.
 ///
 /// It's just a collection of Voxels.

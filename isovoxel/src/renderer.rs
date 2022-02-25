@@ -5,7 +5,7 @@ use std::{
     io::{self, BufWriter, Write},
 };
 
-use crate::{Orientation, Scene, Triangle, Voxel};
+use crate::{Line, Orientation, Scene, Triangle, Voxel, IJ, XY};
 
 /// Svg settings to use when serializing the Triangles in Svg.
 pub struct SvgSettings<'s> {
@@ -16,12 +16,6 @@ pub struct SvgSettings<'s> {
     pub digits: usize,
     pub padding: f64,
 }
-
-/// A point in the IJ coordinate space.
-pub type IJ = (i32, i32);
-
-/// A point in the XY cartesian plane.
-pub type XY = (f64, f64);
 
 /// Project the given Voxel in 3D space to the IJ coordinate space.
 fn project_ij((x, y, z): Voxel) -> IJ {
@@ -54,7 +48,7 @@ fn nearness((x, y, z): Voxel) -> i32 {
 /// The returned triangles are always visible, but the edges of such triangles
 /// may not be. Be sure to check Triangle::visibility to understand which edges
 /// are visible and which are not.
-pub fn render(scene: &Scene) -> Vec<Triangle<XY>> {
+pub fn render(scene: &Scene) -> Vec<Line> {
     let mut faces = HashMap::new();
 
     // remove voxels that when projected end up in the same spot,
@@ -82,7 +76,11 @@ pub fn render(scene: &Scene) -> Vec<Triangle<XY>> {
     let spatial_ix = voxels.iter().map(|v| **v).collect::<HashSet<_>>();
 
     let mut drawn = HashSet::new();
-    let mut res = vec![];
+
+    // store for each position the connectivity as a bitmask (1 vertical, 2
+    // u-parallel, 4 j-parallel) so that later we can use this connectivity
+    // graph to create straight lines without any duplicate segments.
+    let mut connectivity_graph: HashMap<IJ, u8> = HashMap::new();
 
     for vox in voxels {
         for triangle in triangulate(vox, &spatial_ix) {
@@ -92,21 +90,67 @@ pub fn render(scene: &Scene) -> Vec<Triangle<XY>> {
                 continue;
             }
 
-            res.push(triangle.map(|ij| {
-                let (x, y) = project_iso(ij);
-                (x / 2.0, y / 2.0)
-            }));
+            for i in 0..triangle.pts.len() {
+                let a = triangle.pts[i];
+                let b = triangle.pts[(i + 1) % triangle.pts.len()];
+
+                let (a, b) = (a.min(b), a.max(b));
+
+                *connectivity_graph.entry(a).or_default() |= u8::from(triangle.visibility[i]) << i;
+                connectivity_graph.entry(b).or_default();
+            }
+        }
+    }
+
+    let mut res = vec![];
+
+    let mut follow_path = |mask: u8, i, j, di, dj| {
+        let a = (i, j);
+        for d in 0.. {
+            // NOTE: *2 is because the triangles are in the
+            // "doubled-coordinates" space
+            let d = d * 2;
+
+            let b = (i + d * di, j + d * dj);
+            match connectivity_graph.get_mut(&b) {
+                Some(v) if *v & mask != 0 => {
+                    // straight line, follow along
+                    *v &= !mask;
+                }
+                _ if a == b => {
+                    // just a single point, skip line
+                    break;
+                }
+                _ => {
+                    // a termination point, break line
+                    let a = project_iso(a);
+                    let b = project_iso(b);
+
+                    res.push(vec![(a.0 / 2.0, a.1 / 2.0), (b.0 / 2.0, b.1 / 2.0)]);
+                    break;
+                }
+            }
+        }
+    };
+
+    // generate the final paths by following the connections in the connectivity
+    // graph
+    for t in drawn {
+        for (i, j) in t {
+            follow_path(1, i, j, 1, 1);
+            follow_path(2, i, j, 1, 0);
+            follow_path(4, i, j, 0, 1);
         }
     }
 
     res
 }
 
-pub fn dump_svg(path: &str, triangles: &[Triangle<XY>], settings: &SvgSettings) -> io::Result<()> {
+pub fn dump_svg(path: &str, lines: &[Line], settings: &SvgSettings) -> io::Result<()> {
     let f = File::create(path)?;
     let mut f = BufWriter::new(f);
 
-    if triangles.is_empty() {
+    if lines.is_empty() {
         writeln!(
             f,
             r#"<?xml version="1.0" encoding="UTF-8"?>
@@ -119,8 +163,8 @@ pub fn dump_svg(path: &str, triangles: &[Triangle<XY>], settings: &SvgSettings) 
     let (mut minx, mut maxx) = (f64::INFINITY, f64::NEG_INFINITY);
     let (mut miny, mut maxy) = (f64::INFINITY, f64::NEG_INFINITY);
 
-    for t in triangles {
-        for (x, y) in t.pts {
+    for l in lines {
+        for &(x, y) in l {
             minx = f64::min(minx, x);
             maxx = f64::max(maxx, x);
 
@@ -160,21 +204,12 @@ pub fn dump_svg(path: &str, triangles: &[Triangle<XY>], settings: &SvgSettings) 
         settings.stroke, settings.stroke_width
     )?;
 
-    for triangle in triangles {
-        for i in 0..3 {
-            if !triangle.visibility[i] {
-                continue;
-            }
-
-            let (ax, ay) = triangle.pts[i];
-            let (bx, by) = triangle.pts[(i + 1) % 3];
-
-            writeln!(
-                f,
-                r#"<polyline points="{ax:.digits$},{ay:.digits$} {bx:.digits$},{by:.digits$}" />"#,
-                digits = settings.digits
-            )?;
+    for l in lines {
+        write!(f, r#"<polyline points=""#)?;
+        for (x, y) in l {
+            write!(f, "{x:.digits$},{y:.digits$} ", digits = settings.digits)?;
         }
+        writeln!(f, r#"" />"#)?;
     }
 
     writeln!(f, "</g>\n</svg>")?;
