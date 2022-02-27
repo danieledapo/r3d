@@ -25,14 +25,7 @@ pub fn main() {
     dump_svg(
         "hollow_cube.svg",
         &triangles,
-        &SvgSettings {
-            background: Some("white"),
-            scale: 50.0,
-            stroke: "black",
-            stroke_width: 0.1,
-            digits: 4,
-            padding: 2.0,
-        },
+        &SvgSettings::new(1920.0, 1080.0),
     )
     .expect("cannot save hollow_cube.svg");
 
