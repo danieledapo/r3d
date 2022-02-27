@@ -129,43 +129,6 @@ pub struct Scene {
     add: bool,
 }
 
-/// Enum over the possible orientations a Triangle can have.
-///
-/// This can be used to shade each triangle differently.
-///
-/// ```text
-///           top
-///             .
-///           /   \
-///         /       \
-///        |  \   /  |
-///  left  |    |    |  right
-///         \   |   /
-///           \ . /
-/// ```
-///
-#[derive(Debug, Clone, PartialEq, Eq)]
-pub enum Orientation {
-    Top,
-    Left,
-    Right,
-}
-
-/// Each Scene is rendered into a collection of Triangle to draw.
-#[derive(Debug, Clone, PartialEq, Eq)]
-pub struct Triangle<T> {
-    pub orientation: Orientation,
-    pub pts: [T; 3],
-
-    /// Which segments are visible and which are not.
-    ///
-    /// Since each face of a voxel is represented as a pair of triangles the
-    /// common edge is never visible. Besides, the renderer can also decide to
-    /// hide a segment because of its own rendering style. For example, it can
-    /// hide an edge if it's shared between two neighboring voxels.
-    pub visibility: [bool; 3],
-}
-
 impl Scene {
     /// Create an empty scene.
     pub fn new() -> Self {
@@ -237,24 +200,6 @@ impl Scene {
                     self.add(x0 + xi, y0 + yi, z0 + zi);
                 }
             }
-        }
-    }
-}
-
-impl<T> Triangle<T> {
-    pub fn new(orientation: Orientation, pts: [T; 3], visibility: [bool; 3]) -> Self {
-        Self {
-            orientation,
-            pts,
-            visibility,
-        }
-    }
-
-    pub fn map<TT>(self, f: impl FnMut(T) -> TT) -> Triangle<TT> {
-        Triangle {
-            pts: self.pts.map(f),
-            visibility: self.visibility,
-            orientation: self.orientation,
         }
     }
 }
