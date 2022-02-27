@@ -1,51 +1,11 @@
 use std::{
     cmp::Reverse,
     collections::{hash_map::Entry, HashMap, HashSet},
-    fs::File,
-    io::{self, BufWriter, Write},
 };
 
-use crate::{Line, Orientation, Scene, Triangle, Voxel, IJ, XY};
+use crate::{Line, Scene, Voxel, IJ};
 
-/// Svg settings to use when serializing the Triangles in Svg.
-pub struct SvgSettings<'s> {
-    background: Option<&'s str>,
-    width: f64,
-    height: f64,
-    stroke: &'s str,
-    stroke_width: f64,
-    digits: usize,
-    padding: f64,
-}
-
-impl<'a> SvgSettings<'a> {
-    pub fn new(width: f64, height: f64) -> Self {
-        Self {
-            background: None,
-            width,
-            height,
-            stroke: "black",
-            stroke_width: 1.0,
-            digits: 4,
-            padding: 0.0,
-        }
-    }
-
-    pub fn with_background(mut self, background: &'a str) -> Self {
-        self.background = Some(background);
-        self
-    }
-
-    pub fn with_stroke(mut self, stroke: &'a str) -> Self {
-        self.stroke = stroke;
-        self
-    }
-
-    pub fn with_padding(mut self, padding: f64) -> Self {
-        self.padding = padding;
-        self
-    }
-}
+use super::{nearness, project_ij, project_iso, IsoTriangle, Orientation};
 
 /// Render the Scene in 3D space into a set of Triangles in the cartesian XY
 /// plane.
@@ -151,102 +111,6 @@ pub fn render(scene: &Scene) -> Vec<Line> {
     res
 }
 
-pub fn dump_svg(path: &str, lines: &[Line], settings: &SvgSettings) -> io::Result<()> {
-    let f = File::create(path)?;
-    let mut f = BufWriter::new(f);
-
-    if lines.is_empty() {
-        writeln!(
-            f,
-            r#"<?xml version="1.0" encoding="UTF-8"?>
-    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 0 0">
-    </svg>"#
-        )?;
-        return Ok(());
-    }
-
-    let (mut minx, mut maxx) = (f64::INFINITY, f64::NEG_INFINITY);
-    let (mut miny, mut maxy) = (f64::INFINITY, f64::NEG_INFINITY);
-
-    for l in lines {
-        for &(x, y) in l {
-            minx = f64::min(minx, x);
-            maxx = f64::max(maxx, x);
-
-            miny = f64::min(miny, y);
-            maxy = f64::max(maxy, y);
-        }
-    }
-
-    minx -= settings.padding;
-    maxx += settings.padding;
-    miny -= settings.padding;
-    maxy += settings.padding;
-
-    let (width, height) = (maxx - minx, maxy - miny);
-
-    writeln!(
-        f,
-        r#"<?xml version="1.0" encoding="UTF-8"?>
-<svg xmlns="http://www.w3.org/2000/svg" width="{}" height="{}" viewBox="{minx} {miny} {width} {height}">"#,
-        settings.width, settings.height
-    )?;
-
-    if let Some(background) = settings.background {
-        writeln!(
-            f,
-            r#"<rect x="{minx}" y="{miny}" width="{width}" height="{height}" stroke="none" fill="{background}"/>"#,
-        )?;
-    }
-
-    // all the lines share the same attributes hence using a group allows to
-    // save a lot of space in the final SVG given that such attributes are not
-    // repeated.
-    writeln!(
-        f,
-        r#"<g stroke="{}" stroke-width="{}" fill="none">"#,
-        settings.stroke,
-        settings.stroke_width / f64::max(settings.width / width, settings.height / height)
-    )?;
-
-    for l in lines {
-        write!(f, r#"<polyline points=""#)?;
-        for (x, y) in l {
-            write!(f, "{x:.digits$},{y:.digits$} ", digits = settings.digits)?;
-        }
-        writeln!(f, r#"" />"#)?;
-    }
-
-    writeln!(f, "</g>\n</svg>")?;
-
-    Ok(())
-}
-
-/// Project the given Voxel in 3D space to the IJ coordinate space.
-fn project_ij((x, y, z): Voxel) -> IJ {
-    (x - z, y - z)
-}
-
-/// Project the given point in IJ space to the final XY cartesian plane.
-fn project_iso((i, j): IJ) -> XY {
-    let (i, j) = (f64::from(i), f64::from(j));
-
-    // even though these aren't marked const (especially since sqrt is not
-    // const) the compiler is smarter enough to replace the calls with just the
-    // constant
-    let dx = f64::sqrt(3.0) / 2.0;
-    let dy: f64 = 0.5;
-
-    (i * dx - j * dx, i * dy + j * dy)
-}
-
-/// Return a nearness score for the given voxel.
-///
-/// The higher the value the closest the voxel.
-fn nearness((x, y, z): Voxel) -> i32 {
-    x + y + z
-}
-
 /// Triangulate the left, top and right quadrilateral faces of a given Voxel
 /// into a set of triangles.
 ///
@@ -261,7 +125,7 @@ fn nearness((x, y, z): Voxel) -> i32 {
 /// vertical edge, u-parallel edge and v-parallel edge. This sorting can be used
 /// for shading.
 ///
-fn triangulate(&(x, y, z): &Voxel, voxels: &HashSet<Voxel>) -> [Triangle<Voxel>; 6] {
+fn triangulate(&(x, y, z): &Voxel, voxels: &HashSet<Voxel>) -> [IsoTriangle<Voxel>; 6] {
     let right = voxels.contains(&(x + 1, y, z));
     let front = voxels.contains(&(x, y + 1, z));
     let back = voxels.contains(&(x, y - 1, z));
@@ -280,7 +144,7 @@ fn triangulate(&(x, y, z): &Voxel, voxels: &HashSet<Voxel>) -> [Triangle<Voxel>;
     let (x, y, z) = (x * 2, y * 2, z * 2);
 
     [
-        Triangle::new(
+        IsoTriangle::new(
             Orientation::Top,
             [
                 (x - 1, y - 1, z + 1),
@@ -289,7 +153,7 @@ fn triangulate(&(x, y, z): &Voxel, voxels: &HashSet<Voxel>) -> [Triangle<Voxel>;
             ],
             [false, !front, !left],
         ),
-        Triangle::new(
+        IsoTriangle::new(
             Orientation::Top,
             [
                 (x + 1, y + 1, z + 1),
@@ -298,7 +162,7 @@ fn triangulate(&(x, y, z): &Voxel, voxels: &HashSet<Voxel>) -> [Triangle<Voxel>;
             ],
             [false, !back, !right],
         ),
-        Triangle::new(
+        IsoTriangle::new(
             Orientation::Right,
             [
                 (x + 1, y - 1, z + 1),
@@ -307,7 +171,7 @@ fn triangulate(&(x, y, z): &Voxel, voxels: &HashSet<Voxel>) -> [Triangle<Voxel>;
             ],
             [!back || back_right, false, !up || up_right],
         ),
-        Triangle::new(
+        IsoTriangle::new(
             Orientation::Right,
             [
                 (x + 1, y + 1, z - 1),
@@ -316,7 +180,7 @@ fn triangulate(&(x, y, z): &Voxel, voxels: &HashSet<Voxel>) -> [Triangle<Voxel>;
             ],
             [!front, false, !down || down_right],
         ),
-        Triangle::new(
+        IsoTriangle::new(
             Orientation::Left,
             [
                 (x + 1, y + 1, z + 1),
@@ -325,7 +189,7 @@ fn triangulate(&(x, y, z): &Voxel, voxels: &HashSet<Voxel>) -> [Triangle<Voxel>;
             ],
             [!right, !down || front_down, false],
         ),
-        Triangle::new(
+        IsoTriangle::new(
             Orientation::Left,
             [
                 (x - 1, y + 1, z - 1),
