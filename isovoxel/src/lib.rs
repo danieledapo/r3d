@@ -101,6 +101,8 @@
 //!
 
 mod renderer;
+use std::collections::HashSet;
+
 pub use renderer::*;
 
 use geo::{sdf::Sdf, util::arange, Vec3};
@@ -122,8 +124,9 @@ pub type Line = Vec<XY>;
 /// It's just a collection of Voxels.
 #[derive(Debug)]
 pub struct Scene {
-    voxels: Vec<Voxel>,
+    voxels: HashSet<Voxel>,
     sdf_step: f64,
+    add: bool,
 }
 
 /// Enum over the possible orientations a Triangle can have.
@@ -167,9 +170,20 @@ impl Scene {
     /// Create an empty scene.
     pub fn new() -> Self {
         Self {
-            voxels: vec![],
+            voxels: HashSet::new(),
             sdf_step: 1.0,
+            add: true,
         }
+    }
+
+    /// Invert the current insertion mode.
+    ///
+    /// Currently there are two insertion modes:
+    ///
+    /// - insertion: new voxels are simply added to the scene
+    /// - subtraction: new voxels are removed from the scene
+    pub fn invert(&mut self) {
+        self.add = !self.add;
     }
 
     /// Iterator over all the voxels in the scene.
@@ -179,7 +193,11 @@ impl Scene {
 
     /// Add the given voxel to the scene.
     pub fn add(&mut self, x: i32, y: i32, z: i32) {
-        self.voxels.push((x, y, z));
+        if self.add {
+            self.voxels.insert((x, y, z));
+        } else {
+            self.voxels.remove(&(x, y, z));
+        }
     }
 
     /// Add all the voxels included in the box center at the given point with
