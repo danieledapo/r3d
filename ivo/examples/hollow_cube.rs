@@ -3,7 +3,7 @@ use geo::{
     util::opener,
     Vec3,
 };
-use isovoxel::*;
+use ivo::*;
 
 pub fn main() {
     let mut scene = Scene::new();
