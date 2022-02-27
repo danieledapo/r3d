@@ -20,19 +20,8 @@ pub fn main() {
 
     let triangles = render(&scene);
 
-    dump_svg(
-        "sphere.svg",
-        &triangles,
-        &SvgSettings {
-            background: Some("white"),
-            scale: 10.0,
-            stroke: "black",
-            stroke_width: 0.1,
-            digits: 4,
-            padding: 20.0,
-        },
-    )
-    .expect("cannot save sphere.svg");
+    dump_svg("sphere.svg", &triangles, &SvgSettings::new(1920.0, 1080.0))
+        .expect("cannot save sphere.svg");
 
     opener::open("sphere.svg").expect("cannot open sphere.svg");
 }

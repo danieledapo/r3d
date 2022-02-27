@@ -9,37 +9,42 @@ use crate::{Line, Orientation, Scene, Triangle, Voxel, IJ, XY};
 
 /// Svg settings to use when serializing the Triangles in Svg.
 pub struct SvgSettings<'s> {
-    pub background: Option<&'s str>,
-    pub scale: f64,
-    pub stroke: &'s str,
-    pub stroke_width: f64,
-    pub digits: usize,
-    pub padding: f64,
+    background: Option<&'s str>,
+    width: f64,
+    height: f64,
+    stroke: &'s str,
+    stroke_width: f64,
+    digits: usize,
+    padding: f64,
 }
 
-/// Project the given Voxel in 3D space to the IJ coordinate space.
-fn project_ij((x, y, z): Voxel) -> IJ {
-    (x - z, y - z)
-}
+impl<'a> SvgSettings<'a> {
+    pub fn new(width: f64, height: f64) -> Self {
+        Self {
+            background: None,
+            width,
+            height,
+            stroke: "black",
+            stroke_width: 1.0,
+            digits: 4,
+            padding: 0.0,
+        }
+    }
 
-/// Project the given point in IJ space to the final XY cartesian plane.
-fn project_iso((i, j): IJ) -> XY {
-    let (i, j) = (f64::from(i), f64::from(j));
+    pub fn with_background(mut self, background: &'a str) -> Self {
+        self.background = Some(background);
+        self
+    }
 
-    // even though these aren't marked const (especially since sqrt is not
-    // const) the compiler is smarter enough to replace the calls with just the
-    // constant
-    let dx = f64::sqrt(3.0) / 2.0;
-    let dy: f64 = 0.5;
+    pub fn with_stroke(mut self, stroke: &'a str) -> Self {
+        self.stroke = stroke;
+        self
+    }
 
-    (i * dx - j * dx, i * dy + j * dy)
-}
-
-/// Return a nearness score for the given voxel.
-///
-/// The higher the value the closest the voxel.
-fn nearness((x, y, z): Voxel) -> i32 {
-    x + y + z
+    pub fn with_padding(mut self, padding: f64) -> Self {
+        self.padding = padding;
+        self
+    }
 }
 
 /// Render the Scene in 3D space into a set of Triangles in the cartesian XY
@@ -173,10 +178,10 @@ pub fn dump_svg(path: &str, lines: &[Line], settings: &SvgSettings) -> io::Resul
         }
     }
 
-    minx -= settings.padding + settings.stroke_width;
-    maxx += settings.padding + settings.stroke_width;
-    miny -= settings.padding + settings.stroke_width;
-    maxy += settings.padding + settings.stroke_width;
+    minx -= settings.padding;
+    maxx += settings.padding;
+    miny -= settings.padding;
+    maxy += settings.padding;
 
     let (width, height) = (maxx - minx, maxy - miny);
 
@@ -184,8 +189,7 @@ pub fn dump_svg(path: &str, lines: &[Line], settings: &SvgSettings) -> io::Resul
         f,
         r#"<?xml version="1.0" encoding="UTF-8"?>
 <svg xmlns="http://www.w3.org/2000/svg" width="{}" height="{}" viewBox="{minx} {miny} {width} {height}">"#,
-        width * settings.scale,
-        height * settings.scale,
+        settings.width, settings.height
     )?;
 
     if let Some(background) = settings.background {
@@ -201,7 +205,8 @@ pub fn dump_svg(path: &str, lines: &[Line], settings: &SvgSettings) -> io::Resul
     writeln!(
         f,
         r#"<g stroke="{}" stroke-width="{}" fill="none">"#,
-        settings.stroke, settings.stroke_width
+        settings.stroke,
+        settings.stroke_width / f64::max(settings.width / width, settings.height / height)
     )?;
 
     for l in lines {
@@ -215,6 +220,31 @@ pub fn dump_svg(path: &str, lines: &[Line], settings: &SvgSettings) -> io::Resul
     writeln!(f, "</g>\n</svg>")?;
 
     Ok(())
+}
+
+/// Project the given Voxel in 3D space to the IJ coordinate space.
+fn project_ij((x, y, z): Voxel) -> IJ {
+    (x - z, y - z)
+}
+
+/// Project the given point in IJ space to the final XY cartesian plane.
+fn project_iso((i, j): IJ) -> XY {
+    let (i, j) = (f64::from(i), f64::from(j));
+
+    // even though these aren't marked const (especially since sqrt is not
+    // const) the compiler is smarter enough to replace the calls with just the
+    // constant
+    let dx = f64::sqrt(3.0) / 2.0;
+    let dy: f64 = 0.5;
+
+    (i * dx - j * dx, i * dy + j * dy)
+}
+
+/// Return a nearness score for the given voxel.
+///
+/// The higher the value the closest the voxel.
+fn nearness((x, y, z): Voxel) -> i32 {
+    x + y + z
 }
 
 /// Triangulate the left, top and right quadrilateral faces of a given Voxel
