@@ -140,7 +140,7 @@ impl Sdf for Cylinder {
 impl Sdf for Torus {
     fn dist(&self, p: &Vec3) -> f64 {
         let q = Vec3::new(Vec3::new(p.x, p.y, 0.0).norm() - self.r2, p.z, 0.0);
-        q.norm2() - self.r1
+        q.norm() - self.r1
     }
 
     fn bbox(&self) -> Aabb {
