@@ -110,6 +110,11 @@ impl<'a> SvgSettings<'a> {
         self
     }
 
+    pub fn with_stroke_width(mut self, w: f64) -> Self {
+        self.stroke_width = w;
+        self
+    }
+
     pub fn with_padding(mut self, padding: f64) -> Self {
         self.padding = padding;
         self
