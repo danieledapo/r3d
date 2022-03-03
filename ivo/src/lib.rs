@@ -101,7 +101,6 @@
 //!
 
 mod renderer;
-use std::collections::HashSet;
 
 pub use renderer::*;
 
@@ -124,7 +123,7 @@ pub type Line = Vec<XY>;
 /// It's just a collection of Voxels.
 #[derive(Debug)]
 pub struct Scene {
-    voxels: HashSet<Voxel>,
+    voxels: rustc_hash::FxHashSet<Voxel>,
     sdf_step: f64,
     add: bool,
 }
@@ -133,7 +132,7 @@ impl Scene {
     /// Create an empty scene.
     pub fn new() -> Self {
         Self {
-            voxels: HashSet::new(),
+            voxels: Default::default(),
             sdf_step: 1.0,
             add: true,
         }
