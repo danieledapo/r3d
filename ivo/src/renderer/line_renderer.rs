@@ -17,7 +17,7 @@ pub fn render(scene: &Scene) -> Vec<Line> {
 
     // remove voxels that when projected end up in the same spot,
     // keep only the nearest one.
-    for &vox in scene.voxels() {
+    for vox in scene.voxels() {
         match faces.entry(project_ij(vox)) {
             Entry::Vacant(v) => {
                 v.insert(vox);
