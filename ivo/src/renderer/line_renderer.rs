@@ -1,7 +1,6 @@
-use std::{
-    cmp::Reverse,
-    collections::{hash_map::Entry, HashMap, HashSet},
-};
+use std::{cmp::Reverse, collections::hash_map::Entry};
+
+use rustc_hash::{FxHashMap, FxHashSet};
 
 use crate::{Line, Scene, Voxel, IJ};
 
@@ -14,7 +13,7 @@ use super::{nearness, project_ij, project_iso, IsoTriangle, Orientation};
 /// may not be. Be sure to check Triangle::visibility to understand which edges
 /// are visible and which are not.
 pub fn render(scene: &Scene) -> Vec<Line> {
-    let mut faces = HashMap::new();
+    let mut faces = FxHashMap::default();
 
     // remove voxels that when projected end up in the same spot,
     // keep only the nearest one.
@@ -38,14 +37,14 @@ pub fn render(scene: &Scene) -> Vec<Line> {
     voxels.sort_unstable_by_key(|v| Reverse(nearness(**v)));
 
     // TODO: this is relatively slow, but fast enough for now...
-    let spatial_ix = voxels.iter().map(|v| **v).collect::<HashSet<_>>();
+    let spatial_ix = voxels.iter().map(|v| **v).collect::<FxHashSet<_>>();
 
-    let mut drawn = HashSet::new();
+    let mut drawn = FxHashSet::default();
 
     // store for each position the connectivity as a bitmask (1 vertical, 2
     // u-parallel, 4 j-parallel) so that later we can use this connectivity
     // graph to create straight lines without any duplicate segments.
-    let mut connectivity_graph: HashMap<IJ, u8> = HashMap::new();
+    let mut connectivity_graph: FxHashMap<IJ, u8> = FxHashMap::default();
 
     for vox in voxels {
         for triangle in triangulate(vox, &spatial_ix) {
@@ -125,7 +124,7 @@ pub fn render(scene: &Scene) -> Vec<Line> {
 /// vertical edge, u-parallel edge and v-parallel edge. This sorting can be used
 /// for shading.
 ///
-fn triangulate(&(x, y, z): &Voxel, voxels: &HashSet<Voxel>) -> [IsoTriangle<Voxel>; 6] {
+fn triangulate(&(x, y, z): &Voxel, voxels: &FxHashSet<Voxel>) -> [IsoTriangle<Voxel>; 6] {
     let right = voxels.contains(&(x + 1, y, z));
     let front = voxels.contains(&(x, y + 1, z));
     let back = voxels.contains(&(x, y - 1, z));
