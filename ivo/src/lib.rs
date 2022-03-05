@@ -101,6 +101,7 @@
 //!
 
 mod renderer;
+mod spatial_index;
 
 pub use renderer::*;
 
@@ -123,7 +124,7 @@ pub type Line = Vec<XY>;
 /// It's just a collection of Voxels.
 #[derive(Debug)]
 pub struct Scene {
-    voxels: rustc_hash::FxHashSet<Voxel>,
+    voxels: spatial_index::Index,
     sdf_step: f64,
     add: bool,
 }
@@ -132,7 +133,7 @@ impl Scene {
     /// Create an empty scene.
     pub fn new() -> Self {
         Self {
-            voxels: Default::default(),
+            voxels: spatial_index::Index::new(),
             sdf_step: 1.0,
             add: true,
         }
@@ -149,16 +150,16 @@ impl Scene {
     }
 
     /// Iterator over all the voxels in the scene.
-    pub fn voxels(&self) -> impl Iterator<Item = &Voxel> + '_ {
+    pub fn voxels(&self) -> impl Iterator<Item = Voxel> + '_ {
         self.voxels.iter()
     }
 
     /// Add the given voxel to the scene.
     pub fn add(&mut self, x: i32, y: i32, z: i32) {
         if self.add {
-            self.voxels.insert((x, y, z));
+            self.voxels.add(x, y, z);
         } else {
-            self.voxels.remove(&(x, y, z));
+            self.voxels.remove(x, y, z);
         }
     }
 
