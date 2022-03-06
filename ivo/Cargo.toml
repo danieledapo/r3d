@@ -8,3 +8,4 @@ edition = "2021"
 [dependencies]
 geo = {path = "../geo"}
 rustc-hash = "1.1"
+rand = "0.8"
