@@ -163,6 +163,36 @@ impl Scene {
         }
     }
 
+    /// Add a slab parallel to the x axis with the given dimensions.
+    ///
+    /// A slab is just a bounding box, but the instead of giving the center of
+    /// the bounding box the starting point of the slab must be provided.
+    pub fn xslab(&mut self, (x, y, z): Voxel, (w, hd, hh): (i32, i32, i32)) {
+        for dx in 0..w {
+            self.aabb((x + dx, y, z), (0, hd, hh));
+        }
+    }
+
+    /// Add a slab parallel to the y axis with the given dimensions.
+    ///
+    /// A slab is just a bounding box, but the instead of giving the center of
+    /// the bounding box the starting point of the slab must be provided.
+    pub fn yslab(&mut self, (x, y, z): Voxel, (hw, d, hh): (i32, i32, i32)) {
+        for dy in 0..d {
+            self.aabb((x, y + dy, z), (hw, 0, hh));
+        }
+    }
+
+    /// Add a slab parallel to the z axis with the given dimensions.
+    ///
+    /// A slab is just a bounding box, but the instead of giving the center of
+    /// the bounding box the starting point of the slab must be provided.
+    pub fn zslab(&mut self, (x, y, z): Voxel, (hw, hd, h): (i32, i32, i32)) {
+        for dz in 0..h {
+            self.aabb((x, y, z + dz), (hw, hd, 0));
+        }
+    }
+
     /// Add all the voxels included in the box center at the given point with
     /// the given half dimensions.
     pub fn aabb(&mut self, (x, y, z): Voxel, (hw, hd, hh): (i32, i32, i32)) {
