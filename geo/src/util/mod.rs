@@ -1,5 +1,15 @@
 pub mod opener;
 
+#[macro_export]
+macro_rules! chrono {
+    ($label:expr, $e:expr) => {{
+        let now = std::time::Instant::now();
+        let res = $e;
+        println!("{} took {}ms", $label, now.elapsed().as_millis());
+        res
+    }};
+}
+
 pub fn arange(s: f64, e: f64, step: f64) -> impl Iterator<Item = f64> {
     Arange { s, e, step }
 }
