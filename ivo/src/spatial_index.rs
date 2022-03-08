@@ -23,7 +23,7 @@ pub const MAX_RUNNING_VOXELS: usize = 1_000_000;
 
 #[derive(Debug)]
 pub struct Index {
-    grid: Grid,
+    grid: Option<Grid>,
     outside_grid: FxHashSet<Voxel>,
     min: Voxel,
     max: Voxel,
@@ -32,54 +32,73 @@ pub struct Index {
 impl Index {
     pub fn new() -> Self {
         Self {
-            grid: Grid::new((0, 0, 0), (0, 0, 0)),
+            grid: None,
             outside_grid: FxHashSet::default(),
-            min: (0, 0, 0),
-            max: (0, 0, 0),
+            min: (i32::MAX, i32::MAX, i32::MAX),
+            max: (i32::MIN, i32::MIN, i32::MIN),
+        }
+    }
+
+    pub fn with_bbox_hint(min: Voxel, max: Voxel) -> Self {
+        Self {
+            grid: Some(Grid::new(min, max)),
+            outside_grid: FxHashSet::default(),
+            min,
+            max,
         }
     }
 
     pub fn iter(&self) -> impl Iterator<Item = Voxel> + '_ {
-        self.grid.iter().chain(self.outside_grid.iter().copied())
+        self.outside_grid
+            .iter()
+            .copied()
+            .chain(self.grid.as_ref().map(|g| g.iter()).into_iter().flatten())
     }
 
     pub fn add(&mut self, x: i32, y: i32, z: i32) {
-        self.min = (
-            i32::min(x, self.min.0),
-            i32::min(y, self.min.1),
-            i32::min(z, self.min.2),
-        );
-        self.max = (
-            i32::max(x, self.max.0),
-            i32::max(y, self.max.1),
-            i32::max(z, self.max.2),
-        );
+        match &mut self.grid {
+            Some(grid) if grid.contains(x, y, z) => {
+                grid.add(x, y, z);
+            }
+            _ => {
+                self.min = (
+                    i32::min(x, self.min.0),
+                    i32::min(y, self.min.1),
+                    i32::min(z, self.min.2),
+                );
+                self.max = (
+                    i32::max(x, self.max.0),
+                    i32::max(y, self.max.1),
+                    i32::max(z, self.max.2),
+                );
+                self.outside_grid.insert((x, y, z));
 
-        if self.grid.contains(x, y, z) {
-            self.grid.add(x, y, z);
-        } else {
-            self.outside_grid.insert((x, y, z));
+                if self.outside_grid.len() >= MAX_RUNNING_VOXELS {
+                    let mut grid = Grid::new(self.min, self.max);
+                    for (x, y, z) in self.outside_grid.drain() {
+                        grid.add(x, y, z);
+                    }
 
-            if self.outside_grid.len() >= MAX_RUNNING_VOXELS {
-                let mut grid = Grid::new(self.min, self.max);
-                for (x, y, z) in self.outside_grid.drain() {
-                    grid.add(x, y, z);
+                    if let Some(g) = &self.grid {
+                        for (x, y, z) in g.iter() {
+                            grid.add(x, y, z);
+                        }
+                    }
+
+                    self.grid = Some(grid);
                 }
-
-                for (x, y, z) in self.grid.iter() {
-                    grid.add(x, y, z);
-                }
-
-                self.grid = grid;
             }
         }
     }
 
     pub fn remove(&mut self, x: i32, y: i32, z: i32) {
-        if self.grid.contains(x, y, z) {
-            self.grid.remove(x, y, z);
-        } else {
-            self.outside_grid.remove(&(x, y, z));
+        match &mut self.grid {
+            Some(grid) if grid.contains(x, y, z) => {
+                grid.remove(x, y, z);
+            }
+            _ => {
+                self.outside_grid.remove(&(x, y, z));
+            }
         }
     }
 }

@@ -2,11 +2,11 @@ use geo::{chrono, util::opener};
 use ivo::*;
 
 pub fn main() {
-    let mut scene = Scene::new();
-
     let height = 500;
     let half_base = 100;
     let side = height + half_base;
+
+    let mut scene = Scene::with_dimensions_hint(side, side, side);
 
     chrono!("scene", {
         for z in 0..height {
