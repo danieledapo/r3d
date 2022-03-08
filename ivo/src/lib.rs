@@ -139,6 +139,22 @@ impl Scene {
         }
     }
 
+    /// Create an empty scene pre-allocating enough space to cover the bounding
+    /// box centered at the origin with the given half dimensions.
+    pub fn with_dimensions_hint(width: i32, height: i32, depth: i32) -> Self {
+        Self::with_bbox_hint((-width, -height, -depth), (width, height, depth))
+    }
+
+    /// Create an empty scene pre-allocating enough space to cover the given
+    /// bounding box.
+    pub fn with_bbox_hint(min: Voxel, max: Voxel) -> Self {
+        Self {
+            voxels: spatial_index::Index::with_bbox_hint(min, max),
+            sdf_step: 1.0,
+            add: true,
+        }
+    }
+
     /// Invert the current insertion mode.
     ///
     /// Currently there are two insertion modes:
