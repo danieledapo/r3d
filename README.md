@@ -31,3 +31,12 @@ functions and triangle meshes.
 ![trex](images/l/trex.png)
 ![skyscrapers](images/l/skyscrapers.png)
 ![fun](images/l/fun.png)
+
+## Ivo, the isometric voxel renderer
+
+`ivo` is an isometric voxel renderer that is quite limited, for instance it does
+not support arbitrary cameras, but it is fun to play with anyhow.
+
+![hollow-cube](images/ivo/hollow_cube.png)
+![archi](images/ivo/archi.png)
+![octa](images/ivo/octa.png)
