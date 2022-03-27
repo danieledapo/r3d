@@ -3,6 +3,8 @@ target
 *.ppm
 *.png
 *.svg
+
 !images/buzz/*
+!images/ivo/*
 !images/l/*
 !images/r3d.png
