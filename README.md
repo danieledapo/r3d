@@ -6,13 +6,13 @@ My Rust playground to learn more about 3D graphics and renderers.
 
 ## Buzz, the ray tracer
 
-`buzz` is a simple ray tracer that is able to render simple geometric primitives
-such as spheres, cubes and planes as well as triangle meshes. It supports direct
-and indirect lighting, as soft shadows and uses a very simple model to represent
-materials.
+`buzz` is a ray tracer that is able to render simple geometric primitives such
+as spheres, cubes and planes as well as triangle meshes. It supports direct and
+indirect lighting, as well as soft shadows and it uses a very simple model to
+represent materials.
 
-Lastly, it also has a primitive implementation of a simple framework to model
-and render 3D objects using the Constructive Solid Geometry approach.
+Lastly, it also has a primitive implementation of a framework to model and
+render 3D objects using the Constructive Solid Geometry approach.
 
 It has been heavily inspired by
 https://github.com/petershirley/raytracinginoneweekend.
@@ -24,8 +24,8 @@ https://github.com/petershirley/raytracinginoneweekend.
 
 ## L, the line renderer
 
-`l` is a simple line renderer that is able to render lines lying on 3D objects
-with hidden line removal. It supports very basic geometries like cubes, but also
+`l` is a line renderer that is able to render lines lying on 3D objects with
+hidden line removal. It supports very basic geometries like cubes, but also
 functions and triangle meshes.
 
 ![trex](images/l/trex.png)
