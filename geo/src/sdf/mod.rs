@@ -106,7 +106,6 @@ pub fn normal_at(s: &impl Sdf, p: Vec3) -> Vec3 {
 /// [0]: https://en.wikipedia.org/wiki/Volume_ray_casting#Ray_Marching
 pub fn ray_marching(sdf: &impl Sdf, ray: &Ray, steps: usize) -> Option<f64> {
     let epsilon = 0.00001;
-    let jump_size = 0.001;
 
     let (t1, t2) = sdf.bbox().ray_intersection(ray)?;
     if t2 < t1 || t2 < 0.0 {
@@ -114,24 +113,12 @@ pub fn ray_marching(sdf: &impl Sdf, ray: &Ray, steps: usize) -> Option<f64> {
     }
 
     let mut t = t1.max(0.0001);
-    let mut jump = true;
 
     // ray marching
     for _ in 0..steps {
-        let mut d = sdf.dist(&ray.point_at(t));
-
-        if jump && d < 0.0 {
-            t -= jump_size;
-            jump = false;
-            continue;
-        }
-
+        let d = sdf.dist(&ray.point_at(t));
         if d < epsilon {
             return Some(t);
-        }
-
-        if jump && d < jump_size {
-            d = jump_size;
         }
 
         t += d;
