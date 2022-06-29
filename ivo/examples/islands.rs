@@ -1,15 +1,10 @@
-use std::{
-    collections::HashMap,
-    fs,
-    path::Path,
-    time::{SystemTime, UNIX_EPOCH},
-};
+use std::collections::HashMap;
 
 use noise::{HybridMulti, MultiFractal, NoiseFn, Seedable};
 use rand::prelude::*;
 
 use ivo::*;
-use sketch_utils::opener;
+use sketch_utils::{opener, sketch_output_path};
 
 fn landscape(scene: &mut Scene, noise: impl NoiseFn<[f64; 2]>) {
     let mut minh = f64::INFINITY;
@@ -72,24 +67,10 @@ pub fn main() {
 
     let triangles = render(&scene);
 
-    let dir = Path::new(env!("CARGO_MANIFEST_DIR"))
-        .join("..")
-        .join("islands");
-
-    if !dir.is_dir() {
-        fs::create_dir(&dir).expect("cannot create islands dir");
-    }
-
-    let path = dir.join(format!(
-        "islands-{}.svg",
-        SystemTime::now()
-            .duration_since(UNIX_EPOCH)
-            .unwrap()
-            .as_secs(),
-    ));
+    let path = sketch_output_path("islands.svg").unwrap();
 
     dump_svg(
-        path.to_str().unwrap(),
+        &path,
         &triangles,
         // &SvgSettings::new(2048.0, 2048.0)
         &SvgSettings::new(1052.0, 744.0)
@@ -98,5 +79,5 @@ pub fn main() {
     )
     .expect("cannot save output image");
 
-    opener::open(&path).expect("cannot open output image");
+    opener::open(path).expect("cannot open output image");
 }
