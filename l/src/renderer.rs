@@ -56,7 +56,7 @@ pub fn render(camera: &Camera, scene: &Scene, settings: &Settings) -> Vec<Polyli
 
     let is_visible = |p: Vec3| {
         let d = camera.position() - p;
-        let ray = Ray::new(p + d * settings.chop_eps, d);
+        let ray = Ray::new(p + d.normalized() * settings.chop_eps, d);
 
         match scene.intersection(&ray) {
             None => true,

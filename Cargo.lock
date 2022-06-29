@@ -390,6 +390,7 @@ name = "l"
 version = "0.1.0"
 dependencies = [
  "geo",
+ "marching_squares",
  "rand 0.8.5",
  "rayon",
 ]
@@ -430,6 +431,11 @@ checksum = "abb12e687cfb44aa40f41fc3978ef76448f9b6038cad6aef4259d3c095a2382e"
 dependencies = [
  "cfg-if",
 ]
+
+[[package]]
+name = "marching_squares"
+version = "0.1.0"
+source = "git+https://github.com/d-dorazio/marching_squares#cee3deeee125f076a4dc3863c6233dabc8017569"
 
 [[package]]
 name = "memoffset"
