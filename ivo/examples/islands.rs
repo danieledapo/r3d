@@ -8,8 +8,8 @@ use std::{
 use noise::{HybridMulti, MultiFractal, NoiseFn, Seedable};
 use rand::prelude::*;
 
-use geo::util::opener;
 use ivo::*;
+use sketch_utils::opener;
 
 fn landscape(scene: &mut Scene, noise: impl NoiseFn<[f64; 2]>) {
     let mut minh = f64::INFINITY;

@@ -1,9 +1,9 @@
 use geo::{
     sdf::{self, Sdf},
-    util::opener,
     Vec3,
 };
 use ivo::*;
+use sketch_utils::opener;
 
 pub fn main() {
     let mut scene = Scene::new();

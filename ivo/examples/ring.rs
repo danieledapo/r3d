@@ -1,4 +1,6 @@
-use geo::{sdf::Sdf, util::opener, Aabb, Vec3};
+use geo::{sdf::Sdf, Aabb, Vec3};
+use sketch_utils::opener;
+
 use ivo::*;
 
 #[derive(Debug)]

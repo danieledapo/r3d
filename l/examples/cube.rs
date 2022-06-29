@@ -2,7 +2,8 @@ use std::sync::Arc;
 
 use rand::prelude::*;
 
-use geo::{util::opener, Aabb, Vec3};
+use geo::{Aabb, Vec3};
+use sketch_utils::opener;
 
 use l::*;
 

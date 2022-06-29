@@ -1,8 +1,9 @@
 use geo::{
     sdf::{self, Sdf},
-    util::opener,
     Vec3,
 };
+use sketch_utils::opener;
+
 use ivo::*;
 
 pub fn main() {
