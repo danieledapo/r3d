@@ -1,6 +1,7 @@
 use std::path::Path;
 
-use geo::{mesh::load_mesh, util::opener, Vec3};
+use geo::{mesh::load_mesh, Vec3};
+use sketch_utils::opener;
 
 use buzz::*;
 

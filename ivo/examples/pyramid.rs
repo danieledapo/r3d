@@ -1,9 +1,9 @@
 use geo::{
     sdf::{self, Sdf},
-    util::opener,
     Vec3,
 };
 use ivo::*;
+use sketch_utils::opener;
 
 fn pyramid(scene: &mut Scene, half_base: i32, height: i32) {
     for z in 0..height {

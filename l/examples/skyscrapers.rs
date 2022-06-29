@@ -2,7 +2,8 @@ use std::sync::Arc;
 
 use rand::prelude::*;
 
-use geo::{primitive::polyline::Polyline, spatial_index::Shape, util::opener, Aabb, Vec3};
+use geo::{primitive::polyline::Polyline, spatial_index::Shape, Aabb, Vec3};
+use sketch_utils::opener;
 
 use l::*;
 

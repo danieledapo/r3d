@@ -1,7 +1,8 @@
 use rand::Rng;
 
 use buzz::*;
-use geo::{util::opener, Vec3};
+use geo::Vec3;
+use sketch_utils::opener;
 
 const SKY_ENVIRONMENT: Environment =
     Environment::LinearGradient(Vec3::new(1.0, 1.0, 1.0), Vec3::new(0.5, 0.7, 1.0));

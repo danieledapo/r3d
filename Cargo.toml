@@ -4,4 +4,5 @@ members = [
     "geo",
     "ivo",
     "l",
+    "sketch-utils",
 ]

@@ -1,9 +1,9 @@
 use geo::{
     mat4::Mat4,
     sdf::{self, Sdf},
-    util::opener,
     Vec3,
 };
+use sketch_utils::opener;
 
 use buzz::{csg::SdfGeometry, *};
 

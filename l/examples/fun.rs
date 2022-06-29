@@ -1,6 +1,7 @@
 use std::sync::Arc;
 
-use geo::{util::opener, Vec3};
+use geo::Vec3;
+use sketch_utils::opener;
 
 use l::*;
 

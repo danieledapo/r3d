@@ -1,9 +1,10 @@
 use geo::{
     mat4::Mat4,
     sdf::{self, Sdf},
-    util::opener,
     Vec3,
 };
+use sketch_utils::opener;
+
 use ivo::{dump_svg, render, Scene, SvgSettings};
 
 pub fn main() {
