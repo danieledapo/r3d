@@ -31,7 +31,7 @@ enum Node<T> {
     },
 }
 
-impl<'s, T> Bvh<T>
+impl<T> Bvh<T>
 where
     T: Shape,
 {
@@ -208,7 +208,7 @@ where
     }
 }
 
-impl<'s, T> Node<T>
+impl<T> Node<T>
 where
     T: Shape,
 {
@@ -232,7 +232,7 @@ where
             let c1 = b1.center()[partition_axis];
             let c2 = b2.center()[partition_axis];
 
-            c1.partial_cmp(&c2).unwrap()
+            c1.total_cmp(&c2)
         });
 
         let right_elems = elems.split_off(pivot);

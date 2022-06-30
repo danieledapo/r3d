@@ -43,7 +43,7 @@ impl Scene {
     pub fn intersection(&self, ray: &Ray) -> Option<(&dyn Object, f64)> {
         self.objects
             .intersections(ray)
-            .min_by(|(_, t0), (_, t1)| t0.t().partial_cmp(&t1.t()).unwrap())
+            .min_by(|(_, t0), (_, t1)| t0.t().total_cmp(&t1.t()))
             .map(|(s, t)| (s.as_ref(), t))
     }
 }

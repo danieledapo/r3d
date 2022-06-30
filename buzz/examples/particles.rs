@@ -1,6 +1,6 @@
 //! See <https://github.com/d-dorazio/dla> for an example on how to generate the particles.
 
-use std::io::{self, BufRead, BufReader};
+use std::io;
 
 use geo::{Aabb, Vec3};
 use sketch_utils::opener;
@@ -8,8 +8,7 @@ use sketch_utils::opener;
 use buzz::*;
 
 pub fn main() -> opener::Result<()> {
-    let input = BufReader::new(io::stdin());
-    let spheres = input
+    let spheres = io::stdin()
         .lines()
         .map(|l| {
             let l = l.unwrap();

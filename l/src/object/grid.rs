@@ -72,7 +72,7 @@ impl Shape for Grid {
         self.bvh
             .intersections(ray)
             .map(|(_, t)| t)
-            .min_by(|t0, t1| t0.t().partial_cmp(&t1.t()).unwrap())
+            .min_by(|t0, t1| t0.t().total_cmp(&t1.t()))
     }
 
     fn bbox(&self) -> Aabb {
