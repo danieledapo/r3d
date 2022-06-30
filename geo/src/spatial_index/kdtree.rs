@@ -130,8 +130,7 @@ where
 
                         // sort in reverse order so that we can pop the sorted
                         // elements quickly
-                        current_intersections
-                            .sort_by(|(_, t1), (_, t2)| t2.t().partial_cmp(&t1.t()).unwrap());
+                        current_intersections.sort_by(|(_, t1), (_, t2)| t2.t().total_cmp(&t1.t()));
                     }
                     Node::Branch {
                         left,
@@ -238,13 +237,13 @@ fn best_partitioning(bboxes: &[Aabb]) -> Option<(Axis, f64)> {
         .map(|axis| {
             let p = centers.len() / 2;
             let (_, mid, _) =
-                centers.select_nth_unstable_by(p, |a, b| a[*axis].partial_cmp(&b[*axis]).unwrap());
+                centers.select_nth_unstable_by(p, |a, b| a[*axis].total_cmp(&b[*axis]));
 
             let value = mid[*axis];
 
             (axis, value, partition_size(bboxes, *axis, value))
         })
-        .min_by(|(_, _, s1), (_, _, s2)| s1.partial_cmp(s2).unwrap())
+        .min_by_key(|(_, _, s)| *s)
         .unwrap();
 
     // if the best partitioning we found is no better than having everything
