@@ -301,7 +301,7 @@ mod tests {
         assert_eq!(v.norm2(), 25.0);
         assert_eq!(v.normalized().norm(), 1.0);
 
-        let mut nv = v.clone();
+        let mut nv = v;
         nv.normalize();
         assert_eq!(nv.norm(), 1.0);
     }

@@ -15,12 +15,11 @@ pub fn cube(rng: &mut impl Rng, n: usize, perfect_grid: bool) -> Vec<Blob> {
         let z = rng.gen_range(6..=14);
 
         let mut dim = |c, s, e| {
-            let d;
-            if perfect_grid {
-                d = i32::min(c - s, e - c);
+            let d = if perfect_grid {
+                i32::min(c - s, e - c)
             } else {
-                d = i32::max(c - s, e - c);
-            }
+                i32::max(c - s, e - c)
+            };
             rng.gen_range(d / 2..=d)
         };
 
