@@ -384,7 +384,7 @@ mod tests {
         ";
 
         assert_eq!(
-            guess_stl_format(&mut BufReader::new(Cursor::new(&stl[..]))).unwrap(),
+            guess_stl_format(&mut BufReader::new(Cursor::new(stl))).unwrap(),
             StlFormat::Ascii
         );
 

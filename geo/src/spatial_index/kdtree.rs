@@ -451,7 +451,7 @@ mod tests {
             let ray = Ray::new(rpts[0], rpts[1] - rpts[0]);
 
             let pts = ts.into_iter().map(|t| ray.point_at(f64::from(t))).collect::<Vec<_>>();
-            let tree = KdTree::new(pts.clone());
+            let tree = KdTree::new(pts);
 
             let ints = tree.intersections(&ray).collect::<Vec<_>>();
 
