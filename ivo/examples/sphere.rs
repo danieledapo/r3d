@@ -19,9 +19,9 @@ pub fn main() {
             .difference(sdf::Cuboid::new(Vec3::new(200.0, 20.0, 200.0))),
     );
 
-    let triangles = render(&scene);
+    let triangles = render_outlines(&scene);
 
-    dump_svg("sphere.svg", &triangles, &SvgSettings::new(1920.0, 1080.0))
+    dump_outlines_svg("sphere.svg", &triangles, &SvgSettings::new(1920.0, 1080.0))
         .expect("cannot save sphere.svg");
 
     opener::open("sphere.svg").expect("cannot open sphere.svg");

@@ -65,11 +65,11 @@ pub fn main() {
 
     landscape(&mut scene, noise);
 
-    let triangles = render(&scene);
+    let triangles = render_outlines(&scene);
 
     let path = sketch_output_path("islands.svg").unwrap();
 
-    dump_svg(
+    dump_outlines_svg(
         &path,
         &triangles,
         // &SvgSettings::new(2048.0, 2048.0)

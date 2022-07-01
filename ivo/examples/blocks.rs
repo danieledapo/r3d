@@ -70,9 +70,9 @@ pub fn main() {
         }
     }
 
-    let triangles = render(&scene);
+    let triangles = render_outlines(&scene);
 
-    dump_svg("blocks.svg", &triangles, &SvgSettings::new(2048.0, 2048.0))
+    dump_outlines_svg("blocks.svg", &triangles, &SvgSettings::new(2048.0, 2048.0))
         .expect("cannot save blocks.svg");
 
     opener::open("blocks.svg").expect("cannot open blocks.svg");

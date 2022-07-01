@@ -31,9 +31,9 @@ pub fn main() {
         r2: 120.0,
     });
 
-    let triangles = render(&scene);
+    let triangles = render_outlines(&scene);
 
-    dump_svg("ring.svg", &triangles, &SvgSettings::new(1920.0, 1080.0))
+    dump_outlines_svg("ring.svg", &triangles, &SvgSettings::new(1920.0, 1080.0))
         .expect("cannot save ring.svg");
 
     opener::open("ring.svg").expect("cannot open ring.svg");

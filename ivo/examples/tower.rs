@@ -37,9 +37,9 @@ pub fn main() {
         bz = bz.max(z + d);
     }
 
-    let triangles = render(&scene);
+    let triangles = render_outlines(&scene);
 
-    dump_svg(
+    dump_outlines_svg(
         "tower.svg",
         &triangles,
         &SvgSettings::new(2048.0, 2048.0)

@@ -2,67 +2,30 @@ use std::{cmp::Reverse, collections::hash_map::Entry};
 
 use rustc_hash::{FxHashMap, FxHashSet};
 
-use crate::{Line, Scene, Voxel, IJ};
+use crate::{Line, Scene, Voxel, IJ, XY};
 
 use super::{nearness, project_ij, project_iso, IsoTriangle, Orientation};
 
-/// Render the Scene in 3D space into a set of Triangles in the cartesian XY
-/// plane.
+/// Render the Scene in 3D space into a set of visible lines.
 ///
-/// The returned triangles are always visible, but the edges of such triangles
-/// may not be. Be sure to check Triangle::visibility to understand which edges
-/// are visible and which are not.
-pub fn render(scene: &Scene) -> Vec<Line> {
-    let mut faces = FxHashMap::default();
-
-    // remove voxels that when projected end up in the same spot,
-    // keep only the nearest one.
-    for vox in scene.voxels() {
-        match faces.entry(project_ij(vox)) {
-            Entry::Vacant(v) => {
-                v.insert(vox);
-            }
-            Entry::Occupied(mut o) => {
-                if nearness(vox) > nearness(*o.get()) {
-                    o.insert(vox);
-                }
-            }
-        }
-    }
-
-    // Draw the voxels from closest to farthest, skipping triangles that were
-    // already drawn previously by another voxel that, by construction, is on
-    // top of the new one.
-    let mut voxels = faces.values().collect::<Vec<_>>();
-    voxels.sort_unstable_by_key(|v| Reverse(nearness(**v)));
-
-    // TODO: this is relatively slow, but fast enough for now...
-    let spatial_ix = voxels.iter().map(|v| **v).collect::<FxHashSet<_>>();
-
-    let mut drawn = FxHashSet::default();
-
+/// Note that the lines are simplified and merged together when the endpoints
+/// between two segments match in order to reduce the amount of lines.
+pub fn render_outlines(scene: &Scene) -> Vec<Line> {
     // store for each position the connectivity as a bitmask (1 vertical, 2
     // u-parallel, 4 j-parallel) so that later we can use this connectivity
     // graph to create straight lines without any duplicate segments.
     let mut connectivity_graph: FxHashMap<IJ, u8> = FxHashMap::default();
+    let mut drawn = FxHashSet::default();
 
-    for vox in voxels {
-        for triangle in triangulate(vox, &spatial_ix) {
-            let triangle = triangle.map(project_ij);
+    for triangle in render(scene, &mut drawn) {
+        for i in 0..triangle.pts.len() {
+            let a = triangle.pts[i];
+            let b = triangle.pts[(i + 1) % triangle.pts.len()];
 
-            if !drawn.insert(triangle.pts) {
-                continue;
-            }
+            let (a, b) = (a.min(b), a.max(b));
 
-            for i in 0..triangle.pts.len() {
-                let a = triangle.pts[i];
-                let b = triangle.pts[(i + 1) % triangle.pts.len()];
-
-                let (a, b) = (a.min(b), a.max(b));
-
-                *connectivity_graph.entry(a).or_default() |= u8::from(triangle.visibility[i]) << i;
-                connectivity_graph.entry(b).or_default();
-            }
+            *connectivity_graph.entry(a).or_default() |= u8::from(triangle.visibility[i]) << i;
+            connectivity_graph.entry(b).or_default();
         }
     }
 
@@ -108,6 +71,71 @@ pub fn render(scene: &Scene) -> Vec<Line> {
     }
 
     res
+}
+
+/// Render the given Scene into a set of IsoTriangle ready to be rendered.
+///
+/// In particular, each quadrilateral face is broken into two triangles.
+///
+/// Note that the edges of such triangles are not always visible, be sure to
+/// check IsoTriangle::visibility to understand that.
+pub fn render_triangles(scene: &Scene) -> Vec<IsoTriangle<XY>> {
+    let mut drawn = FxHashSet::default();
+    render(scene, &mut drawn)
+        .map(|t| {
+            t.map(|p| {
+                let (a, b) = project_iso(p);
+                (a / 2.0, b / 2.0)
+            })
+        })
+        .collect()
+}
+
+/// Low-level rendering of a given scene into a list of visible IsoTriangle.
+///
+/// Note that the edges of such triangles are not always visible, be sure to
+/// check IsoTriangle::visibility to understand that.
+///
+/// Also, the IsoTriangles are in a space where the coordinates have been
+/// doubled to avoid having to use floats. When projecting into the cartesian
+/// plane be sure to halve them.
+///
+/// `drawn` contains the coordinates of the rendered triangles in IJ space.
+fn render<'a>(
+    scene: &'a Scene,
+    drawn: &'a mut FxHashSet<[IJ; 3]>,
+) -> impl Iterator<Item = IsoTriangle<IJ>> + 'a {
+    let mut faces = FxHashMap::default();
+
+    // remove voxels that when projected end up in the same spot,
+    // keep only the nearest one.
+    for vox in scene.voxels() {
+        match faces.entry(project_ij(vox)) {
+            Entry::Vacant(v) => {
+                v.insert(vox);
+            }
+            Entry::Occupied(mut o) => {
+                if nearness(vox) > nearness(*o.get()) {
+                    o.insert(vox);
+                }
+            }
+        }
+    }
+
+    // Draw the voxels from closest to farthest, skipping triangles that were
+    // already drawn previously by another voxel that, by construction, is on
+    // top of the new one.
+    let mut voxels = faces.into_values().collect::<Vec<_>>();
+    voxels.sort_unstable_by_key(|v| Reverse(nearness(*v)));
+
+    // TODO: this is relatively slow, but fast enough for now...
+    let spatial_ix = voxels.iter().copied().collect::<FxHashSet<_>>();
+
+    voxels
+        .into_iter()
+        .flat_map(move |vox| triangulate(&vox, &spatial_ix))
+        .map(|t| t.map(project_ij))
+        .filter(move |t| drawn.insert(t.pts))
 }
 
 /// Triangulate the left, top and right quadrilateral faces of a given Voxel

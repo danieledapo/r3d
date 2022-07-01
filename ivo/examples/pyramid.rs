@@ -21,9 +21,9 @@ pub fn main() {
     scene.invert();
     scene.sdf(&sdf::Sphere::new(50.0).translate(Vec3::new(0.0, 0.0, 100.0)));
 
-    let triangles = render(&scene);
+    let triangles = render_outlines(&scene);
 
-    dump_svg("pyramid.svg", &triangles, &SvgSettings::new(1920.0, 1080.0))
+    dump_outlines_svg("pyramid.svg", &triangles, &SvgSettings::new(1920.0, 1080.0))
         .expect("cannot save pyramid.svg");
 
     opener::open("pyramid.svg").expect("cannot open pyramid.svg");
