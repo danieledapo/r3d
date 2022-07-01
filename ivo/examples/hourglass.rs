@@ -20,9 +20,9 @@ pub fn main() {
         scene.sdf(&sdf::Torus::new(3.0, r).translate(Vec3::new(0.0, 0.0, -z)));
     }
 
-    let triangles = render(&scene);
+    let triangles = render_outlines(&scene);
 
-    dump_svg(
+    dump_outlines_svg(
         "hourglass.svg",
         &triangles,
         &SvgSettings::new(1080.0, 1920.0),

@@ -28,9 +28,9 @@ pub fn main() {
         }
     }
 
-    let triangles = render(&scene);
+    let triangles = render_outlines(&scene);
 
-    dump_svg("bridge.svg", &triangles, &SvgSettings::new(1920.0, 1080.0))
+    dump_outlines_svg("bridge.svg", &triangles, &SvgSettings::new(1920.0, 1080.0))
         .expect("cannot save bridge.svg");
 
     opener::open("bridge.svg").expect("cannot open bridge.svg");

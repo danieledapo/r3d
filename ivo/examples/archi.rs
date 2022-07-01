@@ -64,9 +64,9 @@ pub fn main() {
         }
     }
 
-    let triangles = render(&scene);
+    let triangles = render_outlines(&scene);
 
-    dump_svg(
+    dump_outlines_svg(
         "archi.svg",
         &triangles,
         &SvgSettings::new(2048.0, 2048.0)

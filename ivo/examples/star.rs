@@ -36,11 +36,11 @@ pub fn main() {
         }
     });
 
-    let triangles = chrono!("rendering", render(&scene));
+    let triangles = chrono!("rendering", render_outlines(&scene));
 
     chrono!(
         "svg output",
-        dump_svg(
+        dump_outlines_svg(
             "star.svg",
             &triangles,
             &SvgSettings::new(1920.0 * 2.0, 1080.0 * 2.0)

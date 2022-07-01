@@ -1,10 +1,10 @@
 use crate::{Voxel, IJ, XY};
 
-mod line_renderer;
+mod scene;
 mod svg;
 
-pub use line_renderer::render;
-pub use svg::{dump_svg, SvgSettings};
+pub use scene::{render_outlines, render_triangles};
+pub use svg::{dump_outlines_svg, dump_triangles_svg, SvgSettings};
 
 /// Enum over the possible orientations a Triangle can have.
 ///
@@ -21,16 +21,16 @@ pub use svg::{dump_svg, SvgSettings};
 ///           \ . /
 /// ```
 ///
-#[derive(Debug, Clone, PartialEq, Eq)]
-enum Orientation {
-    Top,
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum Orientation {
+    Top = 0,
     Left,
     Right,
 }
 
 /// Each Scene is rendered into a collection of Triangle to draw.
 #[derive(Debug, Clone, PartialEq, Eq)]
-struct IsoTriangle<T> {
+pub struct IsoTriangle<T> {
     pub orientation: Orientation,
     pub pts: [T; 3],
 

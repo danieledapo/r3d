@@ -5,7 +5,7 @@ use geo::{
 };
 use sketch_utils::opener;
 
-use ivo::{dump_svg, render, Scene, SvgSettings};
+use ivo::{dump_outlines_svg, render_outlines, Scene, SvgSettings};
 
 pub fn main() {
     let rounded_cube = sdf::Sphere::new(0.65).intersection(sdf::Cuboid::new(Vec3::replicate(1.0)));
@@ -29,8 +29,8 @@ pub fn main() {
             .transformed(Mat4::scale(Vec3::replicate(100.0))),
     );
 
-    let tris = render(&scene);
+    let tris = render_outlines(&scene);
 
-    dump_svg("icsv.svg", &tris, &SvgSettings::new(1920.0, 1080.0)).unwrap();
+    dump_outlines_svg("icsv.svg", &tris, &SvgSettings::new(1920.0, 1080.0)).unwrap();
     opener::open("icsv.svg").unwrap();
 }

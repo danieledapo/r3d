@@ -30,9 +30,9 @@ pub fn main() {
         }
     }
 
-    let triangles = render(&scene);
+    let triangles = render_outlines(&scene);
 
-    dump_svg(
+    dump_outlines_svg(
         "slabs.svg",
         &triangles,
         &SvgSettings::new(2048.0, 2048.0)

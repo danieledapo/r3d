@@ -27,9 +27,9 @@ pub fn main() {
         scene.invert();
     }
 
-    let triangles = render(&scene);
+    let triangles = render_outlines(&scene);
 
-    dump_svg("octa.svg", &triangles, &SvgSettings::new(1080.0, 1920.0))
+    dump_outlines_svg("octa.svg", &triangles, &SvgSettings::new(1080.0, 1920.0))
         .expect("cannot save octa.svg");
 
     opener::open("octa.svg").expect("cannot open octa.svg");
