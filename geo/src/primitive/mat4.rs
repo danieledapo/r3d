@@ -1,10 +1,6 @@
-use crate::Vec3;
+use std::ops::Mul;
 
-/// Trait for geometric objects that can be transformed by a `Mat4` affine
-/// matrix.
-pub trait Transform {
-    fn transform(&self, mat: &Mat4) -> Self;
-}
+use crate::Vec3;
 
 /// A 3D [affine transformation][0] matrix in homogeneous coordinates.
 ///
@@ -154,10 +150,12 @@ impl Mat4 {
     }
 }
 
-impl Transform for Mat4 {
+impl Mul<&Mat4> for Mat4 {
+    type Output = Mat4;
+
     /// Matrix composition.
     #[allow(clippy::needless_range_loop)]
-    fn transform(&self, other: &Mat4) -> Self {
+    fn mul(self, other: &Mat4) -> Self::Output {
         let mut data = [[0.0; 4]; 4];
 
         for r in 0..4 {
@@ -173,8 +171,9 @@ impl Transform for Mat4 {
     }
 }
 
-impl Transform for Vec3 {
-    fn transform(&self, m: &Mat4) -> Self {
+impl Mul<&Mat4> for Vec3 {
+    type Output = Vec3;
+    fn mul(self, m: &Mat4) -> Self::Output {
         Vec3::new(
             m.data[0][0] * self.x + m.data[0][1] * self.y + m.data[0][2] * self.z + m.data[0][3],
             m.data[1][0] * self.x + m.data[1][1] * self.y + m.data[1][2] * self.z + m.data[1][3],

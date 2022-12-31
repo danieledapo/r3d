@@ -1,9 +1,6 @@
 use std::f64::consts::PI;
 
-use geo::{
-    mat4::{Mat4, Transform},
-    Vec3,
-};
+use geo::{mat4::Mat4, Vec3};
 
 /// A `Camera` is an object that allows to cast rays towards a 3D point in world
 /// space that is calculated from a 2D point in screen space.
@@ -77,7 +74,7 @@ impl Camera {
             ],
         };
 
-        self.matrix = projection.transform(&self.camera_to_world.inverse());
+        self.matrix = projection * &self.camera_to_world.inverse();
         self
     }
 
@@ -88,7 +85,7 @@ impl Camera {
 
     /// Project the given point in 3D space to 2D as seen by this `Camera`.
     pub fn project(&self, v: Vec3) -> Vec3 {
-        let p = v.transform(&self.matrix);
+        let p = v * &self.matrix;
 
         let m = &self.matrix.data;
         let w = m[3][0] * v.x + m[3][1] * v.y + m[3][2] * v.z + m[3][3];
