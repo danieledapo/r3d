@@ -40,12 +40,12 @@ pub fn main() -> opener::Result<()> {
 
     // lights
     objects.push(SimpleObject::new(
-        SphereGeometry::new(v3(3.1, 0, 2.8), 0.6),
-        Material::light(Vec3::replicate(0.4)),
+        SphereGeometry::new(v3(3.1, 0.0, 2.8), 0.6),
+        Material::light(v3(0.4, 0.4, 0.4)),
     ));
     objects.push(SimpleObject::new(
         SphereGeometry::new(v3(-3.1, 0.0, 2.8), 0.2),
-        Material::light(Vec3::replicate(0.1)),
+        Material::light(v3(0.1, 0.1, 0.1)),
     ));
 
     let scene = Scene::new(objects, Environment::Color(Vec3::zero()));

@@ -1,11 +1,12 @@
 use crate::ray::Ray;
-use crate::{Aabb, Vec3};
+use crate::{v3, Aabb, Vec3};
 
 /// Return the infinite bounding box of an infinite plane.
 pub fn bbox() -> Aabb {
     use std::f64::{INFINITY, NEG_INFINITY};
 
-    Aabb::new(Vec3::replicate(NEG_INFINITY)).expanded(Vec3::replicate(INFINITY))
+    Aabb::new(v3(NEG_INFINITY, NEG_INFINITY, NEG_INFINITY))
+        .expanded(v3(INFINITY, INFINITY, INFINITY))
 }
 
 /// Calculate the intersection between an infinite plane defined by a point and
