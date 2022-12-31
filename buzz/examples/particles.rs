@@ -2,7 +2,7 @@
 
 use std::io;
 
-use geo::{Aabb, Vec3};
+use geo::{v3, Aabb, Vec3};
 use sketch_utils::opener;
 
 use buzz::*;
@@ -18,7 +18,7 @@ pub fn main() -> opener::Result<()> {
             let y = coords.next().unwrap().parse::<f64>().unwrap();
             let z = coords.next().unwrap().parse::<f64>().unwrap();
 
-            SphereGeometry::new(Vec3::new(x, y, z), 1.73)
+            SphereGeometry::new(v3(x, y, z), 1.73)
         })
         .collect::<Vec<_>>();
 
@@ -33,33 +33,24 @@ pub fn main() -> opener::Result<()> {
         s.center = (s.center - bbox.min()) / bbox.dimensions() * 2.0 - 1.0;
         s.radius /= w.min(h).min(d);
 
-        let c = Vec3::lerp(
-            Vec3::new(0.34, 0.7, 0.03),
-            Vec3::new(0.85, 0.84, 0.0),
-            s.center.norm2(),
-        );
+        let c = Vec3::lerp(v3(0.34, 0.7, 0.03), v3(0.85, 0.84, 0), s.center.norm2());
 
         objects.push(SimpleObject::new(s, Material::lambertian(c)))
     }
 
     // lights
     objects.push(SimpleObject::new(
-        SphereGeometry::new(Vec3::new(3.1, 0.0, 2.8), 0.6),
+        SphereGeometry::new(v3(3.1, 0, 2.8), 0.6),
         Material::light(Vec3::replicate(0.4)),
     ));
     objects.push(SimpleObject::new(
-        SphereGeometry::new(Vec3::new(-3.1, 0.0, 2.8), 0.2),
+        SphereGeometry::new(v3(-3.1, 0.0, 2.8), 0.2),
         Material::light(Vec3::replicate(0.1)),
     ));
 
     let scene = Scene::new(objects, Environment::Color(Vec3::zero()));
 
-    let camera = Camera::look_at(
-        Vec3::new(0.0, 0.0, 2.0),
-        Vec3::zero(),
-        Vec3::new(0.0, 1.0, 0.0),
-        90.0,
-    );
+    let camera = Camera::look_at(v3(0, 0, 2), Vec3::zero(), v3(0, 1, 0), 90.0);
 
     let img = parallel_render(
         &camera,

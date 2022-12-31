@@ -1,4 +1,4 @@
-use geo::{Aabb, Vec3};
+use geo::{v3, Aabb, Vec3};
 use sketch_utils::opener;
 
 use ivo::*;
@@ -20,8 +20,8 @@ pub fn main() {
         let t = rng.gen::<f64>();
         if t <= 0.3 {
             bboxes.push(Aabb::with_dimensions(
-                c + Vec3::new(d.x * [-1.0, 1.0].choose(&mut rng).unwrap(), 0.0, 0.0),
-                Vec3::new(
+                c + v3(d.x * [-1.0, 1.0].choose(&mut rng).unwrap(), 0.0, 0.0),
+                v3(
                     2.0 + 50.0 * rng.gen::<f64>(),
                     2.0 + 12.0 * rng.gen::<f64>(),
                     2.0 + 12.0 * rng.gen::<f64>(),
@@ -29,8 +29,8 @@ pub fn main() {
             ));
         } else if t <= 0.6 {
             bboxes.push(Aabb::with_dimensions(
-                c + Vec3::new(0.0, d.y * [-1.0, 1.0].choose(&mut rng).unwrap(), 0.0),
-                Vec3::new(
+                c + v3(0.0, d.y * [-1.0, 1.0].choose(&mut rng).unwrap(), 0.0),
+                v3(
                     2.0 + 12.0 * rng.gen::<f64>(),
                     2.0 + 50.0 * rng.gen::<f64>(),
                     2.0 + 12.0 * rng.gen::<f64>(),
@@ -38,8 +38,8 @@ pub fn main() {
             ));
         } else {
             bboxes.push(Aabb::with_dimensions(
-                c + Vec3::new(0.0, 0.0, d.z * [-1.0, 1.0].choose(&mut rng).unwrap()),
-                Vec3::new(
+                c + v3(0.0, 0.0, d.z * [-1.0, 1.0].choose(&mut rng).unwrap()),
+                v3(
                     2.0 + 12.0 * rng.gen::<f64>(),
                     2.0 + 12.0 * rng.gen::<f64>(),
                     2.0 + 50.0 * rng.gen::<f64>(),

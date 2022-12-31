@@ -90,60 +90,54 @@ impl Mul<&Mat4> for Ray {
 
 #[cfg(test)]
 mod tests {
-    use super::{Ray, Vec3};
+    use crate::v3;
+
+    use super::*;
 
     #[test]
     fn test_point_at() {
-        let ray = Ray::new(Vec3::zero(), Vec3::new(0.0, 1.0, 0.0));
+        let ray = Ray::new(Vec3::zero(), v3(0, 1, 0));
 
         assert_eq!(ray.point_at(0.0), ray.origin);
-        assert_eq!(ray.point_at(1.0), Vec3::new(0.0, 1.0, 0.0));
-        assert_eq!(ray.point_at(0.5), Vec3::new(0.0, 0.5, 0.0));
+        assert_eq!(ray.point_at(1.0), v3(0, 1, 0));
+        assert_eq!(ray.point_at(0.5), v3(0, 0.5, 0));
     }
 
     #[test]
     fn test_reflect() {
         assert_eq!(
-            Ray::new(Vec3::new(5.0, 1.0, 3.0), Vec3::new(0.0, 1.0, 0.0)).reflect(),
-            Vec3::new(5.0, -1.0, 3.0)
+            Ray::new(v3(5, 1, 3), v3(0, 1, 0)).reflect(),
+            v3(5.0, -1.0, 3.0)
         );
 
-        assert_eq!(
-            Ray::new(Vec3::zero(), Vec3::new(0.0, 1.0, 0.0)).reflect(),
-            Vec3::zero()
-        );
+        assert_eq!(Ray::new(Vec3::zero(), v3(0, 1, 0)).reflect(), Vec3::zero());
     }
 
     #[test]
     fn test_refract() {
-        assert_eq!(
-            Ray::new(Vec3::new(5.0, 1.0, 3.0), Vec3::new(0.0, 1.0, 0.0)).refract(1.5),
-            None
-        );
+        assert_eq!(Ray::new(v3(5, 1, 3), v3(0, 1, 0)).refract(1.5), None);
 
         assert_eq!(
-            Ray::new(Vec3::new(3.0, 0.0, 1.0), Vec3::new(1.0, 0.0, 0.0)).refract(1.5),
-            Some(Vec3::new(-0.8803408430829504, 0.0, 0.4743416490252569))
+            Ray::new(v3(3, 0, 1), v3(1, 0, 0)).refract(1.5),
+            Some(v3(-0.8803408430829504, 0.0, 0.4743416490252569))
         );
     }
 
     #[test]
     fn test_t_of() {
-        let r = Ray::new(Vec3::new(1.0, -1.0, 0.0), Vec3::new(2.0, 1.0, 5.0));
+        let r = Ray::new(v3(1.0, -1.0, 0.0), v3(2, 1, 5));
 
-        assert_eq!(r.t_of(Vec3::new(1.0, -1.0, 0.0)), Some(0.0));
-        assert_eq!(r.t_of(Vec3::new(3.0, 0.0, 5.0)), Some(1.0));
-        assert_eq!(r.t_of(Vec3::new(0.0, -1.5, -2.5)), Some(-0.5));
-        assert_eq!(r.t_of(Vec3::new(10.0, -1.5, -2.5)), None);
+        assert_eq!(r.t_of(v3(1.0, -1.0, 0.0)), Some(0.0));
+        assert_eq!(r.t_of(v3(3, 0, 5)), Some(1.0));
+        assert_eq!(r.t_of(v3(0.0, -1.5, -2.5)), Some(-0.5));
+        assert_eq!(r.t_of(v3(10.0, -1.5, -2.5)), None);
 
         assert_eq!(
-            Ray::new(Vec3::new(1.0, -1.0, 3.0), Vec3::new(0.0, 1.0, 0.0))
-                .t_of(Vec3::new(1.0, 0.0, 3.0)),
+            Ray::new(v3(1.0, -1.0, 3.0), v3(0, 1, 0)).t_of(v3(1, 0, 3)),
             Some(1.0)
         );
         assert_eq!(
-            Ray::new(Vec3::new(1.0, -1.0, 3.0), Vec3::new(0.0, 1.0, 0.0))
-                .t_of(Vec3::new(8.0, 0.0, 3.0)),
+            Ray::new(v3(1.0, -1.0, 3.0), v3(0, 1, 0)).t_of(v3(8, 0, 3)),
             None
         );
     }

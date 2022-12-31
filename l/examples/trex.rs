@@ -1,6 +1,6 @@
 use std::{path::Path, sync::Arc};
 
-use geo::{mesh::load_mesh, Vec3};
+use geo::{mesh::load_mesh, v3, Vec3};
 use sketch_utils::opener;
 
 use l::*;
@@ -14,7 +14,7 @@ pub fn main() -> opener::Result<()> {
     )
     .expect("cannot load t-rex-skull.stl");
 
-    let position = Vec3::new(-30.0, -10.0, 10.0);
+    let position = v3(-30.0, -10.0, 10.0);
     let target = Vec3::zero();
 
     let scene = Scene::new(
@@ -30,7 +30,7 @@ pub fn main() -> opener::Result<()> {
             .collect::<Vec<_>>(),
     );
 
-    let camera = Camera::look_at(position, target, Vec3::new(0.0, 0.0, 1.0))
+    let camera = Camera::look_at(position, target, v3(0, 0, 1))
         .with_perspective_projection(60.0, 1.0, 0.01, 10000.0);
 
     let paths = render(

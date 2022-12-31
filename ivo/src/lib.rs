@@ -105,7 +105,7 @@ mod spatial_index;
 
 pub use renderer::*;
 
-use geo::{sdf::Sdf, util::arange, Vec3};
+use geo::{sdf::Sdf, util::arange, v3};
 
 /// A Voxel identified by its x, y, z coordinates.
 pub type Voxel = (i32, i32, i32);
@@ -238,7 +238,7 @@ impl Scene {
         for (z, zi) in arange(s.z, e.z, self.sdf_step).zip(0..) {
             for (y, yi) in arange(s.y, e.y, self.sdf_step).zip(0..) {
                 for (x, xi) in arange(s.x, e.x, self.sdf_step).zip(0..) {
-                    let d = sdf.dist(&Vec3::new(x, y, z));
+                    let d = sdf.dist(&v3(x, y, z));
                     if d > 0.0 {
                         continue;
                     }

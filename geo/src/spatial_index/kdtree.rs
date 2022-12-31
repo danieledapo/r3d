@@ -295,16 +295,13 @@ mod tests {
 
     use proptest::prelude::*;
 
+    use crate::v3;
     use crate::vec3;
     use crate::Vec3;
 
     #[test]
     fn test_new() {
-        let kd = KdTree::new(vec![
-            Vec3::zero(),
-            Vec3::new(-1.0, 2.0, 0.0),
-            Vec3::new(8.0, 6.0, -1.0),
-        ]);
+        let kd = KdTree::new(vec![Vec3::zero(), v3(-1.0, 2.0, 0.0), v3(8.0, 6.0, -1.0)]);
 
         assert_eq!(
             kd,
@@ -312,8 +309,8 @@ mod tests {
                 root: Node::Leaf {
                     data: vec![
                         Arc::new(Vec3::zero()),
-                        Arc::new(Vec3::new(-1.0, 2.0, 0.0)),
-                        Arc::new(Vec3::new(8.0, 6.0, -1.0)),
+                        Arc::new(v3(-1.0, 2.0, 0.0)),
+                        Arc::new(v3(8.0, 6.0, -1.0)),
                     ]
                 }
             }
@@ -321,16 +318,16 @@ mod tests {
 
         let kd = KdTree::new(vec![
             Vec3::zero(),
-            Vec3::new(-1.0, 2.0, 0.0),
-            Vec3::new(8.0, 6.0, -1.0),
-            Vec3::new(-1.0, -3.0, 2.0),
-            Vec3::new(0.0, 0.0, 1.0),
-            Vec3::new(10.0, 1.0, -4.0),
-            Vec3::new(-9.0, -3.0, -3.0),
-            Vec3::new(0.0, -6.0, 2.0),
-            Vec3::new(-3.0, -3.0, 6.0),
-            Vec3::new(0.0, 5.0, -1.0),
-            Vec3::new(1.0, -3.0, 6.0),
+            v3(-1.0, 2.0, 0.0),
+            v3(8.0, 6.0, -1.0),
+            v3(-1.0, -3.0, 2.0),
+            v3(0, 0, 1),
+            v3(10.0, 1.0, -4.0),
+            v3(-9.0, -3.0, -3.0),
+            v3(0.0, -6.0, 2.0),
+            v3(-3.0, -3.0, 6.0),
+            v3(0.0, 5.0, -1.0),
+            v3(1.0, -3.0, 6.0),
         ]);
 
         assert_eq!(
@@ -342,23 +339,23 @@ mod tests {
 
                     left: Box::new(Node::Leaf {
                         data: vec![
-                            Arc::new(Vec3::new(1.0, -3.0, 6.0)),
-                            Arc::new(Vec3::new(-3.0, -3.0, 6.0)),
-                            Arc::new(Vec3::new(0.0, -6.0, 2.0)),
-                            Arc::new(Vec3::new(-9.0, -3.0, -3.0)),
-                            Arc::new(Vec3::new(0.0, 0.0, 1.0)),
-                            Arc::new(Vec3::new(-1.0, -3.0, 2.0)),
-                            Arc::new(Vec3::new(0.0, 0.0, 0.0))
+                            Arc::new(v3(1.0, -3.0, 6.0)),
+                            Arc::new(v3(-3.0, -3.0, 6.0)),
+                            Arc::new(v3(0.0, -6.0, 2.0)),
+                            Arc::new(v3(-9.0, -3.0, -3.0)),
+                            Arc::new(v3(0, 0, 1)),
+                            Arc::new(v3(-1.0, -3.0, 2.0)),
+                            Arc::new(v3(0, 0, 0))
                         ]
                     }),
                     right: Box::new(Node::Leaf {
                         data: vec![
-                            Arc::new(Vec3::new(0.0, 5.0, -1.0)),
-                            Arc::new(Vec3::new(10.0, 1.0, -4.0)),
-                            Arc::new(Vec3::new(0.0, 0.0, 1.0)),
-                            Arc::new(Vec3::new(8.0, 6.0, -1.0)),
-                            Arc::new(Vec3::new(-1.0, 2.0, 0.0)),
-                            Arc::new(Vec3::new(0.0, 0.0, 0.0)),
+                            Arc::new(v3(0.0, 5.0, -1.0)),
+                            Arc::new(v3(10.0, 1.0, -4.0)),
+                            Arc::new(v3(0, 0, 1)),
+                            Arc::new(v3(8.0, 6.0, -1.0)),
+                            Arc::new(v3(-1.0, 2.0, 0.0)),
+                            Arc::new(v3(0, 0, 0)),
                         ]
                     }),
                 }
@@ -370,22 +367,22 @@ mod tests {
     fn test_best_partitioning() {
         assert_eq!(
             best_partitioning(&[
-                Aabb::new(Vec3::new(5.0, 0.0, 0.0)).expanded(Vec3::new(10.0, 10.0, 10.0)),
-                Aabb::new(Vec3::new(1.0, 2.0, 3.0)).expanded(Vec3::new(7.0, 2.0, 7.0)),
-                Aabb::new(Vec3::new(-1.0, -2.0, 3.0)).expanded(Vec3::new(1.0, 1.0, 3.0)),
+                Aabb::new(v3(5, 0, 0)).expanded(v3(10, 10, 10)),
+                Aabb::new(v3(1, 2, 3)).expanded(v3(7, 2, 7)),
+                Aabb::new(v3(-1.0, -2.0, 3.0)).expanded(v3(1, 1, 3)),
             ]),
             Some((Axis::X, 4.0))
         );
 
         assert_eq!(
             best_partitioning(&[
-                Aabb::new(Vec3::new(-2.0, -1.0, 0.0)),
+                Aabb::new(v3(-2.0, -1.0, 0.0)),
                 Aabb::new(Vec3::zero()),
-                Aabb::new(Vec3::new(3.0, 1.0, 2.0)),
-                Aabb::new(Vec3::new(3.0, 2.0, 2.0)),
-                Aabb::new(Vec3::new(3.0, 3.0, 2.0)),
-                Aabb::new(Vec3::new(4.0, 4.0, 2.0)),
-                Aabb::new(Vec3::new(5.0, 5.0, 2.0)),
+                Aabb::new(v3(3, 1, 2)),
+                Aabb::new(v3(3, 2, 2)),
+                Aabb::new(v3(3, 3, 2)),
+                Aabb::new(v3(4, 4, 2)),
+                Aabb::new(v3(5, 5, 2)),
             ]),
             Some((Axis::Y, 2.0))
         );
@@ -463,15 +460,15 @@ mod tests {
     #[test]
     fn test_intersection_with_stall_ray() {
         let tree = KdTree::new(vec![
-            Vec3::new(0.0, 0.0, 0.0),
-            Vec3::new(0.0, 0.0, 1.0),
-            Vec3::new(0.0, 0.0, 3.0),
-            Vec3::new(0.0, 0.0, 5.0),
-            Vec3::new(1.0, 0.0, 0.0),
-            Vec3::new(0.0, 0.0, -1.0),
-            Vec3::new(0.0, 0.0, 4.0),
-            Vec3::new(0.0, 0.0, 2.0),
-            Vec3::new(1.0, 0.0, 1.0),
+            v3(0, 0, 0),
+            v3(0, 0, 1),
+            v3(0, 0, 3),
+            v3(0, 0, 5),
+            v3(1, 0, 0),
+            v3(0.0, 0.0, -1.0),
+            v3(0, 0, 4),
+            v3(0, 0, 2),
+            v3(1, 0, 1),
         ]);
 
         match tree.root {
@@ -487,34 +484,31 @@ mod tests {
             }
         }
 
-        let ray = Ray::new(Vec3::new(0.0, 0.0, 1.0), Vec3::new(0.0, 1.0, 0.0));
-        assert_eq!(
-            tree.intersection(&ray),
-            Some((&Vec3::new(0.0, 0.0, 1.0), 0.0))
-        );
+        let ray = Ray::new(v3(0, 0, 1), v3(0, 1, 0));
+        assert_eq!(tree.intersection(&ray), Some((&v3(0, 0, 1), 0.0)));
     }
 
     #[test]
     fn test_best_partitioning_no_better() {
         let bboxes = vec![
-            Aabb::new(Vec3::new(-0.1640625, -0.6953125, -0.9453125))
-                .expanded(Vec3::new(0.0, -0.6328125, -0.8828125)),
-            Aabb::new(Vec3::new(-0.1640625, -0.7109375, -0.9296875))
-                .expanded(Vec3::new(-0.0625, -0.6328125, -0.8359375)),
-            Aabb::new(Vec3::new(-0.234375, -0.7109375, -0.9296875))
-                .expanded(Vec3::new(-0.1171875, -0.6328125, -0.8359375)),
-            Aabb::new(Vec3::new(-0.234375, -0.734375, -0.9140625))
-                .expanded(Vec3::new(-0.109375, -0.6328125, -0.71875)),
-            Aabb::new(Vec3::new(-0.265625, -0.734375, -0.9140625))
-                .expanded(Vec3::new(-0.109375, -0.6328125, -0.71875)),
-            Aabb::new(Vec3::new(-0.265625, -0.734375, -0.8203125))
-                .expanded(Vec3::new(-0.109375, -0.6640625, -0.703125)),
-            Aabb::new(Vec3::new(-0.1171875, -0.734375, -0.8359375))
-                .expanded(Vec3::new(-0.09375, -0.7109375, -0.71875)),
-            Aabb::new(Vec3::new(-0.1171875, -0.7265625, -0.8359375))
-                .expanded(Vec3::new(-0.09375, -0.7109375, -0.7421875)),
-            Aabb::new(Vec3::new(-0.1171875, -0.7109375, -0.8828125))
-                .expanded(Vec3::new(-0.0625, -0.6953125, -0.8203125)),
+            Aabb::new(v3(-0.1640625, -0.6953125, -0.9453125))
+                .expanded(v3(0.0, -0.6328125, -0.8828125)),
+            Aabb::new(v3(-0.1640625, -0.7109375, -0.9296875))
+                .expanded(v3(-0.0625, -0.6328125, -0.8359375)),
+            Aabb::new(v3(-0.234375, -0.7109375, -0.9296875))
+                .expanded(v3(-0.1171875, -0.6328125, -0.8359375)),
+            Aabb::new(v3(-0.234375, -0.734375, -0.9140625))
+                .expanded(v3(-0.109375, -0.6328125, -0.71875)),
+            Aabb::new(v3(-0.265625, -0.734375, -0.9140625))
+                .expanded(v3(-0.109375, -0.6328125, -0.71875)),
+            Aabb::new(v3(-0.265625, -0.734375, -0.8203125))
+                .expanded(v3(-0.109375, -0.6640625, -0.703125)),
+            Aabb::new(v3(-0.1171875, -0.734375, -0.8359375))
+                .expanded(v3(-0.09375, -0.7109375, -0.71875)),
+            Aabb::new(v3(-0.1171875, -0.7265625, -0.8359375))
+                .expanded(v3(-0.09375, -0.7109375, -0.7421875)),
+            Aabb::new(v3(-0.1171875, -0.7109375, -0.8828125))
+                .expanded(v3(-0.0625, -0.6953125, -0.8203125)),
         ];
 
         assert!(best_partitioning(&bboxes).is_none());

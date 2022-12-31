@@ -125,6 +125,7 @@ impl Camera {
 
 #[cfg(test)]
 mod tests {
+    use geo::v3;
     use rand::SeedableRng;
     use rand_xorshift::XorShiftRng;
 
@@ -132,19 +133,14 @@ mod tests {
 
     #[test]
     fn test_look_at() {
-        let c = Camera::look_at(
-            Vec3::zero(),
-            Vec3::new(0.0, 0.0, -1.0),
-            Vec3::new(0.0, 1.0, 0.0),
-            90.0,
-        );
+        let c = Camera::look_at(Vec3::zero(), v3(0.0, 0.0, -1.0), v3(0, 1, 0), 90.0);
 
         assert_eq!(c.position, Vec3::zero());
-        assert_eq!(c.target, Vec3::new(0.0, 0.0, -1.0));
+        assert_eq!(c.target, v3(0.0, 0.0, -1.0));
 
-        assert_eq!(c.u, Vec3::new(1.0, 0.0, 0.0));
-        assert_eq!(c.v, Vec3::new(0.0, 1.0, 0.0));
-        assert_eq!(c.w, Vec3::new(0.0, 0.0, -1.0));
+        assert_eq!(c.u, v3(1, 0, 0));
+        assert_eq!(c.v, v3(0, 1, 0));
+        assert_eq!(c.w, v3(0.0, 0.0, -1.0));
         assert!((c.m - 1.0).abs() < 1e-6);
     }
 
@@ -152,18 +148,13 @@ mod tests {
     fn test_cast_ray() {
         let mut rng = XorShiftRng::seed_from_u64(0);
 
-        let c = Camera::look_at(
-            Vec3::new(0.0, 0.0, 5.0),
-            Vec3::new(0.0, 0.0, 0.0),
-            Vec3::new(0.0, 1.0, 0.0),
-            45.0,
-        );
+        let c = Camera::look_at(v3(0, 0, 5), v3(0, 0, 0), v3(0, 1, 0), 45.0);
 
         assert_eq!(
             c.cast_ray((200, 100), (400, 200), &mut rng),
             Ray::new(
                 c.position,
-                Vec3::new(
+                v3(
                     0.0036926676998767344,
                     0.0018201043881227754,
                     -0.9999915256767302
@@ -175,7 +166,7 @@ mod tests {
             c.cast_ray((0, 0), (400, 200), &mut rng),
             Ray::new(
                 c.position,
-                Vec3::new(
+                v3(
                     -0.6080162292347211,
                     0.30680626952501405,
                     -0.7322473475317856
@@ -188,19 +179,14 @@ mod tests {
     fn test_cast_ray_with_focus() {
         let mut rng = XorShiftRng::seed_from_u64(0);
 
-        let c = Camera::look_at(
-            Vec3::new(0.0, 0.0, 5.0),
-            Vec3::new(0.0, 0.0, 0.0),
-            Vec3::new(0.0, 1.0, 0.0),
-            45.0,
-        )
-        .with_focus(Vec3::new(0.0, 0.0, 0.0), 1.0);
+        let c = Camera::look_at(v3(0, 0, 5), v3(0, 0, 0), v3(0, 1, 0), 45.0)
+            .with_focus(v3(0, 0, 0), 1.0);
 
         assert_eq!(
             c.cast_ray((300, 150), (400, 200), &mut rng),
             Ray::new(
-                Vec3::new(0.6289473439268372, 0.15601649433924777, 5.0),
-                Vec3::new(
+                v3(0.6289473439268372, 0.15601649433924777, 5),
+                v3(
                     0.26276272257151023,
                     -0.22585126579607048,
                     -0.9380548797192626

@@ -1,6 +1,6 @@
 use std::ops::Mul;
 
-use crate::Vec3;
+use crate::{v3, Vec3};
 
 /// A 3D [affine transformation][0] matrix in homogeneous coordinates.
 ///
@@ -146,7 +146,7 @@ impl Mat4 {
         let dy = self.data[1][0] * p.x + self.data[1][1] * p.y + self.data[1][2] * p.z;
         let dz = self.data[2][0] * p.x + self.data[2][1] * p.y + self.data[2][2] * p.z;
 
-        Vec3::new(dx, dy, dz).normalized()
+        v3(dx, dy, dz).normalized()
     }
 }
 
@@ -174,7 +174,7 @@ impl Mul<&Mat4> for Mat4 {
 impl Mul<&Mat4> for Vec3 {
     type Output = Vec3;
     fn mul(self, m: &Mat4) -> Self::Output {
-        Vec3::new(
+        v3(
             m.data[0][0] * self.x + m.data[0][1] * self.y + m.data[0][2] * self.z + m.data[0][3],
             m.data[1][0] * self.x + m.data[1][1] * self.y + m.data[1][2] * self.z + m.data[1][3],
             m.data[2][0] * self.x + m.data[2][1] * self.y + m.data[2][2] * self.z + m.data[2][3],

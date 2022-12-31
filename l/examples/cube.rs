@@ -2,7 +2,7 @@ use std::sync::Arc;
 
 use rand::prelude::*;
 
-use geo::{Aabb, Vec3};
+use geo::{v3, Aabb, Vec3};
 use sketch_utils::opener;
 
 use l::*;
@@ -18,22 +18,16 @@ pub fn main() -> opener::Result<()> {
                     continue;
                 }
 
-                objects.push(Arc::new(Cube::new(Aabb::cuboid(
-                    Vec3::new(x.into(), y.into(), z.into()),
-                    1.0,
-                ))) as Arc<dyn Object>);
+                objects
+                    .push(Arc::new(Cube::new(Aabb::cuboid(v3(x, y, z), 1.0))) as Arc<dyn Object>);
             }
         }
     }
 
     let scene = Scene::new(objects);
 
-    let camera = Camera::look_at(
-        Vec3::new(-25.0, -25.0, -25.0),
-        Vec3::zero(),
-        Vec3::new(0.0, 1.0, 0.0),
-    )
-    .with_perspective_projection(60.0, 1.0, 0.01, 100.0);
+    let camera = Camera::look_at(v3(-25.0, -25.0, -25.0), Vec3::zero(), v3(0, 1, 0))
+        .with_perspective_projection(60.0, 1.0, 0.01, 100.0);
 
     let paths = render(
         &camera,

@@ -1,6 +1,6 @@
 use std::path::Path;
 
-use geo::{mesh::load_mesh, Vec3};
+use geo::{mesh::load_mesh, v3, Vec3};
 use sketch_utils::opener;
 
 use buzz::*;
@@ -8,12 +8,7 @@ use buzz::*;
 const MESH_MATERIAL: Material = Material::lambertian(Vec3::new(1.0, 1.0, 0.95));
 
 pub fn main() -> opener::Result<()> {
-    let camera = Camera::look_at(
-        Vec3::new(2.0, 5.0, -6.0),
-        Vec3::new(0.5, 1.0, 0.0),
-        Vec3::new(0.0, 1.0, 0.0),
-        35.0,
-    );
+    let camera = Camera::look_at(v3(2.0, 5.0, -6.0), v3(0.5, 1, 0), v3(0, 1, 0), 35.0);
 
     let mut objects = SceneObjects::new();
 
@@ -30,12 +25,12 @@ pub fn main() -> opener::Result<()> {
     }
 
     objects.push(Box::new(SimpleObject::new(
-        SphereGeometry::new(Vec3::new(2.0, 5.0, -3.0), 0.5),
-        Material::light(Vec3::new(0.35, 0.35, 0.35)),
+        SphereGeometry::new(v3(2.0, 5.0, -3.0), 0.5),
+        Material::light(v3(0.35, 0.35, 0.35)),
     )));
     objects.push(Box::new(SimpleObject::new(
-        SphereGeometry::new(Vec3::new(5.0, 5.0, -3.0), 0.5),
-        Material::light(Vec3::new(0.2, 0.2, 0.2)),
+        SphereGeometry::new(v3(5.0, 5.0, -3.0), 0.5),
+        Material::light(v3(0.2, 0.2, 0.2)),
     )));
 
     let environment = Environment::Color(Vec3::zero());

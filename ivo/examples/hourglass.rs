@@ -1,4 +1,4 @@
-use geo::{sdf::*, Vec3};
+use geo::{sdf::*, v3};
 use sketch_utils::opener;
 
 use ivo::*;
@@ -13,8 +13,8 @@ pub fn main() {
         let r = t * 80.0;
         let z = t * 160.0;
 
-        scene.sdf(&(torus(3.0, r) + Vec3::new(0.0, 0.0, z)));
-        scene.sdf(&(torus(3.0, r) + Vec3::new(0.0, 0.0, -z)));
+        scene.sdf(&(torus(3.0, r) + v3(0.0, 0.0, z)));
+        scene.sdf(&(torus(3.0, r) + v3(0.0, 0.0, -z)));
     }
 
     let triangles = render_outlines(&scene);

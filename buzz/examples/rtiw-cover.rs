@@ -1,7 +1,7 @@
 use rand::Rng;
 
 use buzz::*;
-use geo::Vec3;
+use geo::{v3, Vec3};
 use sketch_utils::opener;
 
 const SKY_ENVIRONMENT: Environment =
@@ -10,20 +10,20 @@ const SKY_ENVIRONMENT: Environment =
 pub fn main() -> opener::Result<()> {
     let mut objects = SceneObjects::new();
     objects.push(SimpleObject::new(
-        SphereGeometry::new(Vec3::new(0.0, -1000.0, 0.0), 1000.0),
-        Material::lambertian(Vec3::new(0.5, 0.5, 0.5)),
+        SphereGeometry::new(v3(0.0, -1000.0, 0.0), 1000.0),
+        Material::lambertian(v3(0.5, 0.5, 0.5)),
     ));
 
     let mut rng = rand::thread_rng();
     for a in -11..11 {
         for b in -11..11 {
-            let center = Vec3::new(
+            let center = v3(
                 f64::from(a) + 0.9 * rng.gen::<f64>(),
                 0.2,
                 f64::from(b) + 0.9 * rng.gen::<f64>(),
             );
 
-            if (center - Vec3::new(4.0, 0.2, 0.0)).norm() > 0.9 {
+            if (center - v3(4, 0.2, 0)).norm() > 0.9 {
                 let mp = rng.gen::<f64>();
                 let mat = if mp < 0.8 {
                     Material::lambertian(rng.gen::<Vec3>() * rng.gen::<Vec3>())
@@ -39,25 +39,25 @@ pub fn main() -> opener::Result<()> {
     }
 
     objects.push(SimpleObject::new(
-        SphereGeometry::new(Vec3::new(0.0, 1.0, 0.0), 1.0),
+        SphereGeometry::new(v3(0, 1, 0), 1.0),
         Material::dielectric(1.5),
     ));
     objects.push(SimpleObject::new(
-        SphereGeometry::new(Vec3::new(-4.0, 1.0, 0.0), 1.0),
-        Material::lambertian(Vec3::new(0.4, 0.2, 0.1)),
+        SphereGeometry::new(v3(-4.0, 1.0, 0.0), 1.0),
+        Material::lambertian(v3(0.4, 0.2, 0.1)),
     ));
     objects.push(SimpleObject::new(
-        SphereGeometry::new(Vec3::new(4.0, 1.0, 0.0), 1.0),
-        Material::metal(Vec3::new(0.7, 0.6, 0.5), 0.0),
+        SphereGeometry::new(v3(4, 1, 0), 1.0),
+        Material::metal(v3(0.7, 0.6, 0.5), 0.0),
     ));
 
     let scene = Scene::new(objects, SKY_ENVIRONMENT);
 
     let target = Vec3::zero();
     let camera = Camera::look_at(
-        Vec3::new(13.0, 2.0, 3.0),
+        v3(13, 2, 3),
         target,
-        Vec3::new(0.0, 1.0, 0.0),
+        v3(0, 1, 0),
         20.0,
     )
     // .with_focus(target, 0.1)

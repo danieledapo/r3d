@@ -1,6 +1,6 @@
 use std::{convert::TryFrom, io::BufRead};
 
-use crate::{Triangle, Vec3};
+use crate::{v3, Triangle, Vec3};
 
 use super::{Error, Mesh, Result};
 
@@ -36,11 +36,11 @@ impl Obj {
                     mesh.comments.push(l.clone());
                 }
                 "v" => {
-                    let x = tokens.next().ok_or(Error::BadFormat)?.parse()?;
-                    let y = tokens.next().ok_or(Error::BadFormat)?.parse()?;
-                    let z = tokens.next().ok_or(Error::BadFormat)?.parse()?;
+                    let x: f64 = tokens.next().ok_or(Error::BadFormat)?.parse()?;
+                    let y: f64 = tokens.next().ok_or(Error::BadFormat)?.parse()?;
+                    let z: f64 = tokens.next().ok_or(Error::BadFormat)?.parse()?;
 
-                    mesh.vertices.push(Vec3::new(x, y, z));
+                    mesh.vertices.push(v3(x, y, z));
                 }
                 "f" => {
                     let l = tokens

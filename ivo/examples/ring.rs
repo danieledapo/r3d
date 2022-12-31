@@ -1,4 +1,4 @@
-use geo::{sdf::Sdf, Aabb, Vec3};
+use geo::{sdf::Sdf, v3, Aabb};
 use sketch_utils::opener;
 
 use ivo::*;
@@ -10,10 +10,10 @@ pub fn main() {
     let r2 = 120.0;
     let rr = r1 + r2;
 
-    let bbox = Aabb::new(Vec3::new(-rr, -rr, -r1)).expanded(Vec3::new(rr, rr, r1));
+    let bbox = Aabb::new(v3(-rr, -rr, -r1)).expanded(v3(rr, rr, r1));
 
     let sdf = Sdf::from_fn(bbox, move |p| {
-        let q = Vec3::new(Vec3::new(p.x, p.y, 0.0).norm() - r2, p.z, 0.0);
+        let q = v3(v3(p.x, p.y, 0.0).norm() - r2, p.z, 0.0);
         q.norm2() - r1
     });
 
