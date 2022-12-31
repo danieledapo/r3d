@@ -1,7 +1,4 @@
-use geo::{
-    sdf::{self, Sdf},
-    Vec3,
-};
+use geo::{sdf::*, Vec3};
 use sketch_utils::opener;
 
 use ivo::*;
@@ -21,8 +18,8 @@ pub fn main() {
         }
 
         scene.invert();
-        scene.sdf(&sdf::Sphere::new(50.0).translate(Vec3::new(0.0, 0.0, f64::from(s) * 100.0)));
-        scene.sdf(&sdf::Sphere::new(60.0).translate(Vec3::new(0.0, 0.0, f64::from(s) * 40.0)));
+        scene.sdf(&(sphere(50.0) + Vec3::new(0.0, 0.0, f64::from(s) * 100.0)));
+        scene.sdf(&(sphere(60.0) + Vec3::new(0.0, 0.0, f64::from(s) * 40.0)));
 
         scene.invert();
     }

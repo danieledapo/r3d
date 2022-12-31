@@ -1,7 +1,4 @@
-use geo::{
-    sdf::{self, Sdf},
-    Vec3,
-};
+use geo::{sdf::*, Vec3};
 use sketch_utils::opener;
 
 use ivo::*;
@@ -10,13 +7,10 @@ pub fn main() {
     let mut scene = Scene::new();
 
     scene.sdf(
-        &sdf::Sphere::new(50.0)
-            .difference(
-                sdf::Cuboid::new(Vec3::new(100.0, 100.0, 200.0))
-                    .translate(Vec3::new(0.0, 0.0, -105.0)),
-            )
-            .difference(sdf::Cuboid::new(Vec3::new(20.0, 200.0, 200.0)))
-            .difference(sdf::Cuboid::new(Vec3::new(200.0, 20.0, 200.0))),
+        &(sphere(50.0)
+            - (cuboid(Vec3::new(100.0, 100.0, 200.0)) + (Vec3::new(0.0, 0.0, -105.0)))
+            - (cuboid(Vec3::new(20.0, 200.0, 200.0)))
+            - (cuboid(Vec3::new(200.0, 20.0, 200.0)))),
     );
 
     let triangles = render_outlines(&scene);
