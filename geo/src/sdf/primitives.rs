@@ -82,11 +82,8 @@ pub fn capsule(a: Vec3, b: Vec3, r: f64) -> Sdf {
 
 pub fn octahedron(r: f64) -> Sdf {
     let tan_30 = f64::to_radians(30.0).tan();
-    Sdf::from_fn(
-        Aabb::new(Vec3::replicate(-r)).expanded(Vec3::replicate(r)),
-        move |p| {
-            let m = p.x.abs() + p.y.abs() + p.z.abs() - r;
-            m * tan_30
-        },
-    )
+    Sdf::from_fn(Aabb::new(v3(-r, -r, -r)).expanded(v3(r, r, r)), move |p| {
+        let m = p.x.abs() + p.y.abs() + p.z.abs() - r;
+        m * tan_30
+    })
 }

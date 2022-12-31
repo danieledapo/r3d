@@ -22,7 +22,7 @@ impl Aabb {
     /// Create a bounding box that covers the cuboid centered at `center` with a
     /// given `size`.
     pub fn cuboid(center: Vec3, size: f64) -> Self {
-        Self::with_dimensions(center - size / 2.0, Vec3::replicate(size))
+        Self::with_dimensions(center - size / 2.0, v3(size, size, size))
     }
 
     /// Create a bounding box that starts at th given min point with the given
@@ -264,7 +264,7 @@ mod tests {
                 max: v3(1, 2, 0),
             }
         );
-        assert_eq!(aabb.dimensions(), Vec3::replicate(2.0));
+        assert_eq!(aabb.dimensions(), v3(2, 2, 2));
     }
 
     #[test]
@@ -321,7 +321,7 @@ mod tests {
             aabb.intersection(&Aabb::cuboid(v3(-5.0, -5.0, -5.0), 20.0)),
             Some(Aabb {
                 min: Vec3::zero(),
-                max: Vec3::replicate(5.0),
+                max: v3(5, 5, 5),
             })
         );
     }

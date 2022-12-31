@@ -18,7 +18,7 @@ pub fn main() -> opener::Result<()> {
         Material::light(v3(0.3, 0.3, 0.3)),
     );
 
-    let rounded_cube = sphere(0.65) & cuboid(Vec3::replicate(1.0));
+    let rounded_cube = sphere(0.65) & cuboid(v3(1.0, 1.0, 1.0));
     let cylinder = cylinder(0.25, 1.1);
     let cylinder_a = cylinder.clone() * Mat4::rotate(v3(1, 0, 0), 90.0_f64.to_radians());
     let cylinder_b = cylinder.clone() * Mat4::rotate(v3(0, 0, 1), 90.0_f64.to_radians());
