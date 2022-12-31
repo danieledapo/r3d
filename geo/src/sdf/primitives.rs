@@ -19,7 +19,7 @@ pub fn cuboid(size: Vec3) -> Sdf {
         y -= size.y / 2.0;
         z -= size.z / 2.0;
 
-        let a = x.max(y).max(z).min(0.0);
+        let a = f64::max(f64::max(x, y), z).min(0.0);
 
         x = x.max(0.0);
         y = y.max(0.0);
@@ -44,7 +44,7 @@ pub fn cylinder(radius: f64, height: f64) -> Sdf {
 
         x -= radius;
         y -= height / 2.0;
-        let a = x.max(y).min(0.0);
+        let a = f64::max(x, y).min(0.0);
 
         x = x.max(0.0);
         y = y.max(0.0);

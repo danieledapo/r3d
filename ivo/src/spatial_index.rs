@@ -154,8 +154,6 @@ impl Grid {
         let (w, h, _d) = distance(self.min, self.max);
         let i = z * w * h + y * w + x;
 
-        let i = i as usize;
-
         (i / 64, i % 64)
     }
 
