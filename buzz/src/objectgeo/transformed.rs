@@ -1,7 +1,4 @@
-use geo::{
-    mat4::{Mat4, Transform},
-    Aabb,
-};
+use geo::{mat4::Mat4, Aabb};
 
 use crate::{Hit, Ray, Shape, Surface, Vec3};
 
@@ -31,20 +28,20 @@ where
     type Intersection = Hit;
 
     fn intersection(&self, ray: &Ray) -> Option<Self::Intersection> {
-        let transformed_ray = ray.transform(&self.inverse_trans);
+        let transformed_ray = ray.clone() * &self.inverse_trans;
         let hit = self.shape.intersection(&transformed_ray)?;
 
         let p = transformed_ray.point_at(hit.t);
         let n = self.shape.normal_at(p);
 
-        let intersection = p.transform(&self.trans);
+        let intersection = p * &self.trans;
         let tn = self.inverse_trans.transform_normal(&n);
 
         Some(Hit::new((p - ray.origin).norm(), Some((intersection, tn))))
     }
 
     fn bbox(&self) -> Aabb {
-        self.shape.bbox().transform(&self.trans)
+        self.shape.bbox() * &self.trans
     }
 }
 

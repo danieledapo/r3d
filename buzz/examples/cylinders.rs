@@ -1,7 +1,4 @@
-use geo::{
-    mat4::{Mat4, Transform},
-    Aabb, Vec3,
-};
+use geo::{mat4::Mat4, Aabb, Vec3};
 use sketch_utils::opener;
 
 use buzz::*;
@@ -24,7 +21,7 @@ pub fn main() -> opener::Result<()> {
         TransformedGeometry::new(
             CylinderGeometry::new(0.25, (0.0, 2.5)),
             Mat4::rotate(Vec3::new(0.0, 1.0, 0.0), 90.0_f64.to_radians())
-                .transform(&Mat4::translate(Vec3::new(1.0, 0.0, -1.25))),
+                * &Mat4::translate(Vec3::new(1.0, 0.0, -1.25)),
         ),
         Material::lambertian(Vec3::new(0.31, 0.46, 0.22)),
     ));

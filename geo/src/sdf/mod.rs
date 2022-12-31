@@ -9,11 +9,7 @@ use std::{
     sync::Arc,
 };
 
-use crate::{
-    mat4::{Mat4, Transform},
-    ray::Ray,
-    Aabb, Vec3,
-};
+use crate::{mat4::Mat4, ray::Ray, Aabb, Vec3};
 
 pub mod primitives;
 pub use primitives::*;
@@ -175,9 +171,9 @@ impl Mul<Mat4> for Sdf {
 
     fn mul(self, mat: Mat4) -> Self::Output {
         let inverse_matrix = mat.inverse();
-        let bbox = self.bbox.transform(&mat);
-        Sdf::from_fn(bbox, move |p| {
-            let q = p.transform(&inverse_matrix);
+        let bbox = self.bbox.clone() * &mat;
+        Sdf::from_fn(bbox, move |&p| {
+            let q = p * &inverse_matrix;
             self.dist(&q)
         })
     }

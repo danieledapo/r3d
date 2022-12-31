@@ -1,8 +1,6 @@
-use crate::{
-    mat4::{Mat4, Transform},
-    ray::Ray,
-    Vec3,
-};
+use std::ops::Mul;
+
+use crate::{mat4::Mat4, ray::Ray, Vec3};
 
 /// An [Axis aligned bounding box][0] useful for approximating the boundary of
 /// shapes.
@@ -205,8 +203,10 @@ impl std::iter::Extend<Vec3> for Aabb {
     }
 }
 
-impl Transform for Aabb {
-    fn transform(&self, m: &Mat4) -> Self {
+impl Mul<&Mat4> for Aabb {
+    type Output = Aabb;
+
+    fn mul(self, m: &Mat4) -> Self::Output {
         // http://dev.theomader.com/transform-bounding-boxes/
         let r = Vec3::new(m.data[0][0], m.data[1][0], m.data[2][0]);
         let u = Vec3::new(m.data[0][1], m.data[1][1], m.data[2][1]);
