@@ -1,4 +1,4 @@
-use geo::Aabb;
+use geo::{v3, Aabb};
 
 use crate::{Hit, Ray, Shape, Surface, Vec3};
 
@@ -58,7 +58,7 @@ impl Shape for CylinderGeometry {
     }
 
     fn bbox(&self) -> Aabb {
-        Aabb::new(Vec3::new(-self.radius, -self.radius, self.zmin)).expanded(Vec3::new(
+        Aabb::new(v3(-self.radius, -self.radius, self.zmin)).expanded(v3(
             self.radius,
             self.radius,
             self.zmax,

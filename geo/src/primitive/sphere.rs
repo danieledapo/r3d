@@ -46,6 +46,8 @@ pub fn bounding_box(center: Vec3, radius: f64) -> Aabb {
 
 #[cfg(test)]
 mod tests {
+    use crate::v3;
+
     use super::*;
 
     #[test]
@@ -54,72 +56,47 @@ mod tests {
         let r = 1.0;
 
         assert_eq!(
-            ray_intersection(
-                c,
-                r,
-                &Ray::new(Vec3::new(0.0, 0.0, -2.0), Vec3::new(0.0, 0.0, 1.0))
-            ),
+            ray_intersection(c, r, &Ray::new(v3(0.0, 0.0, -2.0), v3(0, 0, 1))),
             Some(1.0)
         );
 
         assert_eq!(
-            ray_intersection(
-                c,
-                r,
-                &Ray::new(Vec3::new(0.0, 0.0, 2.0), Vec3::new(0.0, 0.0, 1.0))
-            ),
+            ray_intersection(c, r, &Ray::new(v3(0, 0, 2), v3(0, 0, 1))),
             None
         );
 
         assert_eq!(
-            ray_intersection(
-                c,
-                r,
-                &Ray::new(Vec3::new(1.0, 0.0, 2.0), Vec3::new(0.0, 0.0, -1.0))
-            ),
+            ray_intersection(c, r, &Ray::new(v3(1, 0, 2), v3(0.0, 0.0, -1.0))),
             Some(2.0)
         );
 
         assert_eq!(
-            ray_intersection(
-                c,
-                r,
-                &Ray::new(Vec3::new(-20.0, 0.0, 2.0), Vec3::new(0.0, 0.0, -1.0))
-            ),
+            ray_intersection(c, r, &Ray::new(v3(-20.0, 0.0, 2.0), v3(0.0, 0.0, -1.0))),
             None
         );
 
         assert_eq!(
-            ray_intersection(c, r, &Ray::new(c, Vec3::new(0.0, 0.0, -1.0))),
+            ray_intersection(c, r, &Ray::new(c, v3(0.0, 0.0, -1.0))),
             Some(1.0)
         );
-        assert_eq!(
-            ray_intersection(c, r, &Ray::new(c, Vec3::new(0.0, 0.0, 1.0))),
-            Some(1.0)
-        );
+        assert_eq!(ray_intersection(c, r, &Ray::new(c, v3(0, 0, 1))), Some(1.0));
     }
 
     #[test]
     fn test_normal() {
-        assert_eq!(
-            normal(Vec3::zero(), Vec3::new(3.0, 0.0, 0.0)),
-            Vec3::new(1.0, 0.0, 0.0)
-        );
+        assert_eq!(normal(Vec3::zero(), v3(3, 0, 0)), v3(1, 0, 0));
 
-        assert_eq!(
-            normal(Vec3::new(2.0, 1.0, 0.0), Vec3::new(2.0, 0.0, 0.0)),
-            Vec3::new(0.0, -1.0, 0.0)
-        );
+        assert_eq!(normal(v3(2, 1, 0), v3(2, 0, 0)), v3(0.0, -1.0, 0.0));
     }
 
     #[test]
     fn test_bounding_box() {
         let bbox = bounding_box(Vec3::zero(), 5.0);
-        assert_eq!(bbox.min(), Vec3::new(-5.0, -5.0, -5.0));
-        assert_eq!(bbox.max(), Vec3::new(5.0, 5.0, 5.0));
+        assert_eq!(bbox.min(), v3(-5.0, -5.0, -5.0));
+        assert_eq!(bbox.max(), v3(5, 5, 5));
 
-        let bbox = bounding_box(Vec3::new(1.0, -2.0, 3.0), 10.0);
-        assert_eq!(bbox.min(), Vec3::new(-9.0, -12.0, -7.0));
-        assert_eq!(bbox.max(), Vec3::new(11.0, 8.0, 13.0));
+        let bbox = bounding_box(v3(1.0, -2.0, 3.0), 10.0);
+        assert_eq!(bbox.min(), v3(-9.0, -12.0, -7.0));
+        assert_eq!(bbox.max(), v3(11, 8, 13));
     }
 }

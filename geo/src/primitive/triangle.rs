@@ -1,5 +1,6 @@
 use rand::Rng;
 
+use crate::v3;
 use crate::{primitive::polyline::Polyline, spatial_index::Shape, Vec3};
 use crate::{ray::Ray, Aabb};
 
@@ -74,7 +75,7 @@ impl Triangle {
         if !(0.0..=1.0).contains(&u) || !(0.0..=1.0).contains(&v) {
             None
         } else {
-            Some(Vec3::new(1.0 - u - v, v, u))
+            Some(v3(1.0 - u - v, v, u))
         }
     }
 
@@ -156,22 +157,12 @@ mod tests {
     #[test]
     fn test_triangle_area() {
         assert_eq!(
-            Triangle::new(
-                Vec3::new(0.0, 0.0, 0.0),
-                Vec3::new(50.0, 0.0, 0.0),
-                Vec3::new(25.0, 10.0, 0.0)
-            )
-            .area(),
+            Triangle::new(v3(0, 0, 0), v3(50, 0, 0), v3(25, 10, 0)).area(),
             250.0
         );
 
         assert_eq!(
-            Triangle::new(
-                Vec3::new(0.0, 0.0, 0.0),
-                Vec3::new(50.0, 0.0, 0.0),
-                Vec3::new(100.0, 0.0, 0.0)
-            )
-            .area(),
+            Triangle::new(v3(0, 0, 0), v3(50, 0, 0), v3(100, 0, 0)).area(),
             0.0
         );
     }
@@ -179,70 +170,50 @@ mod tests {
     #[test]
     fn test_triangle_normal() {
         assert_eq!(
-            Triangle::new(
-                Vec3::new(2.0, 2.0, 2.0),
-                Vec3::new(10.0, 15.0, 2.0),
-                Vec3::new(4.0, 10.0, 2.0)
-            )
-            .normal(),
-            Vec3::new(0.0, 0.0, 1.0)
+            Triangle::new(v3(2, 2, 2), v3(10, 15, 2), v3(4, 10, 2)).normal(),
+            v3(0, 0, 1)
         );
 
         assert_eq!(
-            Triangle::new(
-                Vec3::new(2.0, 2.0, 2.0),
-                Vec3::new(10.0, 15.0, 2.0),
-                Vec3::new(4.0, 10.0, 2.0)
-            )
-            .normal(),
-            Vec3::new(0.0, 0.0, 1.0)
+            Triangle::new(v3(2, 2, 2), v3(10, 15, 2), v3(4, 10, 2)).normal(),
+            v3(0, 0, 1)
         );
     }
 
     #[test]
     fn test_triangle_centroid() {
         assert_eq!(
-            Triangle::new(
-                Vec3::new(2.0, 5.0, 2.0),
-                Vec3::new(10.0, 15.0, 2.0),
-                Vec3::new(6.0, 10.0, 2.0)
-            )
-            .centroid(),
-            Vec3::new(6.0, 10.0, 2.0)
+            Triangle::new(v3(2, 5, 2), v3(10, 15, 2), v3(6, 10, 2)).centroid(),
+            v3(6, 10, 2)
         );
     }
 
     #[test]
     fn test_triangle_barycentric() {
-        let v0 = Vec3::new(-20.0, -20.0, 0.0);
-        let v1 = Vec3::new(0.0, 0.0, 0.0);
-        let v2 = Vec3::new(-10.0, -2.0, 0.0);
+        let v0 = v3(-20.0, -20.0, 0.0);
+        let v1 = v3(0, 0, 0);
+        let v2 = v3(-10.0, -2.0, 0.0);
 
         let tri = Triangle::new(v0, v1, v2);
 
         // triangle vertices always have valid bary coords
-        assert_eq!(tri.barycentric(&v0), Some(Vec3::new(1.0, 0.0, 0.0)));
-        assert_eq!(tri.barycentric(&v1), Some(Vec3::new(0.0, 1.0, 0.0)));
-        assert_eq!(tri.barycentric(&v2), Some(Vec3::new(0.0, 0.0, 1.0)));
+        assert_eq!(tri.barycentric(&v0), Some(v3(1, 0, 0)));
+        assert_eq!(tri.barycentric(&v1), Some(v3(0, 1, 0)));
+        assert_eq!(tri.barycentric(&v2), Some(v3(0, 0, 1)));
 
         // random point inside has valid coords
         assert_eq!(
             tri.barycentric(&(v0 * 0.25 + v1 * 0.25 + v2 * 0.5)),
-            Some(Vec3::new(0.25, 0.25, 0.5))
+            Some(v3(0.25, 0.25, 0.5))
         );
 
         // outside point has not valid coords
-        assert_eq!(tri.barycentric(&Vec3::new(10.0, 0.0, 0.0)), None);
-        assert_eq!(tri.barycentric(&Vec3::new(-5.0, -10.0, 0.0)), None);
+        assert_eq!(tri.barycentric(&v3(10, 0, 0)), None);
+        assert_eq!(tri.barycentric(&v3(-5.0, -10.0, 0.0)), None);
 
         // collinear triangle doesn't return valid bary coords
         assert_eq!(
-            Triangle::new(
-                Vec3::new(10.0, 10.0, 10.0),
-                Vec3::new(20.0, 20.0, 20.0),
-                Vec3::new(0.0, 0.0, 0.0)
-            )
-            .barycentric(&Vec3::new(10.0, 10.0, 10.0)),
+            Triangle::new(v3(10, 10, 10), v3(20, 20, 20), v3(0, 0, 0)).barycentric(&v3(10, 10, 10)),
             None
         );
     }

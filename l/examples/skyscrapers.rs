@@ -2,7 +2,7 @@ use std::sync::Arc;
 
 use rand::prelude::*;
 
-use geo::{primitive::polyline::Polyline, spatial_index::Shape, Aabb, Vec3};
+use geo::{primitive::polyline::Polyline, spatial_index::Shape, v3, Aabb, Vec3};
 use sketch_utils::opener;
 
 use l::*;
@@ -55,19 +55,19 @@ impl Object for Building {
             let dy = (y1 - y0) * t;
             let dz = (z1 - z0) * t;
 
-            out.push(vec![Vec3::new(x0 + dx, y0, z0), Vec3::new(x0 + dx, y0, z1)].into());
-            out.push(vec![Vec3::new(x0 + dx, y1, z0), Vec3::new(x0 + dx, y1, z1)].into());
+            out.push(vec![v3(x0 + dx, y0, z0), v3(x0 + dx, y0, z1)].into());
+            out.push(vec![v3(x0 + dx, y1, z0), v3(x0 + dx, y1, z1)].into());
 
-            out.push(vec![Vec3::new(x0, y0 + dy, z0), Vec3::new(x0, y0 + dy, z1)].into());
-            out.push(vec![Vec3::new(x1, y0 + dy, z0), Vec3::new(x1, y0 + dy, z1)].into());
+            out.push(vec![v3(x0, y0 + dy, z0), v3(x0, y0 + dy, z1)].into());
+            out.push(vec![v3(x1, y0 + dy, z0), v3(x1, y0 + dy, z1)].into());
 
             out.push(
                 vec![
-                    Vec3::new(x0, y0, z0 + dz),
-                    Vec3::new(x1, y0, z0 + dz),
-                    Vec3::new(x1, y1, z0 + dz),
-                    Vec3::new(x0, y1, z0 + dz),
-                    Vec3::new(x0, y0, z0 + dz),
+                    v3(x0, y0, z0 + dz),
+                    v3(x1, y0, z0 + dz),
+                    v3(x1, y1, z0 + dz),
+                    v3(x0, y1, z0 + dz),
+                    v3(x0, y0, z0 + dz),
                 ]
                 .into(),
             );
@@ -91,8 +91,8 @@ pub fn main() -> opener::Result<()> {
 
             let building = Building::new(
                 Aabb::with_dimensions(
-                    Vec3::new(f64::from(x) - 0.5, f64::from(y) - 0.5, 0.0),
-                    Vec3::new(0.8, 0.8, height.into()),
+                    v3(f64::from(x) - 0.5, f64::from(y) - 0.5, 0.0),
+                    v3(0.8, 0.8, height),
                 ),
                 height,
             );
@@ -103,12 +103,8 @@ pub fn main() -> opener::Result<()> {
 
     let scene = Scene::new(objects);
 
-    let camera = Camera::look_at(
-        Vec3::new(5.0, -3.0, 20.0),
-        Vec3::zero(),
-        Vec3::new(0.0, 0.0, 1.0),
-    )
-    .with_perspective_projection(45.0, 1.0, 0.01, 100.0);
+    let camera = Camera::look_at(v3(5.0, -3.0, 20.0), Vec3::zero(), v3(0, 0, 1))
+        .with_perspective_projection(45.0, 1.0, 0.01, 100.0);
 
     let paths = render(
         &camera,

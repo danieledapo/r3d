@@ -2,7 +2,7 @@ use geo::{
     primitive::polyline::Polyline,
     ray::Ray,
     spatial_index::{Bvh, Intersection, Shape},
-    Aabb, Triangle, Vec3,
+    v3, Aabb, Triangle, Vec3,
 };
 
 use crate::{Facet, Object};
@@ -32,7 +32,7 @@ impl Grid {
             for j in 0..steps {
                 let x = sx + (ex - sx) * (j as f64) / (steps as f64 - 1.0);
 
-                heightmap.push(Vec3::new(x, y, fun(x, y)));
+                heightmap.push(v3(x, y, fun(x, y)));
             }
         }
 

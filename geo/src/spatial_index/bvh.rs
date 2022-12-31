@@ -278,46 +278,32 @@ where
 
 #[cfg(test)]
 mod tests {
+    use crate::v3;
+
     use super::*;
 
     #[test]
     fn test_bvh_build() {
-        let bvh: Bvh<Vec3> = vec![
-            Vec3::new(10.0, -1.0, 7.0),
-            Vec3::new(0.0, 2.0, 0.0),
-            Vec3::new(8.0, 1.0, 4.0),
-        ]
-        .into_iter()
-        .collect();
+        let bvh: Bvh<Vec3> = vec![v3(10.0, -1.0, 7.0), v3(0, 2, 0), v3(8, 1, 4)]
+            .into_iter()
+            .collect();
 
         assert_eq!(
             bvh,
             Bvh {
                 infinite_objects: vec![],
                 root: Some(Node::Branch {
-                    bbox: Aabb::from_points(vec![
-                        Vec3::new(0.0, -1.0, 0.0),
-                        Vec3::new(10.0, 2.0, 7.0)
-                    ])
-                    .unwrap(),
+                    bbox: Aabb::from_points(vec![v3(0.0, -1.0, 0.0), v3(10, 2, 7)]).unwrap(),
 
-                    left: Box::new(Node::Leaf {
-                        data: Vec3::new(0.0, 2.0, 0.0)
-                    }),
+                    left: Box::new(Node::Leaf { data: v3(0, 2, 0) }),
 
                     right: Box::new(Node::Branch {
-                        bbox: Aabb::from_points(vec![
-                            Vec3::new(8.0, -1.0, 4.0),
-                            Vec3::new(10.0, 1.0, 7.0)
-                        ])
-                        .unwrap(),
+                        bbox: Aabb::from_points(vec![v3(8.0, -1.0, 4.0), v3(10, 1, 7)]).unwrap(),
 
-                        left: Box::new(Node::Leaf {
-                            data: Vec3::new(8.0, 1.0, 4.0)
-                        }),
+                        left: Box::new(Node::Leaf { data: v3(8, 1, 4) }),
 
                         right: Box::new(Node::Leaf {
-                            data: Vec3::new(10.0, -1.0, 7.0)
+                            data: v3(10.0, -1.0, 7.0)
                         })
                     })
                 })
@@ -326,52 +312,42 @@ mod tests {
 
         assert_eq!(
             bvh.iter().collect::<Vec<_>>(),
-            vec![
-                &Vec3::new(0.0, 2.0, 0.0),
-                &Vec3::new(8.0, 1.0, 4.0),
-                &Vec3::new(10.0, -1.0, 7.0)
-            ]
+            vec![&v3(0, 2, 0), &v3(8, 1, 4), &v3(10.0, -1.0, 7.0)]
         );
     }
 
     #[test]
     fn test_intersections() {
         let bvh: Bvh<Vec3> = vec![
-            Vec3::new(-10.0, -1.0, -7.0),
+            v3(-10.0, -1.0, -7.0),
             Vec3::zero(),
-            Vec3::new(0.0, 1.0, 1.0),
-            Vec3::new(10.0, 1.0, 7.0),
+            v3(0, 1, 1),
+            v3(10, 1, 7),
         ]
         .into_iter()
         .collect();
 
         assert_eq!(
-            bvh.intersections(&Ray::new(Vec3::zero(), Vec3::new(1.0, 1.0, 1.0)))
+            bvh.intersections(&Ray::new(Vec3::zero(), v3(1, 1, 1)))
                 .collect::<Vec<_>>(),
             vec![(&Vec3::zero(), 0.0)]
         );
 
         assert_eq!(
-            bvh.intersections(&Ray::new(
-                Vec3::new(1.0, 0.0, 2.0),
-                Vec3::new(-1.0, 1.0, -1.0)
-            ))
-            .collect::<Vec<_>>(),
-            vec![(&Vec3::new(0.0, 1.0, 1.0), 1.0)]
-        );
-
-        assert_eq!(
-            bvh.intersections(&Ray::new(Vec3::zero(), Vec3::new(0.0, 1.0, 1.0)))
+            bvh.intersections(&Ray::new(v3(1, 0, 2), v3(-1.0, 1.0, -1.0)))
                 .collect::<Vec<_>>(),
-            vec![(&Vec3::zero(), 0.0), (&Vec3::new(0.0, 1.0, 1.0), 1.0)]
+            vec![(&v3(0, 1, 1), 1.0)]
         );
 
         assert_eq!(
-            bvh.intersections(&Ray::new(
-                Vec3::new(-11.0, -20.0, 100.0),
-                Vec3::new(-1.0, -1.0, 1.0)
-            ))
-            .collect::<Vec<_>>(),
+            bvh.intersections(&Ray::new(Vec3::zero(), v3(0, 1, 1)))
+                .collect::<Vec<_>>(),
+            vec![(&Vec3::zero(), 0.0), (&v3(0, 1, 1), 1.0)]
+        );
+
+        assert_eq!(
+            bvh.intersections(&Ray::new(v3(-11.0, -20.0, 100.0), v3(-1.0, -1.0, 1.0)))
+                .collect::<Vec<_>>(),
             vec![]
         );
     }

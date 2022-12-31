@@ -27,6 +27,8 @@ pub fn intersection(origin: Vec3, normal: Vec3, ray: &Ray) -> Option<f64> {
 
 #[cfg(test)]
 mod tests {
+    use crate::v3;
+
     use super::*;
 
     #[test]
@@ -34,8 +36,8 @@ mod tests {
         assert_eq!(
             intersection(
                 Vec3::zero(),
-                Vec3::new(0.0, 0.0, 1.0),
-                &Ray::new(Vec3::new(0.0, 0.0, 5.0), Vec3::new(0.0, 0.0, -1.0))
+                v3(0, 0, 1),
+                &Ray::new(v3(0, 0, 5), v3(0.0, 0.0, -1.0))
             ),
             Some(5.0)
         );
@@ -43,8 +45,8 @@ mod tests {
         assert_eq!(
             intersection(
                 Vec3::zero(),
-                Vec3::new(0.0, 0.0, 1.0),
-                &Ray::new(Vec3::new(-5.0, 0.0, 5.0), Vec3::new(0.5, 0.0, -0.5))
+                v3(0, 0, 1),
+                &Ray::new(v3(-5.0, 0.0, 5.0), v3(0.5, 0.0, -0.5))
             ),
             Some(10.0)
         );
@@ -52,8 +54,8 @@ mod tests {
         assert_eq!(
             intersection(
                 Vec3::zero(),
-                Vec3::new(0.0, 0.0, 1.0),
-                &Ray::new(Vec3::new(0.0, 0.0, 5.0), Vec3::new(0.0, 0.0, 1.0))
+                v3(0, 0, 1),
+                &Ray::new(v3(0, 0, 5), v3(0, 0, 1))
             ),
             None
         );

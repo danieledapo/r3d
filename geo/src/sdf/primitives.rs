@@ -1,4 +1,4 @@
-use crate::{sphere, Aabb, Vec3};
+use crate::{sphere, v3, Aabb, Vec3};
 
 use super::Sdf;
 
@@ -31,11 +31,8 @@ pub fn cuboid(size: Vec3) -> Sdf {
 }
 
 pub fn cylinder(radius: f64, height: f64) -> Sdf {
-    let bbox = Aabb::new(Vec3::new(-radius, -height / 2.0, -radius)).expanded(Vec3::new(
-        radius,
-        height / 2.0,
-        radius,
-    ));
+    let bbox =
+        Aabb::new(v3(-radius, -height / 2.0, -radius)).expanded(v3(radius, height / 2.0, radius));
 
     Sdf::from_fn(bbox, move |p| {
         let mut x = (p.x.powi(2) + p.z.powi(2)).sqrt();
@@ -61,10 +58,10 @@ pub fn torus(r1: f64, r2: f64) -> Sdf {
     let a = r1;
     let b = r1 + r2;
 
-    let bbox = Aabb::new(Vec3::new(-b, -b, -a)).expanded(Vec3::new(b, b, a));
+    let bbox = Aabb::new(v3(-b, -b, -a)).expanded(v3(b, b, a));
 
     Sdf::from_fn(bbox, move |p| {
-        let q = Vec3::new(Vec3::new(p.x, p.y, 0.0).norm() - r2, p.z, 0.0);
+        let q = v3(v3(p.x, p.y, 0.0).norm() - r2, p.z, 0.0);
         q.norm() - r1
     })
 }

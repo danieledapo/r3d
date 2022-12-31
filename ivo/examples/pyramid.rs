@@ -1,4 +1,4 @@
-use geo::{sdf::*, Vec3};
+use geo::{sdf::*, v3};
 use ivo::*;
 use sketch_utils::opener;
 
@@ -16,7 +16,7 @@ pub fn main() {
 
     pyramid(&mut scene, 60, 200);
     scene.invert();
-    scene.sdf(&(sphere(50.0) + Vec3::new(0.0, 0.0, 100.0)));
+    scene.sdf(&(sphere(50.0) + v3(0, 0, 100)));
 
     let triangles = render_outlines(&scene);
 

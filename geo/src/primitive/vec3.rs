@@ -17,6 +17,11 @@ pub struct Vec3 {
     pub z: f64,
 }
 
+/// Tiny alias for `v3()` which is quite mouthful.
+pub fn v3(x: impl Into<f64>, y: impl Into<f64>, z: impl Into<f64>) -> Vec3 {
+    Vec3::new(x.into(), y.into(), z.into())
+}
+
 impl Vec3 {
     /// Create a new `Vec3` with the given coordinates.
     pub const fn new(x: f64, y: f64, z: f64) -> Self {
@@ -87,7 +92,7 @@ impl Vec3 {
     ///
     /// [0]: https://en.wikipedia.org/wiki/Cross_product
     pub fn cross(&self, v: Vec3) -> Self {
-        Vec3::new(
+        v3(
             self.y * v.z - self.z * v.y,
             self.z * v.x - self.x * v.z,
             self.x * v.y - self.y * v.x,
@@ -97,14 +102,14 @@ impl Vec3 {
     /// Linear interpolation between two `Vec3`.
     ///
     /// ```rust
-    /// # use geo::Vec3;
+    /// # use geo::{Vec3, v3};
     ///
     /// let o = Vec3::zero();
-    /// let p = Vec3::new(2.0, 0.0, -6.0);
+    /// let p = v3(2.0, 0.0, -6.0);
     ///
     /// assert_eq!(Vec3::lerp(o, p, 0.0), o);
     /// assert_eq!(Vec3::lerp(o, p, 1.0), p);
-    /// assert_eq!(Vec3::lerp(o, p, 0.5), Vec3::new(1.0, 0.0, -3.0));
+    /// assert_eq!(Vec3::lerp(o, p, 0.5), v3(1.0, 0.0, -3.0));
     /// ```
     pub fn lerp(self, b: Vec3, t: f64) -> Vec3 {
         self * (1.0 - t) + b * t
@@ -113,11 +118,11 @@ impl Vec3 {
     /// Check whether a `Vec3` is not NaN or infinite.
     ///
     /// ```rust
-    /// # use geo::Vec3;
+    /// # use geo::{Vec3, v3};
     ///
-    /// assert!(Vec3::new(0.0, 1.0, 2.0).is_finite());
-    /// assert!(!Vec3::new(f64::NAN, 1.0, 2.0).is_finite());
-    /// assert!(!Vec3::new(f64::INFINITY, 1.0, 0.5).is_finite());
+    /// assert!(v3(0, 1, 2).is_finite());
+    /// assert!(!v3(f64::NAN, 1.0, 2.0).is_finite());
+    /// assert!(!v3(f64::INFINITY, 1.0, 0.5).is_finite());
     /// ```
     pub fn is_finite(&self) -> bool {
         self.x.is_finite() && self.y.is_finite() && self.z.is_finite()
@@ -164,7 +169,7 @@ macro_rules! impl_num_op {
             type Output = Vec3;
 
             fn $fn(self, v: Vec3) -> Self::Output {
-                Vec3::new(self.x $op v.x, self.y $op v.y, self.z $op v.z)
+                v3(self.x $op v.x, self.y $op v.y, self.z $op v.z)
             }
         }
 
@@ -172,7 +177,7 @@ macro_rules! impl_num_op {
             type Output = Vec3;
 
             fn $fn(self, s: f64) -> Self::Output {
-                Vec3::new(self.x $op s, self.y $op s, self.z $op s)
+                v3(self.x $op s, self.y $op s, self.z $op s)
             }
         }
 
@@ -219,7 +224,7 @@ impl Sum for Vec3 {
 
 impl Product for Vec3 {
     fn product<I: Iterator<Item = Vec3>>(iter: I) -> Vec3 {
-        iter.fold(Vec3::new(1.0, 1.0, 1.0), Mul::mul)
+        iter.fold(v3(1, 1, 1), Mul::mul)
     }
 }
 
@@ -244,7 +249,7 @@ impl Index<Axis> for Vec3 {
 
 #[cfg(test)]
 pub fn vec3() -> impl Strategy<Value = Vec3> {
-    any::<(f64, f64, f64)>().prop_map(|(x, y, z)| Vec3::new(x, y, z))
+    any::<(f64, f64, f64)>().prop_map(|(x, y, z)| v3(x, y, z))
 }
 
 #[cfg(test)]
@@ -253,7 +258,7 @@ pub fn distinct_vec3(
 ) -> impl Strategy<Value = Vec<Vec3>> {
     proptest::collection::hash_set(any::<(i16, i16, i16)>(), range).prop_map(|cs| {
         cs.into_iter()
-            .map(|(x, y, z)| Vec3::new(f64::from(x), f64::from(y), f64::from(z)))
+            .map(|(x, y, z)| v3(f64::from(x), f64::from(y), f64::from(z)))
             .collect()
     })
 }
@@ -266,28 +271,19 @@ mod tests {
     fn test_basic_math_ops() {
         let v = Vec3::zero();
 
-        assert_eq!(v + Vec3::new(2.0, 1.0, 0.0) * 2.0, Vec3::new(4.0, 2.0, 0.0));
-        assert_eq!(
-            v - Vec3::new(9.0, -6.0, 3.0) / 3.0,
-            Vec3::new(-3.0, 2.0, -1.0)
-        );
+        assert_eq!(v + v3(2, 1, 0) * 2.0, v3(4, 2, 0));
+        assert_eq!(v - v3(9.0, -6.0, 3.0) / 3.0, v3(-3.0, 2.0, -1.0));
 
-        assert_eq!(
-            (v + 5.0) * Vec3::new(2.0, -1.0, 0.0),
-            Vec3::new(10.0, -5.0, 0.0)
-        );
-        assert_eq!(
-            (v - 2.0) / Vec3::new(-2.0, 1.0, 4.0),
-            Vec3::new(1.0, -2.0, -0.5)
-        );
+        assert_eq!((v + 5.0) * v3(2.0, -1.0, 0.0), v3(10.0, -5.0, 0.0));
+        assert_eq!((v - 2.0) / v3(-2.0, 1.0, 4.0), v3(1.0, -2.0, -0.5));
 
-        assert_eq!(-(v + Vec3::new(1.0, 2.0, 3.0)), Vec3::new(-1.0, -2.0, -3.0));
+        assert_eq!(-(v + v3(1, 2, 3)), v3(-1.0, -2.0, -3.0));
     }
 
     #[test]
     fn test_dist() {
         let o = Vec3::zero();
-        let v2 = Vec3::new(3.0, 4.0, 0.0);
+        let v2 = v3(3, 4, 0);
 
         assert_eq!(o.dist(v2), 5.0);
         assert_eq!(o.dist2(v2), 25.0);
@@ -295,7 +291,7 @@ mod tests {
 
     #[test]
     fn test_norm() {
-        let v = Vec3::new(0.0, 3.0, 4.0);
+        let v = v3(0, 3, 4);
 
         assert_eq!(v.norm(), 5.0);
         assert_eq!(v.norm2(), 25.0);
@@ -308,20 +304,17 @@ mod tests {
 
     #[test]
     fn test_dot() {
-        assert_eq!(Vec3::zero().dot(Vec3::new(-5.0, 3.0, 1.0)), 0.0);
-        assert_eq!(Vec3::new(-5.0, 3.0, 1.0).dot(Vec3::zero()), 0.0);
+        assert_eq!(Vec3::zero().dot(v3(-5.0, 3.0, 1.0)), 0.0);
+        assert_eq!(v3(-5.0, 3.0, 1.0).dot(Vec3::zero()), 0.0);
 
-        assert_eq!(
-            Vec3::new(1.0, 3.0, -5.0).dot(Vec3::new(4.0, -2.0, -1.0)),
-            3.0
-        );
+        assert_eq!(v3(1.0, 3.0, -5.0).dot(v3(4.0, -2.0, -1.0)), 3.0);
     }
 
     #[test]
     fn test_cross() {
-        let right = Vec3::new(1.0, 0.0, 0.0);
-        let up = Vec3::new(0.0, 1.0, 0.0);
-        let forward = Vec3::new(0.0, 0.0, 1.0);
+        let right = v3(1, 0, 0);
+        let up = v3(0, 1, 0);
+        let forward = v3(0, 0, 1);
 
         assert_eq!(right.cross(up), forward);
         assert_eq!(up.cross(right), -forward);
@@ -332,26 +325,26 @@ mod tests {
         assert_eq!(Vec::<Vec3>::new().into_iter().sum::<Vec3>(), Vec3::zero());
 
         assert_eq!(
-            vec![Vec3::new(-10.0, 5.0, 0.0), Vec3::new(8.0, 2.0, -1.0)]
+            vec![v3(-10.0, 5.0, 0.0), v3(8.0, 2.0, -1.0)]
                 .into_iter()
                 .sum::<Vec3>(),
-            Vec3::new(-2.0, 7.0, -1.0)
+            v3(-2.0, 7.0, -1.0)
         );
     }
 
     #[test]
     fn test_product() {
         assert_eq!(
-            vec![Vec3::new(-10.0, 5.0, 0.0), Vec3::new(8.0, 2.0, -1.0)]
+            vec![v3(-10.0, 5.0, 0.0), v3(8.0, 2.0, -1.0)]
                 .into_iter()
                 .product::<Vec3>(),
-            Vec3::new(-80.0, 10.0, 0.0)
+            v3(-80.0, 10.0, 0.0)
         );
     }
 
     #[test]
     fn test_index() {
-        let v = Vec3::new(1.0, 2.0, 3.0);
+        let v = v3(1, 2, 3);
 
         assert_eq!(v[Axis::X], 1.0);
         assert_eq!(v[Axis::Y], 2.0);

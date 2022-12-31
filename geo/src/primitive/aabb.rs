@@ -1,6 +1,6 @@
 use std::ops::Mul;
 
-use crate::{mat4::Mat4, ray::Ray, Vec3};
+use crate::{mat4::Mat4, ray::Ray, v3, Vec3};
 
 /// An [Axis aligned bounding box][0] useful for approximating the boundary of
 /// shapes.
@@ -115,12 +115,12 @@ impl Aabb {
     /// Expand the bounding box so that it covers another bounding box too.
     pub fn intersection(&self, aabb: &Aabb) -> Option<Self> {
         let b = Aabb {
-            min: Vec3::new(
+            min: v3(
                 self.min.x.max(aabb.min.x),
                 self.min.y.max(aabb.min.y),
                 self.min.z.max(aabb.min.z),
             ),
-            max: Vec3::new(
+            max: v3(
                 self.max.x.min(aabb.max.x),
                 self.max.y.min(aabb.max.y),
                 self.max.z.min(aabb.max.z),
@@ -208,10 +208,10 @@ impl Mul<&Mat4> for Aabb {
 
     fn mul(self, m: &Mat4) -> Self::Output {
         // http://dev.theomader.com/transform-bounding-boxes/
-        let r = Vec3::new(m.data[0][0], m.data[1][0], m.data[2][0]);
-        let u = Vec3::new(m.data[0][1], m.data[1][1], m.data[2][1]);
-        let b = Vec3::new(m.data[0][2], m.data[1][2], m.data[2][2]);
-        let t = Vec3::new(m.data[0][3], m.data[1][3], m.data[2][3]);
+        let r = v3(m.data[0][0], m.data[1][0], m.data[2][0]);
+        let u = v3(m.data[0][1], m.data[1][1], m.data[2][1]);
+        let b = v3(m.data[0][2], m.data[1][2], m.data[2][2]);
+        let t = v3(m.data[0][3], m.data[1][3], m.data[2][3]);
 
         let xa = r * self.min.x;
         let xb = r * self.max.x;
@@ -243,25 +243,25 @@ mod tests {
         assert_eq!(aabb.max(), Vec3::zero());
         assert_eq!(aabb.center(), Vec3::zero());
 
-        aabb.expand(Vec3::new(-2.0, 0.0, 1.0));
-        assert_eq!(aabb.min(), Vec3::new(-2.0, 0.0, 0.0),);
-        assert_eq!(aabb.max(), Vec3::new(0.0, 0.0, 1.0));
-        assert_eq!(aabb.center(), Vec3::new(-1.0, 0.0, 0.5));
+        aabb.expand(v3(-2.0, 0.0, 1.0));
+        assert_eq!(aabb.min(), v3(-2.0, 0.0, 0.0),);
+        assert_eq!(aabb.max(), v3(0, 0, 1));
+        assert_eq!(aabb.center(), v3(-1.0, 0.0, 0.5));
 
-        aabb.expand(Vec3::new(8.0, 8.0, -5.0));
-        assert_eq!(aabb.min(), Vec3::new(-2.0, 0.0, -5.0));
-        assert_eq!(aabb.max(), Vec3::new(8.0, 8.0, 1.0));
-        assert_eq!(aabb.center(), Vec3::new(3.0, 4.0, -2.0));
+        aabb.expand(v3(8.0, 8.0, -5.0));
+        assert_eq!(aabb.min(), v3(-2.0, 0.0, -5.0));
+        assert_eq!(aabb.max(), v3(8, 8, 1));
+        assert_eq!(aabb.center(), v3(3.0, 4.0, -2.0));
     }
 
     #[test]
     fn test_cube() {
-        let aabb = Aabb::cuboid(Vec3::new(0.0, 1.0, -1.0), 2.0);
+        let aabb = Aabb::cuboid(v3(0.0, 1.0, -1.0), 2.0);
         assert_eq!(
             aabb,
             Aabb {
-                min: Vec3::new(-1.0, 0.0, -2.0),
-                max: Vec3::new(1.0, 2.0, 0.0),
+                min: v3(-1.0, 0.0, -2.0),
+                max: v3(1, 2, 0),
             }
         );
         assert_eq!(aabb.dimensions(), Vec3::replicate(2.0));
@@ -272,14 +272,10 @@ mod tests {
         assert_eq!(Aabb::from_points(vec![]), None);
 
         assert_eq!(
-            Aabb::from_points(vec![
-                Vec3::zero(),
-                Vec3::new(-2.0, 10.0, 2.0),
-                Vec3::new(0.0, 1.0, -2.0)
-            ]),
+            Aabb::from_points(vec![Vec3::zero(), v3(-2.0, 10.0, 2.0), v3(0.0, 1.0, -2.0)]),
             Some(Aabb {
-                min: Vec3::new(-2.0, 0.0, -2.0),
-                max: Vec3::new(0.0, 10.0, 2.0)
+                min: v3(-2.0, 0.0, -2.0),
+                max: v3(0, 10, 2)
             })
         );
     }
@@ -287,22 +283,22 @@ mod tests {
     #[test]
     fn test_union() {
         let mut aabb = Aabb::new(Vec3::zero());
-        aabb = aabb.union(&Aabb::new(Vec3::new(1.0, 0.0, 2.0)));
+        aabb = aabb.union(&Aabb::new(v3(1, 0, 2)));
 
         assert_eq!(
             aabb,
             Aabb {
                 min: Vec3::zero(),
-                max: Vec3::new(1.0, 0.0, 2.0)
+                max: v3(1, 0, 2)
             }
         );
 
-        aabb = aabb.union(&Aabb::new(Vec3::new(-5.0, -1.0, -3.0)));
+        aabb = aabb.union(&Aabb::new(v3(-5.0, -1.0, -3.0)));
         assert_eq!(
             aabb,
             Aabb {
-                min: Vec3::new(-5.0, -1.0, -3.0),
-                max: Vec3::new(1.0, 0.0, 2.0)
+                min: v3(-5.0, -1.0, -3.0),
+                max: v3(1, 0, 2)
             }
         );
     }
@@ -311,18 +307,18 @@ mod tests {
     fn test_intersection() {
         let mut aabb = Aabb::new(Vec3::zero());
         assert_eq!(aabb.intersection(&aabb), Some(aabb.clone()));
-        aabb.expand(Vec3::new(10.0, 20.0, 10.0));
+        aabb.expand(v3(10, 20, 10));
 
         assert_eq!(
-            aabb.intersection(&Aabb::cuboid(Vec3::new(5.0, 10.0, 5.0), 6.0)),
+            aabb.intersection(&Aabb::cuboid(v3(5, 10, 5), 6.0)),
             Some(Aabb {
-                min: Vec3::new(2.0, 7.0, 2.0),
-                max: Vec3::new(8.0, 13.0, 8.0),
+                min: v3(2, 7, 2),
+                max: v3(8, 13, 8),
             })
         );
 
         assert_eq!(
-            aabb.intersection(&Aabb::cuboid(Vec3::new(-5.0, -5.0, -5.0), 20.0)),
+            aabb.intersection(&Aabb::cuboid(v3(-5.0, -5.0, -5.0), 20.0)),
             Some(Aabb {
                 min: Vec3::zero(),
                 max: Vec3::replicate(5.0),
@@ -335,80 +331,60 @@ mod tests {
         assert_eq!(Aabb::new(Vec3::zero()).dimensions(), Vec3::zero());
 
         assert_eq!(
-            Aabb::from_points(vec![
-                Vec3::new(1.0, 2.0, 3.0),
-                Vec3::zero(),
-                Vec3::new(-1.0, 0.0, 0.0)
-            ])
-            .unwrap()
-            .dimensions(),
-            Vec3::new(2.0, 2.0, 3.0)
+            Aabb::from_points(vec![v3(1, 2, 3), Vec3::zero(), v3(-1.0, 0.0, 0.0)])
+                .unwrap()
+                .dimensions(),
+            v3(2, 2, 3)
         );
     }
 
     #[test]
     fn test_contains() {
-        let aabb = Aabb::from_points(vec![Vec3::zero(), Vec3::new(-10.0, 2.0, 3.0)]).unwrap();
+        let aabb = Aabb::from_points(vec![Vec3::zero(), v3(-10.0, 2.0, 3.0)]).unwrap();
 
         assert!(aabb.contains(&Vec3::zero()));
-        assert!(aabb.contains(&Vec3::new(-10.0, 2.0, 3.0)));
-        assert!(aabb.contains(&Vec3::new(-8.0, 1.0, 2.0)));
+        assert!(aabb.contains(&v3(-10.0, 2.0, 3.0)));
+        assert!(aabb.contains(&v3(-8.0, 1.0, 2.0)));
 
-        assert!(!aabb.contains(&Vec3::new(-20.0, 0.0, 0.0)));
-        assert!(!aabb.contains(&Vec3::new(0.0, -5.0, 0.0)));
-        assert!(!aabb.contains(&Vec3::new(0.0, 1.0, 4.0)));
+        assert!(!aabb.contains(&v3(-20.0, 0.0, 0.0)));
+        assert!(!aabb.contains(&v3(0.0, -5.0, 0.0)));
+        assert!(!aabb.contains(&v3(0, 1, 4)));
     }
 
     #[test]
     fn test_ray_intersection() {
-        let aabb = Aabb::from_points(vec![Vec3::zero(), Vec3::new(-10.0, 2.0, 3.0)]).unwrap();
+        let aabb = Aabb::from_points(vec![Vec3::zero(), v3(-10.0, 2.0, 3.0)]).unwrap();
 
         assert_eq!(
-            aabb.ray_intersection(&Ray::new(Vec3::zero(), Vec3::new(-1.0, 0.0, 1.0))),
+            aabb.ray_intersection(&Ray::new(Vec3::zero(), v3(-1.0, 0.0, 1.0))),
             Some((0.0, 3.0))
         );
         assert_eq!(
-            aabb.ray_intersection(&Ray::new(
-                Vec3::new(1.0, 1.0, 2.0),
-                Vec3::new(-2.0, -1.0, 0.0)
-            )),
+            aabb.ray_intersection(&Ray::new(v3(1, 1, 2), v3(-2.0, -1.0, 0.0))),
             Some((0.5, 1.0))
         );
         assert_eq!(
-            aabb.ray_intersection(&Ray::new(
-                Vec3::new(1.0, 1.0, 1.0),
-                Vec3::new(-1.0, 0.0, 1.0)
-            )),
+            aabb.ray_intersection(&Ray::new(v3(1, 1, 1), v3(-1.0, 0.0, 1.0))),
             Some((1.0, 2.0))
         );
 
         assert_eq!(
-            aabb.ray_intersection(&Ray::new(
-                Vec3::new(1.0, 1.0, 1.0),
-                Vec3::new(1.0, 0.0, 1.0)
-            )),
+            aabb.ray_intersection(&Ray::new(v3(1, 1, 1), v3(1, 0, 1))),
             Some((-1.0, -1.0))
         );
         assert!(aabb
-            .ray_intersection(&Ray::new(
-                Vec3::new(-11.0, 6.0, 1.0),
-                Vec3::new(-1.0, 0.0, 1.0)
-            ))
+            .ray_intersection(&Ray::new(v3(-11.0, 6.0, 1.0), v3(-1.0, 0.0, 1.0)))
             .is_none());
 
-        let aabb = Aabb::from_points(vec![Vec3::new(-10.0, -1.0, -7.0), Vec3::new(0.0, 1.0, 1.0)])
-            .unwrap();
+        let aabb = Aabb::from_points(vec![v3(-10.0, -1.0, -7.0), v3(0, 1, 1)]).unwrap();
         assert_eq!(
-            aabb.ray_intersection(&Ray::new(
-                Vec3::new(1.0, 0.0, 2.0),
-                Vec3::new(-1.0, 1.0, -1.0)
-            )),
+            aabb.ray_intersection(&Ray::new(v3(1, 0, 2), v3(-1.0, 1.0, -1.0))),
             Some((1.0, 1.0))
         );
 
-        let aabb = Aabb::from_points(vec![Vec3::new(-7.0, -1.0, -3.0), Vec3::zero()]).unwrap();
+        let aabb = Aabb::from_points(vec![v3(-7.0, -1.0, -3.0), Vec3::zero()]).unwrap();
         assert_eq!(
-            aabb.ray_intersection(&Ray::new(Vec3::zero(), Vec3::new(1.0, 1.0, 1.0))),
+            aabb.ray_intersection(&Ray::new(Vec3::zero(), v3(1, 1, 1))),
             Some((-1.0, 0.0))
         );
     }

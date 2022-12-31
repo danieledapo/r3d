@@ -8,7 +8,7 @@ use std::{
 use byteorder::{LittleEndian, ReadBytesExt};
 
 use super::{Error, Mesh, Result};
-use crate::{Triangle, Vec3};
+use crate::{v3, Triangle, Vec3};
 
 /// A STL format type.
 #[derive(Debug, PartialEq, Eq, Clone, Copy)]
@@ -106,7 +106,7 @@ pub fn load_binary_stl<R: BufRead>(mut r: R) -> Result<([u8; 80], Vec<StlTriangl
         let y = r.read_f32::<LittleEndian>()?;
         let z = r.read_f32::<LittleEndian>()?;
 
-        Ok(Vec3::new(f64::from(x), f64::from(y), f64::from(z)))
+        Ok(v3(f64::from(x), f64::from(y), f64::from(z)))
     };
 
     let ntriangles = r.read_u32::<LittleEndian>()?;
@@ -187,7 +187,7 @@ pub fn load_ascii_stl(stl: &str) -> Result<(&str, Vec<StlTriangle>)> {
             let vy: f64 = tokens.next().ok_or(Error::BadFormat)?.parse()?;
             let vz: f64 = tokens.next().ok_or(Error::BadFormat)?.parse()?;
 
-            vs.push(Vec3::new(vx, vy, vz));
+            vs.push(v3(vx, vy, vz));
         }
 
         if vs.len() != 3 {
@@ -195,7 +195,7 @@ pub fn load_ascii_stl(stl: &str) -> Result<(&str, Vec<StlTriangle>)> {
         }
 
         tris.push(StlTriangle {
-            normal: Vec3::new(nx, ny, nz),
+            normal: v3(nx, ny, nz),
             triangle: Triangle::new(vs[0], vs[1], vs[2]),
             attributes: vec![],
         });
@@ -239,111 +239,91 @@ mod tests {
             vec![
                 StlTriangle {
                     attributes: vec![],
-                    normal: Vec3::new(-1.0, 0.0, 0.0),
+                    normal: v3(-1.0, 0.0, 0.0),
                     triangle: Triangle::new(
-                        Vec3::new(-1.0, -1.0, -1.0),
-                        Vec3::new(-1.0, -1.0, 1.0),
-                        Vec3::new(-1.0, 1.0, 1.0),
+                        v3(-1.0, -1.0, -1.0),
+                        v3(-1.0, -1.0, 1.0),
+                        v3(-1.0, 1.0, 1.0),
                     ),
                 },
                 StlTriangle {
                     attributes: vec![],
-                    normal: Vec3::new(-1.0, 0.0, 0.0),
+                    normal: v3(-1.0, 0.0, 0.0),
                     triangle: Triangle::new(
-                        Vec3::new(-1.0, 1.0, 1.0),
-                        Vec3::new(-1.0, 1.0, -1.0),
-                        Vec3::new(-1.0, -1.0, -1.0),
+                        v3(-1.0, 1.0, 1.0),
+                        v3(-1.0, 1.0, -1.0),
+                        v3(-1.0, -1.0, -1.0),
                     ),
                 },
                 StlTriangle {
                     attributes: vec![],
-                    normal: Vec3::new(0.0, 1.0, 0.0),
+                    normal: v3(0, 1, 0),
+                    triangle: Triangle::new(v3(-1.0, 1.0, -1.0), v3(-1.0, 1.0, 1.0), v3(1, 1, 1),),
+                },
+                StlTriangle {
+                    attributes: vec![],
+                    normal: v3(0, 1, 0),
+                    triangle: Triangle::new(v3(1, 1, 1), v3(1.0, 1.0, -1.0), v3(-1.0, 1.0, -1.0),),
+                },
+                StlTriangle {
+                    attributes: vec![],
+                    normal: v3(1, 0, 0),
+                    triangle: Triangle::new(v3(1.0, 1.0, -1.0), v3(1, 1, 1), v3(1.0, -1.0, 1.0),),
+                },
+                StlTriangle {
+                    attributes: vec![],
+                    normal: v3(1, 0, 0),
                     triangle: Triangle::new(
-                        Vec3::new(-1.0, 1.0, -1.0),
-                        Vec3::new(-1.0, 1.0, 1.0),
-                        Vec3::new(1.0, 1.0, 1.0),
+                        v3(1.0, -1.0, 1.0),
+                        v3(1.0, -1.0, -1.0),
+                        v3(1.0, 1.0, -1.0),
                     ),
                 },
                 StlTriangle {
                     attributes: vec![],
-                    normal: Vec3::new(0.0, 1.0, 0.0),
+                    normal: v3(0.0, -1.0, 0.0),
                     triangle: Triangle::new(
-                        Vec3::new(1.0, 1.0, 1.0),
-                        Vec3::new(1.0, 1.0, -1.0),
-                        Vec3::new(-1.0, 1.0, -1.0),
+                        v3(-1.0, -1.0, 1.0),
+                        v3(-1.0, -1.0, -1.0),
+                        v3(1.0, -1.0, -1.0),
                     ),
                 },
                 StlTriangle {
                     attributes: vec![],
-                    normal: Vec3::new(1.0, 0.0, 0.0),
+                    normal: v3(0.0, -1.0, 0.0),
                     triangle: Triangle::new(
-                        Vec3::new(1.0, 1.0, -1.0),
-                        Vec3::new(1.0, 1.0, 1.0),
-                        Vec3::new(1.0, -1.0, 1.0),
+                        v3(1.0, -1.0, -1.0),
+                        v3(1.0, -1.0, 1.0),
+                        v3(-1.0, -1.0, 1.0),
                     ),
                 },
                 StlTriangle {
                     attributes: vec![],
-                    normal: Vec3::new(1.0, 0.0, 0.0),
+                    normal: v3(0.0, 0.0, -1.0),
                     triangle: Triangle::new(
-                        Vec3::new(1.0, -1.0, 1.0),
-                        Vec3::new(1.0, -1.0, -1.0),
-                        Vec3::new(1.0, 1.0, -1.0),
+                        v3(1.0, -1.0, -1.0),
+                        v3(-1.0, -1.0, -1.0),
+                        v3(-1.0, 1.0, -1.0),
                     ),
                 },
                 StlTriangle {
                     attributes: vec![],
-                    normal: Vec3::new(0.0, -1.0, 0.0),
+                    normal: v3(0.0, 0.0, -1.0),
                     triangle: Triangle::new(
-                        Vec3::new(-1.0, -1.0, 1.0),
-                        Vec3::new(-1.0, -1.0, -1.0),
-                        Vec3::new(1.0, -1.0, -1.0),
+                        v3(-1.0, 1.0, -1.0),
+                        v3(1.0, 1.0, -1.0),
+                        v3(1.0, -1.0, -1.0),
                     ),
                 },
                 StlTriangle {
                     attributes: vec![],
-                    normal: Vec3::new(0.0, -1.0, 0.0),
-                    triangle: Triangle::new(
-                        Vec3::new(1.0, -1.0, -1.0),
-                        Vec3::new(1.0, -1.0, 1.0),
-                        Vec3::new(-1.0, -1.0, 1.0),
-                    ),
+                    normal: v3(0, 0, 1),
+                    triangle: Triangle::new(v3(1, 1, 1), v3(-1.0, 1.0, 1.0), v3(-1.0, -1.0, 1.0),),
                 },
                 StlTriangle {
                     attributes: vec![],
-                    normal: Vec3::new(0.0, 0.0, -1.0),
-                    triangle: Triangle::new(
-                        Vec3::new(1.0, -1.0, -1.0),
-                        Vec3::new(-1.0, -1.0, -1.0),
-                        Vec3::new(-1.0, 1.0, -1.0),
-                    ),
-                },
-                StlTriangle {
-                    attributes: vec![],
-                    normal: Vec3::new(0.0, 0.0, -1.0),
-                    triangle: Triangle::new(
-                        Vec3::new(-1.0, 1.0, -1.0),
-                        Vec3::new(1.0, 1.0, -1.0),
-                        Vec3::new(1.0, -1.0, -1.0),
-                    ),
-                },
-                StlTriangle {
-                    attributes: vec![],
-                    normal: Vec3::new(0.0, 0.0, 1.0),
-                    triangle: Triangle::new(
-                        Vec3::new(1.0, 1.0, 1.0),
-                        Vec3::new(-1.0, 1.0, 1.0),
-                        Vec3::new(-1.0, -1.0, 1.0),
-                    ),
-                },
-                StlTriangle {
-                    attributes: vec![],
-                    normal: Vec3::new(0.0, 0.0, 1.0),
-                    triangle: Triangle::new(
-                        Vec3::new(-1.0, -1.0, 1.0),
-                        Vec3::new(1.0, -1.0, 1.0),
-                        Vec3::new(1.0, 1.0, 1.0),
-                    ),
+                    normal: v3(0, 0, 1),
+                    triangle: Triangle::new(v3(-1.0, -1.0, 1.0), v3(1.0, -1.0, 1.0), v3(1, 1, 1),),
                 },
             ]
         );
@@ -396,39 +376,23 @@ mod tests {
             vec![
                 StlTriangle {
                     attributes: vec![],
-                    normal: Vec3::new(0.0, -1.0, 0.0),
-                    triangle: Triangle::new(
-                        Vec3::zero(),
-                        Vec3::new(1.0, 0.0, 0.0),
-                        Vec3::new(0.0, 0.0, 1.0)
-                    )
+                    normal: v3(0.0, -1.0, 0.0),
+                    triangle: Triangle::new(Vec3::zero(), v3(1, 0, 0), v3(0, 0, 1))
                 },
                 StlTriangle {
                     attributes: vec![],
-                    normal: Vec3::new(0.0, 0.0, -1.0),
-                    triangle: Triangle::new(
-                        Vec3::zero(),
-                        Vec3::new(0.0, 1.0, 0.0),
-                        Vec3::new(1.0, 0.0, 0.0)
-                    )
+                    normal: v3(0.0, 0.0, -1.0),
+                    triangle: Triangle::new(Vec3::zero(), v3(0, 1, 0), v3(1, 0, 0))
                 },
                 StlTriangle {
                     attributes: vec![],
-                    normal: Vec3::new(-1.0, 0.0, 0.0),
-                    triangle: Triangle::new(
-                        Vec3::zero(),
-                        Vec3::new(0.0, 0.0, 1.0),
-                        Vec3::new(0.0, 1.0, 0.0)
-                    )
+                    normal: v3(-1.0, 0.0, 0.0),
+                    triangle: Triangle::new(Vec3::zero(), v3(0, 0, 1), v3(0, 1, 0))
                 },
                 StlTriangle {
                     attributes: vec![],
-                    normal: Vec3::new(0.577, 0.577, 0.577),
-                    triangle: Triangle::new(
-                        Vec3::new(1.0, 0.0, 0.0),
-                        Vec3::new(0.0, 1.0, 0.0),
-                        Vec3::new(0.0, 0.0, 1.0)
-                    )
+                    normal: v3(0.577, 0.577, 0.577),
+                    triangle: Triangle::new(v3(1, 0, 0), v3(0, 1, 0), v3(0, 0, 1))
                 }
             ]
         )

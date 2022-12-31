@@ -1,6 +1,6 @@
 use std::{env, path::Path};
 
-use geo::{mesh::load_mesh, Vec3};
+use geo::{mesh::load_mesh, v3, Vec3};
 use sketch_utils::opener;
 
 use buzz::*;
@@ -9,16 +9,11 @@ const MESH_MATERIAL: Material = Material::lambertian(Vec3::new(0.8, 0.1, 0.1));
 // const MESH_MATERIAL: Material = Material::dielectric(2.4);
 
 pub fn main() -> opener::Result<()> {
-    let camera = Camera::look_at(
-        Vec3::new(0.0, -4.0, 0.0),
-        Vec3::new(0.0, 0.0, 0.0),
-        Vec3::new(0.0, 0.0, 1.0),
-        35.0,
-    );
+    let camera = Camera::look_at(v3(0.0, -4.0, 0.0), v3(0, 0, 0), v3(0, 0, 1), 35.0);
     // let camera = Camera::look_at(
-    //     Vec3::new(0.0, 0.0, 2.0),
-    //     Vec3::new(0.0, 0.0, 0.0),
-    //     Vec3::new(0.0, 1.0, 0.0),
+    //     v3(0, 0, 2),
+    //     v3(0, 0, 0),
+    //     v3(0, 1, 0),
     //     80.0,
     // );
 
@@ -37,19 +32,19 @@ pub fn main() -> opener::Result<()> {
     }
 
     objects.push(SimpleObject::new(
-        SphereGeometry::new(Vec3::new(-0.5, -6.0, 0.0), 0.5),
-        Material::light(Vec3::new(0.5, 0.5, 0.5)),
+        SphereGeometry::new(v3(-0.5, -6.0, 0.0), 0.5),
+        Material::light(v3(0.5, 0.5, 0.5)),
     ));
     objects.push(SimpleObject::new(
-        SphereGeometry::new(Vec3::new(0.0, 0.0, 6.0), 0.5),
-        Material::light(Vec3::new(0.2, 0.2, 0.2)),
+        SphereGeometry::new(v3(0, 0, 6), 0.5),
+        Material::light(v3(0.2, 0.2, 0.2)),
     ));
     objects.push(SimpleObject::new(
-        SphereGeometry::new(Vec3::new(0.0, 100.0, 0.0), 90.0),
-        Material::lambertian(Vec3::new(0.2, 0.3, 0.36)),
+        SphereGeometry::new(v3(0, 100, 0), 90.0),
+        Material::lambertian(v3(0.2, 0.3, 0.36)),
     ));
 
-    // let environment = Environment::Color(Vec3::new(0.8, 0.9, 0.8));
+    // let environment = Environment::Color(v3(0.8, 0.9, 0.8));
     let environment = Environment::Color(Vec3::zero());
 
     let scene = Scene::new(objects, environment);

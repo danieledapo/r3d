@@ -1,6 +1,6 @@
 use std::sync::Arc;
 
-use geo::Vec3;
+use geo::{v3, Vec3};
 use sketch_utils::opener;
 
 use l::*;
@@ -15,12 +15,8 @@ pub fn main() -> opener::Result<()> {
 
     let scene = Scene::new(vec![Arc::new(fun) as Arc<dyn Object>]);
 
-    let camera = Camera::look_at(
-        Vec3::new(8.0, 8.0, 10.0),
-        Vec3::zero(),
-        Vec3::new(0.0, 0.0, 1.0),
-    )
-    .with_perspective_projection(30.0, 1.0, 0.01, 100.0);
+    let camera = Camera::look_at(v3(8, 8, 10), Vec3::zero(), v3(0, 0, 1))
+        .with_perspective_projection(30.0, 1.0, 0.01, 100.0);
 
     let paths = render(
         &camera,

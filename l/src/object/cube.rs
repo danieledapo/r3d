@@ -1,4 +1,4 @@
-use geo::{primitive::polyline::Polyline, ray::Ray, spatial_index::Shape, Aabb, Vec3};
+use geo::{primitive::polyline::Polyline, ray::Ray, spatial_index::Shape, v3, Aabb, Vec3};
 
 use crate::Object;
 
@@ -46,56 +46,56 @@ impl Object for Cube {
         vec![
             // left
             vec![
-                Vec3::new(x0, y0, z0),
-                Vec3::new(x0, y0, z1),
-                Vec3::new(x0, y1, z1),
-                Vec3::new(x0, y1, z0),
-                Vec3::new(x0, y0, z0),
+                v3(x0, y0, z0),
+                v3(x0, y0, z1),
+                v3(x0, y1, z1),
+                v3(x0, y1, z0),
+                v3(x0, y0, z0),
             ]
             .into(),
             // right
             vec![
-                Vec3::new(x1, y0, z0),
-                Vec3::new(x1, y0, z1),
-                Vec3::new(x1, y1, z1),
-                Vec3::new(x1, y1, z0),
-                Vec3::new(x1, y0, z0),
+                v3(x1, y0, z0),
+                v3(x1, y0, z1),
+                v3(x1, y1, z1),
+                v3(x1, y1, z0),
+                v3(x1, y0, z0),
             ]
             .into(),
             // back
             vec![
-                Vec3::new(x0, y0, z0),
-                Vec3::new(x1, y0, z0),
-                Vec3::new(x1, y1, z0),
-                Vec3::new(x0, y1, z0),
-                Vec3::new(x0, y0, z0),
+                v3(x0, y0, z0),
+                v3(x1, y0, z0),
+                v3(x1, y1, z0),
+                v3(x0, y1, z0),
+                v3(x0, y0, z0),
             ]
             .into(),
             // front
             vec![
-                Vec3::new(x0, y0, z1),
-                Vec3::new(x1, y0, z1),
-                Vec3::new(x1, y1, z1),
-                Vec3::new(x0, y1, z1),
-                Vec3::new(x0, y0, z1),
+                v3(x0, y0, z1),
+                v3(x1, y0, z1),
+                v3(x1, y1, z1),
+                v3(x0, y1, z1),
+                v3(x0, y0, z1),
             ]
             .into(),
             // bottom
             vec![
-                Vec3::new(x0, y0, z0),
-                Vec3::new(x1, y0, z0),
-                Vec3::new(x1, y0, z1),
-                Vec3::new(x0, y0, z1),
-                Vec3::new(x0, y0, z0),
+                v3(x0, y0, z0),
+                v3(x1, y0, z0),
+                v3(x1, y0, z1),
+                v3(x0, y0, z1),
+                v3(x0, y0, z0),
             ]
             .into(),
             // top
             vec![
-                Vec3::new(x0, y1, z0),
-                Vec3::new(x1, y1, z0),
-                Vec3::new(x1, y1, z1),
-                Vec3::new(x0, y1, z1),
-                Vec3::new(x0, y1, z0),
+                v3(x0, y1, z0),
+                v3(x1, y1, z0),
+                v3(x1, y1, z1),
+                v3(x0, y1, z1),
+                v3(x0, y1, z0),
             ]
             .into(),
         ]

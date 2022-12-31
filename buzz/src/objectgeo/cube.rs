@@ -1,4 +1,4 @@
-use geo::Aabb;
+use geo::{v3, Aabb};
 
 use crate::{Hit, Ray, Shape, Surface, Vec3};
 
@@ -34,26 +34,26 @@ impl Surface for CubeGeometry {
         let max = self.bbox.max();
 
         if p.x < min.x + EPS {
-            return Vec3::new(-1.0, 0.0, 0.0);
+            return v3(-1.0, 0.0, 0.0);
         }
         if p.x > max.x - EPS {
-            return Vec3::new(1.0, 0.0, 0.0);
+            return v3(1, 0, 0);
         }
 
         if p.y < min.y + EPS {
-            return Vec3::new(0.0, -1.0, 0.0);
+            return v3(0.0, -1.0, 0.0);
         }
         if p.y > max.y - EPS {
-            return Vec3::new(0.0, 1.0, 0.0);
+            return v3(0, 1, 0);
         }
 
         if p.z < min.z + EPS {
-            return Vec3::new(0.0, 0.0, -1.0);
+            return v3(0.0, 0.0, -1.0);
         }
         if p.z > max.z - EPS {
-            return Vec3::new(0.0, 0.0, 1.0);
+            return v3(0, 0, 1);
         }
 
-        Vec3::new(0.0, 1.0, 0.0)
+        v3(0, 1, 0)
     }
 }

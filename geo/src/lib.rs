@@ -8,6 +8,6 @@ pub use primitive::{
     aabb::Aabb,
     mat4, plane, ray, sphere,
     triangle::{self, Triangle},
-    vec3::{self, Vec3},
+    vec3::{self, v3, Vec3},
     Axis,
 };

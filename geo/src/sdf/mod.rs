@@ -9,7 +9,7 @@ use std::{
     sync::Arc,
 };
 
-use crate::{mat4::Mat4, ray::Ray, Aabb, Vec3};
+use crate::{mat4::Mat4, ray::Ray, v3, Aabb, Vec3};
 
 pub mod primitives;
 pub use primitives::*;
@@ -64,10 +64,10 @@ impl Sdf {
     pub fn normal_at(&self, p: Vec3) -> Vec3 {
         let e = 0.000001;
         let Vec3 { x, y, z } = p;
-        let n = Vec3::new(
-            self.dist(&Vec3::new(x + e, y, z)) - self.dist(&Vec3::new(x - e, y, z)),
-            self.dist(&Vec3::new(x, y + e, z)) - self.dist(&Vec3::new(x, y - e, z)),
-            self.dist(&Vec3::new(x, y, z + e)) - self.dist(&Vec3::new(x, y, z - e)),
+        let n = v3(
+            self.dist(&v3(x + e, y, z)) - self.dist(&v3(x - e, y, z)),
+            self.dist(&v3(x, y + e, z)) - self.dist(&v3(x, y - e, z)),
+            self.dist(&v3(x, y, z + e)) - self.dist(&v3(x, y, z - e)),
         );
         n.normalized()
     }
