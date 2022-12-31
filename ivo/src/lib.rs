@@ -223,7 +223,7 @@ impl Scene {
 
     /// Add all the voxels that are contained in the given sdf by sampling the
     /// sdf by the given step.
-    pub fn sdf(&mut self, sdf: &impl Sdf) {
+    pub fn sdf(&mut self, sdf: &Sdf) {
         let bbox = sdf.bbox();
         let (tl, br) = (bbox.min(), bbox.max());
 

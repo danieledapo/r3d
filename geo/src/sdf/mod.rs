@@ -3,12 +3,19 @@
 //! [0]: http://www.iquilezles.org/www/articles/distfunctions/distfunctions.htm
 //!
 
-use crate::{mat4::Mat4, ray::Ray, Aabb, Vec3};
+use std::{
+    fmt::Debug,
+    ops::{Add, BitAnd, BitOr, Mul, Sub},
+    sync::Arc,
+};
 
-mod combinations;
+use crate::{
+    mat4::{Mat4, Transform},
+    ray::Ray,
+    Aabb, Vec3,
+};
+
 pub mod primitives;
-
-pub use self::combinations::{Difference, Intersection, Transformed, Translate, Union};
 pub use primitives::*;
 
 /// An SDF is a function that when called with a point it returns the distance
@@ -20,113 +27,164 @@ pub use primitives::*;
 ///
 /// This representation, besides being quite lightweight, allows easy
 /// composition of objects via simple boolean operations (or, and, sub).
-pub trait Sdf: std::fmt::Debug + Sized {
+#[derive(Clone)]
+pub struct Sdf {
     /// Return the distance from the given point to the object.
     ///
     /// The distance will be:
     /// - negative if the point is inside the object
     /// - positive if the point is outside the object
     /// - 0 (or almost 0) if the point is exactly on the boundary of the object
-    fn dist(&self, p: &Vec3) -> f64;
+    dist: Arc<dyn Fn(&Vec3) -> f64 + Send + Sync + 'static>,
 
-    /// Return the bounding box of the Sdf.
-    fn bbox(&self) -> Aabb;
+    /// The bounding box of the Sdf.
+    bbox: Aabb,
+}
 
-    /// Return the union (aka or) between this Sdf and another one.
-    fn union<S: Sdf>(self, other: S) -> Union<Self, S> {
-        Union {
-            left: self,
-            right: other,
+impl Sdf {
+    /// Create the Sdf from the given function and with the given visibility
+    /// bounding box.
+    pub fn from_fn(bbox: Aabb, dist: impl Fn(&Vec3) -> f64 + Send + Sync + 'static) -> Self {
+        Self {
+            dist: Arc::new(dist),
+            bbox,
         }
     }
 
-    /// Return the intersection (aka and) between this Sdf and another one.
-    fn intersection<S: Sdf>(self, other: S) -> Intersection<Self, S> {
-        Intersection {
-            left: self,
-            right: other,
-        }
+    /// Calculate the distance to the given point from the Sdf.
+    pub fn dist(&self, p: &Vec3) -> f64 {
+        (self.dist)(p)
     }
 
-    /// Return the difference (aka -) between this Sdf and another one.
-    fn difference<S: Sdf>(self, other: S) -> Difference<Self, S> {
-        Difference {
-            left: self,
-            right: other,
-        }
+    /// Return the bounding box of the Sdf
+    pub fn bbox(&self) -> Aabb {
+        self.bbox.clone()
     }
 
-    /// Translate the Sdf by the given amount.
-    fn translate(self, xlate: Vec3) -> Translate<Self> {
-        Translate { sdf: self, xlate }
-    }
-
-    /// Return the current Sdf transformed with the given transformation matrix.
+    /// Calculate the normal at the given point on the Sdf.
     ///
-    /// Note that the given transformation should be continuous and should not
-    /// introduce discontinuities.
-    fn transformed(self, xform: Mat4) -> Transformed<Self> {
-        let inverse_matrix = xform.inverse();
-        Transformed {
-            sdf: self,
-            matrix: xform,
-            inverse_matrix,
+    /// Note that the point is assumed to be on the surface of the Sdf and no
+    /// checks are made in this regard.
+    pub fn normal_at(&self, p: Vec3) -> Vec3 {
+        let e = 0.000001;
+        let Vec3 { x, y, z } = p;
+        let n = Vec3::new(
+            self.dist(&Vec3::new(x + e, y, z)) - self.dist(&Vec3::new(x - e, y, z)),
+            self.dist(&Vec3::new(x, y + e, z)) - self.dist(&Vec3::new(x, y - e, z)),
+            self.dist(&Vec3::new(x, y, z + e)) - self.dist(&Vec3::new(x, y, z - e)),
+        );
+        n.normalized()
+    }
+
+    /// Calculate the intersection between a given Ray and an Sdf.
+    ///
+    /// The algorithm used is a form of [Ray marching][0] which basically
+    /// queries the Sdf along the ray multiple times until the distance becomes
+    /// 0 (i.e. we touched the surface of the object). If the distance never
+    /// reaches 0 then there's no intersection.
+    ///
+    /// The steps parameter decides the maximum number of queries we can perform
+    /// before giving up and returning a no intersection.
+    ///
+    /// Returns either the t parameter of the intersection or none if no
+    /// intersection was found.
+    ///
+    /// [0]: https://en.wikipedia.org/wiki/Volume_ray_casting#Ray_Marching
+    pub fn ray_march(&self, ray: &Ray, steps: usize) -> Option<f64> {
+        let epsilon = 0.00001;
+
+        let (t1, t2) = self.bbox.ray_intersection(ray)?;
+        if t2 < t1 || t2 < 0.0 {
+            return None;
         }
+
+        let mut t = t1.max(0.0001);
+
+        // ray marching
+        for _ in 0..steps {
+            let d = self.dist(&ray.point_at(t));
+            if d < epsilon {
+                return Some(t);
+            }
+
+            t += d;
+
+            if t > t2 {
+                break;
+            }
+        }
+
+        None
     }
 }
 
-/// Calculate the normal at the given point on the Sdf.
-///
-/// Note that the point is assumed to be on the surface of the Sdf and no checks
-/// are made in this regard.
-pub fn normal_at(s: &impl Sdf, p: Vec3) -> Vec3 {
-    let e = 0.000001;
-    let Vec3 { x, y, z } = p;
-    let n = Vec3::new(
-        s.dist(&Vec3::new(x + e, y, z)) - s.dist(&Vec3::new(x - e, y, z)),
-        s.dist(&Vec3::new(x, y + e, z)) - s.dist(&Vec3::new(x, y - e, z)),
-        s.dist(&Vec3::new(x, y, z + e)) - s.dist(&Vec3::new(x, y, z - e)),
-    );
-    n.normalized()
+impl Add<Vec3> for Sdf {
+    type Output = Self;
+
+    fn add(self, delta: Vec3) -> Self::Output {
+        Self::from_fn(self.bbox.translated(delta), move |p| {
+            self.dist(&(*p - delta))
+        })
+    }
 }
 
-/// Calculate the intersection between a given Ray and an Sdf.
-///
-/// The algorithm used is a form of [Ray marching][0] which basically queries
-/// the Sdf along the ray multiple times until the distance becomes 0 (i.e. we
-/// touched the surface of the object). If the distance never reaches 0 then
-/// there's no intersection.
-///
-/// The steps parameter decides the maximum numer of queries we can permorm
-/// before giving up and returning a no intersection.
-///
-/// Returns either the t parameter of the intersection or none if no
-/// intersection was found.
-///
-/// [0]: https://en.wikipedia.org/wiki/Volume_ray_casting#Ray_Marching
-pub fn ray_marching(sdf: &impl Sdf, ray: &Ray, steps: usize) -> Option<f64> {
-    let epsilon = 0.00001;
+impl BitOr<Sdf> for Sdf {
+    type Output = Self;
 
-    let (t1, t2) = sdf.bbox().ray_intersection(ray)?;
-    if t2 < t1 || t2 < 0.0 {
-        return None;
+    fn bitor(self, rhs: Sdf) -> Self::Output {
+        Self::from_fn(self.bbox.union(&rhs.bbox), move |p| {
+            let ld = self.dist(p);
+            let rd = rhs.dist(p);
+            f64::min(ld, rd)
+        })
     }
+}
 
-    let mut t = t1.max(0.0001);
+impl BitAnd<Sdf> for Sdf {
+    type Output = Self;
 
-    // ray marching
-    for _ in 0..steps {
-        let d = sdf.dist(&ray.point_at(t));
-        if d < epsilon {
-            return Some(t);
-        }
-
-        t += d;
-
-        if t > t2 {
-            break;
-        }
+    fn bitand(self, rhs: Sdf) -> Self::Output {
+        Self::from_fn(
+            self.bbox
+                .intersection(&rhs.bbox)
+                .unwrap_or_else(|| Aabb::new(Vec3::zero())),
+            move |p| {
+                let ld = self.dist(p);
+                let rd = rhs.dist(p);
+                f64::max(ld, rd)
+            },
+        )
     }
+}
 
-    None
+impl Sub<Self> for Sdf {
+    type Output = Self;
+
+    fn sub(self, rhs: Self) -> Self::Output {
+        Self::from_fn(self.bbox.clone(), move |p| {
+            let ld = self.dist(p);
+            let rd = rhs.dist(p);
+
+            f64::max(ld, -rd)
+        })
+    }
+}
+
+impl Mul<Mat4> for Sdf {
+    type Output = Self;
+
+    fn mul(self, mat: Mat4) -> Self::Output {
+        let inverse_matrix = mat.inverse();
+        let bbox = self.bbox.transform(&mat);
+        Sdf::from_fn(bbox, move |p| {
+            let q = p.transform(&inverse_matrix);
+            self.dist(&q)
+        })
+    }
+}
+
+impl Debug for Sdf {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("Sdf").field("bbox", &self.bbox).finish()
+    }
 }
