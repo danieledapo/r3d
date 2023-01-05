@@ -159,6 +159,7 @@ forward_num_fn!(floor);
 forward_num_fn!(ceil);
 forward_num_fn!(round);
 forward_num_fn!(signum);
+forward_num_fn!(fract);
 
 macro_rules! impl_num_op {
     ($tr:ident, $fn:ident, $op:tt, $assign_tr:ident, $assign_fn:ident) => {
