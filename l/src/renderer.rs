@@ -55,12 +55,16 @@ pub fn render(camera: &Camera, scene: &Scene, settings: &Settings) -> Vec<Polyli
     let clip_box = Aabb::cuboid(Vec3::zero(), 2.0);
 
     let is_visible = |p: Vec3| {
-        let d = camera.position() - p;
-        let ray = Ray::new(p + d * settings.chop_eps, d);
+        // NOTE: here we fire the ray from the camera to the point because doing
+        // the other way around wouldn't actually work since intersections,
+        // subtractions and unions don't always produce valid SDFs especially in
+        // the interior of the shape.
+        let d = p - camera.position();
+        let ray = Ray::new(camera.position(), d.normalized());
 
         match scene.intersection(&ray) {
             None => true,
-            Some((_, t)) => t.t() >= d.norm(),
+            Some((_, t)) => t.t() + settings.chop_eps >= d.norm(),
         }
     };
 
