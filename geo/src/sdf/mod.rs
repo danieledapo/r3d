@@ -112,6 +112,20 @@ impl Sdf {
 
         None
     }
+
+    /// Return a shape that's the surface enlarged by the given thickness.
+    ///
+    /// All interiors beyond thickness are removed.
+    pub fn shell(self, thickness: f64) -> Self {
+        let b = Aabb::new(self.bbox.min() - thickness).expanded(self.bbox.max() + thickness);
+        Self::from_fn(b, move |p| self.dist(p).abs() - thickness)
+    }
+
+    /// Round the SDF with the given radius.
+    pub fn round(self, radius: f64) -> Self {
+        let b = Aabb::new(self.bbox.min() - radius).expanded(self.bbox.max() + radius);
+        Self::from_fn(b, move |p| self.dist(p) - radius)
+    }
 }
 
 impl Add<Vec3> for Sdf {
