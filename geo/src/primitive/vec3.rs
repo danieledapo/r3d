@@ -1,5 +1,7 @@
 use std::iter::{Product, Sum};
-use std::ops::{Add, AddAssign, Div, DivAssign, Index, Mul, MulAssign, Neg, Sub, SubAssign};
+use std::ops::{
+    Add, AddAssign, Div, DivAssign, Index, Mul, MulAssign, Neg, Rem, RemAssign, Sub, SubAssign,
+};
 
 use rand::distributions::{Distribution, Standard};
 use rand::Rng;
@@ -198,6 +200,7 @@ impl_num_op!(Add, add, +, AddAssign, add_assign);
 impl_num_op!(Sub, sub, -, SubAssign, sub_assign);
 impl_num_op!(Mul, mul, *, MulAssign, mul_assign);
 impl_num_op!(Div, div, /, DivAssign, div_assign);
+impl_num_op!(Rem, rem, %, RemAssign, rem_assign);
 
 impl Neg for Vec3 {
     type Output = Vec3;
