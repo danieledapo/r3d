@@ -57,6 +57,12 @@ impl Sdf {
         self.bbox.clone()
     }
 
+    pub fn pad_bbox(mut self, p: f64) -> Self {
+        self.bbox.expand(self.bbox.min() - p);
+        self.bbox.expand(self.bbox.max() + p);
+        self
+    }
+
     /// Calculate the normal at the given point on the Sdf.
     ///
     /// Note that the point is assumed to be on the surface of the Sdf and no
@@ -126,6 +132,24 @@ impl Sdf {
         let b = Aabb::new(self.bbox.min() - radius).expanded(self.bbox.max() + radius);
         Self::from_fn(b, move |p| self.dist(p) - radius)
     }
+
+    pub fn smooth_union(self, other: Sdf, k: f64) -> Self {
+        let mut b = self.bbox.union(&other.bbox);
+        b.expand(b.min() - k);
+        b.expand(b.max() + k);
+
+        Self::from_fn(b, move |p| {
+            let d1 = self.dist(p);
+            let d2 = other.dist(p);
+
+            let h = f64::clamp(0.5 + 0.5 * (d2 - d1) / k, 0.0, 1.0);
+            d2 + (d1 - d2) * h - k * h * (1.0 - h)
+        })
+    }
+
+    pub fn then(self, m: impl Fn(&Vec3, f64) -> f64 + Send + Sync + 'static) -> Self {
+        Self::from_fn(self.bbox.clone(), move |p| m(p, self.dist(p)))
+    }
 }
 
 impl Add<Vec3> for Sdf {
@@ -193,8 +217,34 @@ impl Mul<Mat4> for Sdf {
     }
 }
 
+impl Mul<f64> for Sdf {
+    type Output = Self;
+
+    fn mul(self, s: f64) -> Self::Output {
+        let mut b = Aabb::new(self.bbox.min() * s);
+        b.expand(self.bbox.max() * s);
+
+        Sdf::from_fn(b, move |p| self.dist(&(*p / s)) * s)
+    }
+}
+
 impl Debug for Sdf {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         f.debug_struct("Sdf").field("bbox", &self.bbox).finish()
     }
+}
+
+pub fn smooth_union(d1: f64, d2: f64, k: f64) -> f64 {
+    let h = f64::clamp(0.5 + 0.5 * (d2 - d1) / k, 0.0, 1.0);
+    d2 + (d1 - d2) * h - k * h * (1.0 - h)
+}
+
+pub fn smooth_sub(d1: f64, d2: f64, k: f64) -> f64 {
+    let h = f64::clamp(0.5 - 0.5 * (d2 + d1) / k, 0.0, 1.0);
+    d2 + (-d1 - d2) * h + k * h * (1.0 - h)
+}
+
+pub fn smooth_and(d1: f64, d2: f64, k: f64) -> f64 {
+    let h = f64::clamp(0.5 - 0.5 * (d2 - d1) / k, 0.0, 1.0);
+    d2 + (d1 - d2) * h + k * h * (1.0 - h)
 }

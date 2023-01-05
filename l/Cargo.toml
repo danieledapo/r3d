@@ -11,3 +11,4 @@ rayon = "1.6"
 [dev-dependencies]
 rand = "0.8"
 sketch_utils = { path = "../sketch-utils" }
+marching_squares = { git = "https://github.com/d-dorazio/marching-squares" }
