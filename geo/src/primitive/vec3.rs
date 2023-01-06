@@ -1,6 +1,7 @@
 use std::iter::{Product, Sum};
 use std::ops::{
-    Add, AddAssign, Div, DivAssign, Index, Mul, MulAssign, Neg, Rem, RemAssign, Sub, SubAssign,
+    Add, AddAssign, Div, DivAssign, Index, IndexMut, Mul, MulAssign, Neg, Rem, RemAssign, Sub,
+    SubAssign,
 };
 
 use rand::distributions::{Distribution, Standard};
@@ -242,6 +243,16 @@ impl Index<Axis> for Vec3 {
             Axis::X => &self.x,
             Axis::Y => &self.y,
             Axis::Z => &self.z,
+        }
+    }
+}
+
+impl IndexMut<Axis> for Vec3 {
+    fn index_mut(&mut self, axis: Axis) -> &mut Self::Output {
+        match axis {
+            Axis::X => &mut self.x,
+            Axis::Y => &mut self.y,
+            Axis::Z => &mut self.z,
         }
     }
 }
