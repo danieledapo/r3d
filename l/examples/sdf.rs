@@ -13,7 +13,7 @@ use rayon::prelude::*;
 use l::*;
 
 #[derive(Debug)]
-struct Sp {
+pub struct Sp {
     sdf: Sdf,
     divs: u16,
     light_dir: Vec3,
@@ -85,7 +85,7 @@ impl Object for Sp {
     }
 }
 
-struct SdfField {
+pub struct SdfField {
     data: Vec<f64>,
     y: f64,
     axis: Axis,
@@ -323,9 +323,6 @@ pub fn main() -> opener::Result<()> {
     let target = v3(0, 0, 0);
     let light_dir = v3(1, 1, -1).normalized();
 
-    let sdf = capsule(v3(0, 0, -25), v3(0, 0, 25), 50.0).shell(1.0)
-        - (cuboid(v3(200, 200, 100)) + v3(0, 0, 85))
-        - (sphere(30.0) + v3(0, -50, 0));
     let hash = |p: Vec3| {
         let p = (p * 0.3183099 + v3(0.11, 0.17, 0.13)).fract() * 13.0;
         (p.x * p.y * p.z * (p.x + p.y + p.x)).fract()
@@ -337,7 +334,10 @@ pub fn main() -> opener::Result<()> {
 
     let rot = Mat4::rotate(v3(0, 0, 1), f64::to_radians(30.0));
 
-    sdf.then(move |op, mut d| {
+    let sdf = (capsule(v3(0, 0, -25), v3(0, 0, 25), 50.0).shell(1.0)
+        - (cuboid(v3(200, 200, 100)) + v3(0, 0, 85))
+        - (sphere(30.0) + v3(0, -50, 0)))
+    .then(move |op, mut d| {
         let octaves = 3;
 
         let mut op = *op;
@@ -401,8 +401,8 @@ pub fn main() -> opener::Result<()> {
             width: 2048.0,
             height: 2048.0,
             stroke_width: 3.0,
-            stroke: "white",
-            background: Some("black"),
+            stroke: "black",
+            background: Some("white"),
             digits: 3,
         },
     )
