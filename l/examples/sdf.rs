@@ -1,4 +1,4 @@
-use std::sync::Arc;
+use std::{ops::Add, sync::Arc};
 
 use geo::{
     mat4::Mat4, primitive::polyline::Polyline, ray::Ray, sdf::*, spatial_index::Shape, v3, Aabb,
@@ -151,11 +151,11 @@ impl SdfField {
                     if j > 0 && res.data[(j - 1) * w + i as usize] > EPS {
                         res.data[(j - 1) * w + i as usize] =
                             sdf.dist(&res.to_3d(i, j as f64 - 1.0));
-        }
+                    }
 
                     i += 1.0;
                     continue;
-    }
+                }
 
                 if i > 0.0 && res.data[j * w + i as usize - 1] <= EPS {
                     res.data[j * w + i as usize] = d;
@@ -208,39 +208,124 @@ impl SdfField {
         for y in 0..h {
             for x in 0..w {
                 write!(out, "{}", if self.z_at(x, y) < 0.001 { 0 } else { 1 }).unwrap();
-    }
+            }
             writeln!(out).unwrap();
         }
     }
 }
 
+pub fn glitch_sdf() {
+    let mut objects = vec![];
 
+    let position = v3(0, -200, 100);
+    let target = v3(0, 0, 0);
+    let light_dir = v3(1, 1, -1).normalized();
+
+    let sdf = Sdf::from_fn(sphere(70.0).bbox(), |&p| {
+        let d = p.norm() - 70.0;
+        d + 10.0 * (p.x * 0.5).cos()
+    })
+    .pad_bbox(100.0);
+
+    objects.push(Arc::new(Sp {
+        sdf,
+        divs: 300,
+        axis: Axis::Z,
+        light_dir,
+    }) as Arc<dyn Object>);
+
+    let scene = Scene::new(objects);
+
+    let camera = Camera::look_at(position, target, v3(0, 0, 1))
+        .with_perspective_projection(45.0, 1.0, 0.001, 10000.0);
+
+    let paths = render(
+        &camera,
+        &scene,
+        &Settings {
+            chop_eps: 0.01,
+            simplify_eps: 0.001,
+        },
+    );
+    dump_svg(
+        "glitch_sdf.svg",
+        &paths,
+        SvgSettings {
+            width: 2048.0,
+            height: 2048.0,
+            stroke_width: 3.0,
+            stroke: "white",
+            background: Some("black"),
+            digits: 3,
+        },
+    )
+    .expect("cannot save glitch_sdf.svg");
+
+    opener::open("glitch_sdf.svg").unwrap();
+}
+
+pub fn poke_sdf() {
+    let mut objects = vec![];
+
+    let position = v3(0, -180, 0);
+    let target = v3(0, 0, 0);
+    let light_dir = v3(1, 1, -1).normalized();
+
+    let sdf = sphere(50.0).shell(5.0) - cuboid(v3(300, 300, 30)) - sphere(30.0).add(v3(30, -30, 0));
+
+    objects.push(Arc::new(Sp {
+        sdf,
+        divs: 300,
+        axis: Axis::Y,
+        light_dir,
+    }) as Arc<dyn Object>);
+    objects.push(Arc::new(Sp {
+        sdf: octahedron(15.0) + v3(20.0, -20.0, 0),
+        divs: 100,
+        axis: Axis::Z,
+        light_dir,
+    }) as Arc<dyn Object>);
+
+    let scene = Scene::new(objects);
+
+    let camera = Camera::look_at(position, target, v3(0, 0, 1))
+        .with_perspective_projection(45.0, 1.0, 0.001, 10000.0);
+
+    let paths = render(
+        &camera,
+        &scene,
+        &Settings {
+            chop_eps: 0.01,
+            simplify_eps: 0.001,
+        },
+    );
+    dump_svg(
+        "poke_sdf.svg",
+        &paths,
+        SvgSettings {
+            width: 2048.0,
+            height: 2048.0,
+            stroke_width: 1.0,
+            stroke: "black",
+            background: None,
+            digits: 3,
+        },
+    )
+    .expect("cannot save poke_sdf.svg");
+
+    opener::open("poke_sdf.svg").unwrap();
 }
 
 pub fn main() -> opener::Result<()> {
     let mut objects = vec![];
 
-    let position = v3(100, -150, 80);
-    // let position = v3(0, -180, 0);
+    let position = v3(0, -200, 100);
     let target = v3(0, 0, 0);
-    let light_dir = v3(1, 0, 0).normalized();
+    let light_dir = v3(1, 1, -1).normalized();
 
-    // let sdf = cuboid(v3(50, 50, 50));
-    // let sdf = sphere(25.0) - sphere(15.0);
-    // let sdf = sphere(25.0) - (sphere(15.0) + v3(0, -20, 0.0));
-    // let sdf = sdf.shell(0.5) - (cuboid(v3(100, 100, 50)) + v3(0, 0, 30));
-    // let sdf = (sphere(60.0) & cuboid(v3(100, 100, 100)))
-    //     - capsule(v3(-100, 0, 0), v3(100, 0, 0), 15.0)
-    //     - capsule(v3(0, -100, 0), v3(0, 100, 0), 15.0)
-    //     - capsule(v3(0, 0, -100), v3(0, 0, 100), 15.0);
-    // let sdf = (capsule(v3(0, 0, -25), v3(0, 0, 25), 50.0).shell(1.0)
-    //     - (cuboid(v3(200, 200, 100)) + v3(0, 0, 85))
-    //     - (sphere(30.0) + v3(0, -50, 0)))
-
-    // let sdf = sphere(50.0).shell(5.0) - cuboid(v3(300, 300, 30)) - sphere(30.0).add(v3(30, -30, 0));
-
-    let sdf = cylinder(25.0, 75.0).shell(10.0) - (cuboid(v3(100, 100, 100)) + v3(0, -75, 0));
-
+    let sdf = capsule(v3(0, 0, -25), v3(0, 0, 25), 50.0).shell(1.0)
+        - (cuboid(v3(200, 200, 100)) + v3(0, 0, 85))
+        - (sphere(30.0) + v3(0, -50, 0));
     let hash = |p: Vec3| {
         let p = (p * 0.3183099 + v3(0.11, 0.17, 0.13)).fract() * 13.0;
         (p.x * p.y * p.z * (p.x + p.y + p.x)).fract()
@@ -250,55 +335,49 @@ pub fn main() -> opener::Result<()> {
         sphere(r).dist(&(f - c))
     };
 
-    let rot = Mat4::rotate(v3(0, 0, 1), f64::to_radians(63.0));
-    let sdf = sdf
-        .then(move |op, mut d| {
-            let mut op = *op;
-            let octaves = 3;
+    let rot = Mat4::rotate(v3(0, 0, 1), f64::to_radians(30.0));
 
-            let mut s = 1.0;
-            for _ in 0..octaves {
-                let p = op.abs() / (50.0 * s);
-                let i = p.floor();
-                let f = p.fract();
+    sdf.then(move |op, mut d| {
+        let octaves = 3;
 
-                let noise = s
-                    * 40.0
-                    * f64::min(
-                        f64::min(
-                            f64::min(sph(i, f, v3(0, 0, 0)), sph(i, f, v3(0, 0, 1))),
-                            f64::min(sph(i, f, v3(0, 1, 0)), sph(i, f, v3(0, 1, 1))),
-                        ),
-                        f64::min(
-                            f64::min(sph(i, f, v3(1, 0, 0)), sph(i, f, v3(1, 0, 1))),
-                            f64::min(sph(i, f, v3(1, 1, 0)), sph(i, f, v3(1, 1, 1))),
-                        ),
-                    );
+        let mut op = *op;
 
-                let noise = smooth_and(noise, d - 1.0 * s, 30.0 * s);
-                d = smooth_union(noise, d, 30.0 * s);
+        let mut s = 1.0;
+        for _ in 0..octaves {
+            let p = op.abs() / (50.0 * s);
+            let i = p.floor();
+            let f = p.fract();
 
-                s *= 0.5;
-                op = op * &rot;
-            }
+            let noise = s
+                * 40.0
+                * f64::min(
+                    f64::min(
+                        f64::min(sph(i, f, v3(0, 0, 0)), sph(i, f, v3(0, 0, 1))),
+                        f64::min(sph(i, f, v3(0, 1, 0)), sph(i, f, v3(0, 1, 1))),
+                    ),
+                    f64::min(
+                        f64::min(sph(i, f, v3(1, 0, 0)), sph(i, f, v3(1, 0, 1))),
+                        f64::min(sph(i, f, v3(1, 1, 0)), sph(i, f, v3(1, 1, 1))),
+                    ),
+                );
 
-            d
-        })
-        .pad_bbox(30.0);
+            let noise = smooth_and(noise, d - 1.0 * s, 30.0 * s);
+            d = smooth_union(noise, d, 30.0 * s);
+
+            s *= 0.5;
+            op = op * &rot;
+        }
+
+        d
+    })
+    .pad_bbox(30.0);
 
     objects.push(Arc::new(Sp {
         sdf,
-        divs: 200,
+        divs: 300,
         axis: Axis::Y,
         light_dir,
     }) as Arc<dyn Object>);
-
-    // objects.push(Arc::new(Sp {
-    //     sdf: octahedron(15.0) + v3(20.0, -20.0, 0),
-    //     divs: 100,
-    //     axis: Axis::Z,
-    //     light_dir,
-    // }) as Arc<dyn Object>);
 
     let scene = Scene::new(objects);
 
@@ -321,9 +400,9 @@ pub fn main() -> opener::Result<()> {
             // height: 944.8818897637797,
             width: 2048.0,
             height: 2048.0,
-            stroke_width: 1.0,
-            stroke: "black",
-            background: None,
+            stroke_width: 3.0,
+            stroke: "white",
+            background: Some("black"),
             digits: 3,
         },
     )
