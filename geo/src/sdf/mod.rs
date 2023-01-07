@@ -239,7 +239,7 @@ pub fn smooth_union(d1: f64, d2: f64, k: f64) -> f64 {
     d2 + (d1 - d2) * h - k * h * (1.0 - h)
 }
 
-pub fn smooth_sub(d1: f64, d2: f64, k: f64) -> f64 {
+pub fn smooth_sub(d2: f64, d1: f64, k: f64) -> f64 {
     let h = f64::clamp(0.5 - 0.5 * (d2 + d1) / k, 0.0, 1.0);
     d2 + (-d1 - d2) * h + k * h * (1.0 - h)
 }
