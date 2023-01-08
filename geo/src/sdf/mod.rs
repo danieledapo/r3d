@@ -129,8 +129,7 @@ impl Sdf {
 
     /// Round the SDF with the given radius.
     pub fn round(self, radius: f64) -> Self {
-        let b = Aabb::new(self.bbox.min() - radius).expanded(self.bbox.max() + radius);
-        Self::from_fn(b, move |p| self.dist(p) - radius)
+        Self::from_fn(self.bbox.clone(), move |p| self.dist(p) - radius)
     }
 
     pub fn smooth_union(self, other: Sdf, k: f64) -> Self {
