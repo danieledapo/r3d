@@ -1,218 +1,10 @@
 use std::{ops::Add, sync::Arc};
 
-use geo::{
-    mat4::Mat4, primitive::polyline::Polyline, ray::Ray, sdf::*, spatial_index::Shape, v3, Aabb,
-    Axis, Vec3,
-};
+use geo::{mat4::Mat4, sdf::*, v3, Axis, Vec3};
 
-use marching_squares::Field;
 use sketch_utils::opener;
 
-use rayon::prelude::*;
-
 use l::*;
-
-#[derive(Debug)]
-pub struct Sp {
-    sdf: Sdf,
-    divs: u16,
-    light_dir: Vec3,
-    axis: Axis,
-}
-
-impl Shape for Sp {
-    type Intersection = f64;
-
-    fn intersection(&self, ray: &geo::ray::Ray) -> Option<Self::Intersection> {
-        self.sdf.ray_march(ray, 128)
-    }
-
-    fn bbox(&self) -> Aabb {
-        self.sdf.bbox()
-    }
-}
-
-impl Object for Sp {
-    fn paths(&self) -> Vec<Polyline> {
-        let bbox = self.bbox();
-
-        (0..self.divs)
-            .into_par_iter()
-            .flat_map(|t| {
-                let mut paths = vec![];
-                let y = bbox.min()[self.axis]
-                    + bbox.dimensions()[self.axis] * f64::from(t) / f64::from(self.divs - 1);
-
-                let f = SdfField::new(&self.sdf, y, self.axis);
-
-                // f.debug_save();
-
-                let contours = marching_squares::march(&f, 0.0);
-                for c in contours {
-                    let points = c
-                        .into_iter()
-                        .map(|(x, y)| {
-                            let p = f.to_3d(x, y);
-
-                            let d = (bbox.center() - p).normalized();
-                            let t = self.sdf.ray_march(&Ray::new(p, d), 10).unwrap_or(0.0);
-                            p + d * t
-                        })
-                        .collect::<Polyline>();
-
-                    let mut cur = Polyline::new();
-                    for p in points.chop(0.01).iter() {
-                        let n = self.sdf.normal_at(p);
-                        let lt = n.dot(-self.light_dir);
-
-                        let black = lt <= 0.5 + 0.5 * ((t % 4) as f64 / 3.0);
-                        if black {
-                            cur.push(p);
-                        } else if !cur.is_empty() {
-                            paths.push(cur);
-                            cur = Polyline::new();
-                        }
-                    }
-
-                    if !cur.is_empty() {
-                        paths.push(cur);
-                    }
-                }
-
-                paths
-            })
-            .collect()
-    }
-}
-
-pub struct SdfField {
-    data: Vec<f64>,
-    y: f64,
-    axis: Axis,
-    width: usize,
-    height: usize,
-    bbox: Aabb,
-}
-
-impl marching_squares::Field for SdfField {
-    fn dimensions(&self) -> (usize, usize) {
-        (self.width, self.height)
-    }
-
-    fn z_at(&self, x: usize, y: usize) -> f64 {
-        self.data[y * self.width + x]
-    }
-}
-
-impl SdfField {
-    const RESOLUTION: f64 = 10.0;
-
-    pub fn new(sdf: &Sdf, y: f64, axis: Axis) -> Self {
-        let bbox = sdf.bbox();
-        let dims = bbox.dimensions();
-
-        let (w, h) = match axis {
-            Axis::X => (dims.y, dims.z),
-            Axis::Y => (dims.z, dims.x),
-            Axis::Z => (dims.x, dims.y),
-        };
-        let w = (w.ceil() * Self::RESOLUTION) as usize;
-        let h = (h.ceil() * Self::RESOLUTION) as usize;
-
-        // +1 to include the last pixel, +2 to add a black border
-        let (w, h) = (w + 1 + 2, h + 1 + 2);
-
-        let mut res = Self {
-            bbox: sdf.bbox(),
-            data: vec![100.0; w * h],
-            y,
-            axis,
-            width: w,
-            height: h,
-        };
-
-        const EPS: f64 = 0.001;
-        for j in 0..h {
-            // for i in 0..w {
-            //     res.data[j * w + i] = sdf.dist(&res.to_3d(i as f64, j as f64));
-            // }
-            // continue;
-
-            let mut i = 0.0;
-            while i < w as f64 {
-                let d = sdf.dist(&res.to_3d(i, j as f64));
-                if d <= EPS {
-                    res.data[j * w + i as usize] = d;
-
-                    if i > 0.0 && res.data[j * w + i as usize - 1] > EPS {
-                        res.data[j * w + i as usize - 1] = sdf.dist(&res.to_3d(i - 1.0, j as f64));
-                    }
-
-                    if j > 0 && res.data[(j - 1) * w + i as usize] > EPS {
-                        res.data[(j - 1) * w + i as usize] =
-                            sdf.dist(&res.to_3d(i, j as f64 - 1.0));
-                    }
-
-                    i += 1.0;
-                    continue;
-                }
-
-                if i > 0.0 && res.data[j * w + i as usize - 1] <= EPS {
-                    res.data[j * w + i as usize] = d;
-                }
-
-                if j > 0 && res.data[(j - 1) * w + i as usize] <= EPS {
-                    res.data[j * w + i as usize] = d;
-                }
-
-                i += (d * Self::RESOLUTION).floor().max(1.0);
-            }
-        }
-
-        res
-    }
-
-    pub fn to_3d(&self, i: f64, j: f64) -> Vec3 {
-        let mut p = self.bbox.min();
-        p -= 1.0 / Self::RESOLUTION;
-        p[self.axis] = self.y;
-
-        p += match self.axis {
-            Axis::X => v3(0, i, j),
-            Axis::Y => v3(j, 0, i),
-            Axis::Z => v3(i, j, 0),
-        } / v3(Self::RESOLUTION, Self::RESOLUTION, Self::RESOLUTION);
-
-        p
-    }
-
-    pub fn debug_save(&self) {
-        use std::{
-            fs::File,
-            io::{BufWriter, Write},
-        };
-
-        let mut out = BufWriter::new(
-            File::create(format!(
-                "debug-{:08}.pbm",
-                (1000000.0 + self.y * 100.0).round() as i64
-            ))
-            .unwrap(),
-        );
-
-        let (w, h) = self.dimensions();
-
-        writeln!(out, "P1").unwrap();
-        writeln!(out, "{} {}", w, h).unwrap();
-
-        for y in 0..h {
-            for x in 0..w {
-                write!(out, "{}", if self.z_at(x, y) < 0.001 { 0 } else { 1 }).unwrap();
-            }
-            writeln!(out).unwrap();
-        }
-    }
-}
 
 pub fn glitch_sdf() {
     let mut objects = vec![];
@@ -227,12 +19,7 @@ pub fn glitch_sdf() {
     })
     .pad_bbox(100.0);
 
-    objects.push(Arc::new(Sp {
-        sdf,
-        divs: 300,
-        axis: Axis::Z,
-        light_dir,
-    }) as Arc<dyn Object>);
+    objects.push(Arc::new(SdfSlicer::new(sdf, 300, Axis::Z, light_dir)) as Arc<dyn Object>);
 
     let scene = Scene::new(objects);
 
@@ -273,18 +60,13 @@ pub fn poke_sdf() {
 
     let sdf = sphere(50.0).shell(5.0) - cuboid(v3(300, 300, 30)) - sphere(30.0).add(v3(30, -30, 0));
 
-    objects.push(Arc::new(Sp {
-        sdf,
-        divs: 300,
-        axis: Axis::Y,
+    objects.push(Arc::new(SdfSlicer::new(sdf, 300, Axis::Y, light_dir)) as Arc<dyn Object>);
+    objects.push(Arc::new(SdfSlicer::new(
+        octahedron(15.0) + v3(20.0, -20.0, 0),
+        100,
+        Axis::Z,
         light_dir,
-    }) as Arc<dyn Object>);
-    objects.push(Arc::new(Sp {
-        sdf: octahedron(15.0) + v3(20.0, -20.0, 0),
-        divs: 100,
-        axis: Axis::Z,
-        light_dir,
-    }) as Arc<dyn Object>);
+    )) as Arc<dyn Object>);
 
     let scene = Scene::new(objects);
 
@@ -372,12 +154,7 @@ pub fn main() -> opener::Result<()> {
     })
     .pad_bbox(30.0);
 
-    objects.push(Arc::new(Sp {
-        sdf,
-        divs: 300,
-        axis: Axis::Y,
-        light_dir,
-    }) as Arc<dyn Object>);
+    objects.push(Arc::new(SdfSlicer::new(sdf, 300, Axis::Z, light_dir)) as Arc<dyn Object>);
 
     let scene = Scene::new(objects);
 
