@@ -50,7 +50,7 @@ pub fn main() -> opener::Result<()> {
         },
     );
 
-    img.save("teapot.png").expect("cannot save output image");
+    img.save("teapot.ppm").expect("cannot save output image");
 
-    opener::open("teapot.png")
+    opener::open("teapot.ppm")
 }

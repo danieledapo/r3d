@@ -1,8 +1,7 @@
-use geo::{ray::Ray, spatial_index::Intersection, Vec3};
+use geo::{ray::Ray, spatial_index::Intersection, util::image::Image, Vec3};
 
 use std::convert::TryFrom;
 
-use image::{Rgb, RgbImage};
 use rand::prelude::*;
 use rand_xorshift::XorShiftRng;
 use rayon::prelude::*;
@@ -41,7 +40,7 @@ pub struct RenderConfig {
 
 /// Render a `Scene` from a `Camera` to a new `RgbImage` of the given
 /// dimensions.
-pub fn render(camera: &Camera, scene: &Scene, config: &RenderConfig) -> image::RgbImage {
+pub fn render(camera: &Camera, scene: &Scene, config: &RenderConfig) -> Image<3> {
     let lights = if config.direct_lighting {
         scene.lights().collect::<Vec<_>>()
     } else {
@@ -49,10 +48,17 @@ pub fn render(camera: &Camera, scene: &Scene, config: &RenderConfig) -> image::R
     };
 
     let mut rng = XorShiftRng::seed_from_u64(thread_rng().gen());
-    let mut img = RgbImage::new(config.width, config.height);
+    let mut img = Image::rgb(config.width, config.height);
 
-    for (x, y, pix) in img.enumerate_pixels_mut() {
-        *pix = render_pixel((x, y), camera, scene, &lights, &mut rng, config);
+    for (x, y, pix) in img.pixels_mut() {
+        pix.copy_from_slice(&render_pixel(
+            (x, y),
+            camera,
+            scene,
+            &lights,
+            &mut rng,
+            config,
+        ));
     }
 
     img
@@ -60,26 +66,30 @@ pub fn render(camera: &Camera, scene: &Scene, config: &RenderConfig) -> image::R
 
 /// Render a `Scene` from a `Camera` to a new `RgbImage` of the given dimensions
 /// concurrently.
-pub fn parallel_render(camera: &Camera, scene: &Scene, config: &RenderConfig) -> image::RgbImage {
+pub fn parallel_render(camera: &Camera, scene: &Scene, config: &RenderConfig) -> Image<3> {
     let lights = if config.direct_lighting {
         scene.lights().collect::<Vec<_>>()
     } else {
         vec![]
     };
 
-    let mut img = RgbImage::new(config.width, config.height);
+    let mut img = Image::rgb(config.width, config.height);
 
-    img.par_chunks_mut(3 * usize::try_from(config.width).unwrap())
+    img.data_mut()
+        .par_chunks_mut(3 * usize::try_from(config.width).unwrap())
         .zip((0_u32..config.height).into_par_iter())
         .for_each(|(row, y)| {
             let mut rng = XorShiftRng::seed_from_u64(thread_rng().gen());
 
             for (pix, x) in row.chunks_mut(3).zip(0..) {
-                let Rgb([r, g, b]) = render_pixel((x, y), camera, scene, &lights, &mut rng, config);
-
-                pix[0] = r;
-                pix[1] = g;
-                pix[2] = b;
+                pix.copy_from_slice(&render_pixel(
+                    (x, y),
+                    camera,
+                    scene,
+                    &lights,
+                    &mut rng,
+                    config,
+                ));
             }
         });
 
@@ -94,7 +104,7 @@ pub fn render_pixel(
     lights: &[&dyn Object],
     rng: &mut impl Rng,
     config: &RenderConfig,
-) -> Rgb<u8> {
+) -> [u8; 3] {
     let mut c = (0..config.samples)
         .map(|_| {
             let r = camera.cast_ray((x, y), (config.width, config.height), rng);
@@ -108,11 +118,11 @@ pub fn render_pixel(
     c.y = c.y.sqrt();
     c.z = c.z.sqrt();
 
-    Rgb([
+    [
         (c.x * 255.0) as u8,
         (c.y * 255.0) as u8,
         (c.z * 255.0) as u8,
-    ])
+    ]
 }
 
 fn sample(

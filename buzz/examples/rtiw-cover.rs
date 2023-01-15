@@ -75,8 +75,8 @@ pub fn main() -> opener::Result<()> {
             soft_shadows: false,
         },
     );
-    img.save("ray-tracing-in-a-weekend-cover.png")
+    img.save("ray-tracing-in-a-weekend-cover.ppm")
         .expect("cannot save output image");
 
-    opener::open("ray-tracing-in-a-weekend-cover.png")
+    opener::open("ray-tracing-in-a-weekend-cover.ppm")
 }
