@@ -62,7 +62,7 @@ pub fn main() -> opener::Result<()> {
         },
     );
 
-    img.save("suzanne.png").expect("cannot save output image");
+    img.save("suzanne.ppm").expect("cannot save output image");
 
-    opener::open("suzanne.png")
+    opener::open("suzanne.ppm")
 }

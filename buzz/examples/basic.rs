@@ -39,7 +39,7 @@ pub fn main() -> opener::Result<()> {
             soft_shadows: false,
         },
     );
-    img.save("basic.png").expect("cannot save output image");
+    img.save("basic.ppm").expect("cannot save output image");
 
-    opener::open("basic.png")
+    opener::open("basic.ppm")
 }
