@@ -1,3 +1,5 @@
+pub mod image;
+
 pub fn arange(s: f64, e: f64, step: f64) -> impl Iterator<Item = f64> {
     Arange { s, e, step }
 }
