@@ -6,7 +6,7 @@ edition = "2021"
 
 [dependencies]
 geo = { path = "../geo"}
-rayon = "1.5"
+rayon = "1.6"
 
 [dev-dependencies]
 rand = "0.8"
