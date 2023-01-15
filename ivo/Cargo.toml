@@ -4,10 +4,10 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
-geo = {path = "../geo"}
+geo = { path = "../geo" }
 rustc-hash = "1.1"
 
 [dev-dependencies]
-noise = "0.7"
+noise = "0.8"
 rand = "0.8"
 sketch_utils = { path = "../sketch-utils" }

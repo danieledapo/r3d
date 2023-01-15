@@ -1,12 +1,12 @@
 use std::collections::HashMap;
 
-use noise::{HybridMulti, MultiFractal, NoiseFn, Seedable};
+use noise::{HybridMulti, MultiFractal, NoiseFn, Perlin};
 use rand::prelude::*;
 
 use ivo::*;
 use sketch_utils::{opener, sketch_output_path};
 
-fn landscape(scene: &mut Scene, noise: impl NoiseFn<[f64; 2]>) {
+fn landscape(scene: &mut Scene, noise: impl NoiseFn<f64, 2>) {
     let mut minh = f64::INFINITY;
     let mut maxh = f64::NEG_INFINITY;
 
@@ -58,8 +58,7 @@ pub fn main() {
 
     let seed = rand::thread_rng().gen();
 
-    let noise = HybridMulti::new()
-        .set_seed(seed)
+    let noise = HybridMulti::<Perlin>::new(seed)
         .set_frequency(0.5)
         .set_octaves(2);
 
