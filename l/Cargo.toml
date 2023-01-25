@@ -5,8 +5,9 @@ authors = ["Daniele D'Orazio <d.dorazio96@gmail.com>"]
 edition = "2021"
 
 [dependencies]
-geo = { path = "../geo"}
+geo = { path = "../geo" }
 rayon = "1.6"
+marching_squares = { git = "https://github.com/d-dorazio/marching-squares" }
 
 [dev-dependencies]
 rand = "0.8"
