@@ -136,6 +136,29 @@ impl Sdf {
         Self::from_fn(self.bbox.clone(), move |p| self.dist(p) - radius)
     }
 
+    /// Smoothly merge two SDFs together using the given blend factor.
+    pub fn smooth_union(self, other: Sdf, k: f64) -> Self {
+        Self::from_fn(self.bbox.union(&other.bbox), move |p| {
+            smooth_union(self.dist(p), other.dist(p), k)
+        })
+    }
+
+    /// Smoothly subtract the latter SDF from the former together using the
+    /// given blend factor.
+    pub fn smooth_sub(self, other: Sdf, k: f64) -> Self {
+        Self::from_fn(self.bbox.clone(), move |p| {
+            smooth_sub(self.dist(p), other.dist(p), k)
+        })
+    }
+
+    /// Smoothly intersect two SDFs using the given blend factor.
+    pub fn smooth_and(self, other: Sdf, k: f64) -> Self {
+        Self::from_fn(
+            self.bbox
+                .intersection(&other.bbox)
+                .unwrap_or_else(|| Aabb::new(Vec3::zero())),
+            move |p| smooth_and(self.dist(p), other.dist(p), k),
+        )
     }
 }
 
@@ -219,4 +242,19 @@ impl Debug for Sdf {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         f.debug_struct("Sdf").field("bbox", &self.bbox).finish()
     }
+}
+
+pub fn smooth_union(d1: f64, d2: f64, k: f64) -> f64 {
+    let h = f64::clamp(0.5 + 0.5 * (d2 - d1) / k, 0.0, 1.0);
+    d2 + (d1 - d2) * h - k * h * (1.0 - h)
+}
+
+pub fn smooth_sub(d1: f64, d2: f64, k: f64) -> f64 {
+    let h = f64::clamp(0.5 - 0.5 * (d2 + d1) / k, 0.0, 1.0);
+    d2 + (-d1 - d2) * h + k * h * (1.0 - h)
+}
+
+pub fn smooth_and(d1: f64, d2: f64, k: f64) -> f64 {
+    let h = f64::clamp(0.5 - 0.5 * (d2 - d1) / k, 0.0, 1.0);
+    d2 + (d1 - d2) * h + k * h * (1.0 - h)
 }
