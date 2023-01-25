@@ -57,6 +57,10 @@ impl Sdf {
         self.bbox.clone()
     }
 
+    /// Pad the bbox of the SDF by the given amount in all dimensions.
+    ///
+    /// This is useful when the SDF is manually altered in a way that's not
+    /// automatically tracked by the system.
     pub fn pad_bbox(mut self, p: f64) -> Self {
         self.bbox.expand(self.bbox.min() - p);
         self.bbox.expand(self.bbox.max() + p);
@@ -132,22 +136,29 @@ impl Sdf {
         Self::from_fn(self.bbox.clone(), move |p| self.dist(p) - radius)
     }
 
+    /// Smoothly merge two SDFs together using the given blend factor.
     pub fn smooth_union(self, other: Sdf, k: f64) -> Self {
-        let mut b = self.bbox.union(&other.bbox);
-        b.expand(b.min() - k);
-        b.expand(b.max() + k);
-
-        Self::from_fn(b, move |p| {
-            let d1 = self.dist(p);
-            let d2 = other.dist(p);
-
-            let h = f64::clamp(0.5 + 0.5 * (d2 - d1) / k, 0.0, 1.0);
-            d2 + (d1 - d2) * h - k * h * (1.0 - h)
+        Self::from_fn(self.bbox.union(&other.bbox), move |p| {
+            smooth_union(self.dist(p), other.dist(p), k)
         })
     }
 
-    pub fn then(self, m: impl Fn(&Vec3, f64) -> f64 + Send + Sync + 'static) -> Self {
-        Self::from_fn(self.bbox.clone(), move |p| m(p, self.dist(p)))
+    /// Smoothly subtract the latter SDF from the former together using the
+    /// given blend factor.
+    pub fn smooth_sub(self, other: Sdf, k: f64) -> Self {
+        Self::from_fn(self.bbox.clone(), move |p| {
+            smooth_sub(self.dist(p), other.dist(p), k)
+        })
+    }
+
+    /// Smoothly intersect two SDFs using the given blend factor.
+    pub fn smooth_and(self, other: Sdf, k: f64) -> Self {
+        Self::from_fn(
+            self.bbox
+                .intersection(&other.bbox)
+                .unwrap_or_else(|| Aabb::new(Vec3::zero())),
+            move |p| smooth_and(self.dist(p), other.dist(p), k),
+        )
     }
 }
 
@@ -238,7 +249,7 @@ pub fn smooth_union(d1: f64, d2: f64, k: f64) -> f64 {
     d2 + (d1 - d2) * h - k * h * (1.0 - h)
 }
 
-pub fn smooth_sub(d2: f64, d1: f64, k: f64) -> f64 {
+pub fn smooth_sub(d1: f64, d2: f64, k: f64) -> f64 {
     let h = f64::clamp(0.5 - 0.5 * (d2 + d1) / k, 0.0, 1.0);
     d2 + (-d1 - d2) * h + k * h * (1.0 - h)
 }

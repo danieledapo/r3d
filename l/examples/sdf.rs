@@ -1,4 +1,4 @@
-use std::{ops::Add, sync::Arc};
+use std::{f64::consts::FRAC_1_PI, ops::Add, sync::Arc};
 
 use geo::{mat4::Mat4, sdf::*, v3, Axis, Vec3};
 
@@ -106,7 +106,7 @@ pub fn main() -> opener::Result<()> {
     let light_dir = v3(1, 1, -1).normalized();
 
     let hash = |p: Vec3| {
-        let p = (p * 0.3183099 + v3(0.11, 0.17, 0.13)).fract() * 13.0;
+        let p = (p * FRAC_1_PI + v3(0.11, 0.17, 0.13)).fract() * 13.0;
         (p.x * p.y * p.z * (p.x + p.y + p.x)).fract()
     };
     let sph = move |i: Vec3, f: Vec3, c: Vec3| {
@@ -116,13 +116,16 @@ pub fn main() -> opener::Result<()> {
 
     let rot = Mat4::rotate(v3(0, 0, 1), f64::to_radians(30.0));
 
-    let sdf = (capsule(v3(0, 0, -25), v3(0, 0, 25), 50.0).shell(1.0)
+    let base_sdf = capsule(v3(0, 0, -25), v3(0, 0, 25), 50.0).shell(1.0)
         - (cuboid(v3(200, 200, 100)) + v3(0, 0, 85))
-        - (sphere(30.0) + v3(0, -50, 0)))
-    .then(move |op, mut d| {
+        - (sphere(30.0) + v3(0, -50, 0));
+
+    let sdf = Sdf::from_fn(base_sdf.bbox(), move |op| {
         let octaves = 3;
 
         let mut op = *op;
+
+        let mut d = base_sdf.dist(&op);
 
         let mut s = 1.0;
         for _ in 0..octaves {
