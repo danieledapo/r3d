@@ -193,6 +193,17 @@ impl Mul<Mat4> for Sdf {
     }
 }
 
+impl Mul<f64> for Sdf {
+    type Output = Self;
+
+    fn mul(self, s: f64) -> Self::Output {
+        let mut b = Aabb::new(self.bbox.min() * s);
+        b.expand(self.bbox.max() * s);
+
+        Sdf::from_fn(b, move |p| self.dist(&(*p / s)) * s)
+    }
+}
+
 impl Debug for Sdf {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         f.debug_struct("Sdf").field("bbox", &self.bbox).finish()
