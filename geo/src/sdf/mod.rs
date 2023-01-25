@@ -57,6 +57,16 @@ impl Sdf {
         self.bbox.clone()
     }
 
+    /// Pad the bbox of the SDF by the given amount in all dimensions.
+    ///
+    /// This is useful when the SDF is manually altered or created in a way
+    /// that's not automatically tracked by the system.
+    pub fn pad_bbox(mut self, p: f64) -> Self {
+        self.bbox.expand(self.bbox.min() - p);
+        self.bbox.expand(self.bbox.max() + p);
+        self
+    }
+
     /// Calculate the normal at the given point on the Sdf.
     ///
     /// Note that the point is assumed to be on the surface of the Sdf and no
