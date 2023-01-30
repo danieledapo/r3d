@@ -2,7 +2,7 @@
 
 use std::{
     convert::TryFrom,
-    io::{BufRead, Seek, SeekFrom},
+    io::{BufRead, Seek},
 };
 
 use byteorder::{LittleEndian, ReadBytesExt};
@@ -88,7 +88,7 @@ pub fn guess_stl_format<R: BufRead + Seek>(r: &mut R) -> Result<StlFormat> {
         _ => StlFormat::Binary,
     };
 
-    r.seek(SeekFrom::Start(0))?;
+    r.rewind()?;
 
     Ok(format)
 }
