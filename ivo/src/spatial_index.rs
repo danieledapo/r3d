@@ -57,7 +57,7 @@ impl Index {
 
     pub fn add(&mut self, x: i32, y: i32, z: i32) {
         match &mut self.grid {
-            Some(grid) if grid.contains(x, y, z) => {
+            Some(grid) if grid.covers_cell(x, y, z) => {
                 grid.add(x, y, z);
             }
             _ => {
@@ -93,7 +93,7 @@ impl Index {
 
     pub fn remove(&mut self, x: i32, y: i32, z: i32) {
         match &mut self.grid {
-            Some(grid) if grid.contains(x, y, z) => {
+            Some(grid) if grid.covers_cell(x, y, z) => {
                 grid.remove(x, y, z);
             }
             _ => {
@@ -131,7 +131,7 @@ impl Grid {
             .flat_map(move |(p, &c)| ones(c).map(move |bi| self.rev_index(p, bi as usize)))
     }
 
-    pub fn contains(&self, x: i32, y: i32, z: i32) -> bool {
+    pub fn covers_cell(&self, x: i32, y: i32, z: i32) -> bool {
         (self.min.0..=self.max.0).contains(&x)
             && (self.min.1..=self.max.1).contains(&y)
             && (self.min.2..=self.max.2).contains(&z)
