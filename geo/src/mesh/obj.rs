@@ -57,7 +57,11 @@ impl Obj {
                             Ok(vi)
                         })
                         .collect::<Result<Vec<isize>>>();
+
                     let l = l?;
+                    if l.len() != 3 {
+                        return Err(Error::BadFormat);
+                    }
 
                     mesh.loops.push(l);
                 }
@@ -74,11 +78,7 @@ impl Obj {
 
 impl Mesh for Obj {
     fn triangles(&self) -> Box<dyn Iterator<Item = Triangle> + '_> {
-        Box::new(self.loops.iter().filter_map(move |l| {
-            if l.len() != 3 {
-                return None;
-            }
-
+        Box::new(self.loops.iter().map(move |l| {
             let get_v = |i: isize| {
                 self.vertices[if i > 0 {
                     usize::try_from(i - 1).unwrap()
@@ -87,7 +87,7 @@ impl Mesh for Obj {
                 }]
             };
 
-            Some(Triangle::new(get_v(l[0]), get_v(l[1]), get_v(l[2])))
+            Triangle::new(get_v(l[0]), get_v(l[1]), get_v(l[2]))
         }))
     }
 }
