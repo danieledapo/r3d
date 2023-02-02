@@ -170,6 +170,23 @@ impl Scene {
         self.voxels.iter()
     }
 
+    /// Iterator over the external voxels, that is the voxels that are not
+    /// completely enclosed by other voxels.
+    pub fn boundary_voxels(&self) -> impl Iterator<Item = Voxel> + '_ {
+        self.voxels().filter(|(x, y, z)| {
+            [
+                (0, 0, 1),
+                (0, 0, -1),
+                (1, 0, 0),
+                (-1, 0, 0),
+                (0, 1, 0),
+                (0, -1, 0),
+            ]
+            .into_iter()
+            .any(|(dx, dy, dz)| !self.is_set(x + dx, y + dy, z + dz))
+        })
+    }
+
     /// Add the given voxel to the scene.
     pub fn add(&mut self, x: i32, y: i32, z: i32) {
         if self.add {
