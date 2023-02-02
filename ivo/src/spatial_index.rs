@@ -91,6 +91,13 @@ impl Index {
         }
     }
 
+    pub fn is_set(&self, x: i32, y: i32, z: i32) -> bool {
+        match &self.grid {
+            Some(grid) if grid.covers_cell(x, y, z) => grid.is_set(x, y, z),
+            _ => self.outside_grid.contains(&(x, y, z)),
+        }
+    }
+
     pub fn remove(&mut self, x: i32, y: i32, z: i32) {
         match &mut self.grid {
             Some(grid) if grid.covers_cell(x, y, z) => {
@@ -135,6 +142,11 @@ impl Grid {
         (self.min.0..=self.max.0).contains(&x)
             && (self.min.1..=self.max.1).contains(&y)
             && (self.min.2..=self.max.2).contains(&z)
+    }
+
+    pub fn is_set(&self, x: i32, y: i32, z: i32) -> bool {
+        let (p, bi) = self.index(x, y, z);
+        (self.cells[p] & (1 << bi)) != 0
     }
 
     pub fn add(&mut self, x: i32, y: i32, z: i32) {

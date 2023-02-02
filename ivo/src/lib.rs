@@ -179,6 +179,11 @@ impl Scene {
         }
     }
 
+    /// Check if a given voxel is set or not.
+    pub fn is_set(&self, x: i32, y: i32, z: i32) -> bool {
+        self.voxels.is_set(x, y, z)
+    }
+
     /// Add a slab parallel to the x axis with the given dimensions.
     ///
     /// A slab is just a bounding box, but the instead of giving the center of
