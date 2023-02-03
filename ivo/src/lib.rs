@@ -246,23 +246,19 @@ impl Scene {
         let bbox = sdf.bbox();
         let (tl, br) = (bbox.min(), bbox.max());
 
-        let (x0, y0, z0) = (
-            tl.x.round() as i32,
-            tl.y.round() as i32,
-            tl.z.round() as i32,
-        );
+        let tl = tl.floor();
 
-        let (s, e) = (tl.floor() + 0.5, br.ceil() - 0.5);
-
-        for (z, zi) in arange(s.z, e.z, 1.0).zip(0..) {
-            for (y, yi) in arange(s.y, e.y, 1.0).zip(0..) {
-                for (x, xi) in arange(s.x, e.x, 1.0).zip(0..) {
+        // ray march each layer so that we can quickly jump over the outside pixels
+        for z in arange(tl.z, br.z, 1.0) {
+            for y in arange(tl.y, br.y, 1.0) {
+                let mut x = tl.x;
+                while x <= br.x {
                     let d = sdf.dist(&v3(x, y, z));
-                    if d > 0.0 {
-                        continue;
+                    if d <= 0.1 {
+                        self.add(x.round() as i32, y.round() as i32, z.round() as i32);
                     }
 
-                    self.add(x0 + xi, y0 + yi, z0 + zi);
+                    x += f64::max(d.round(), 1.0);
                 }
             }
         }
