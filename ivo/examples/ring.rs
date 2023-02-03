@@ -1,4 +1,4 @@
-use geo::{sdf::Sdf, v3, Aabb};
+use geo::sdf;
 use sketch_utils::opener;
 
 use ivo::*;
@@ -6,18 +6,7 @@ use ivo::*;
 pub fn main() {
     let mut scene = Scene::new();
 
-    let r1 = 200.0;
-    let r2 = 120.0;
-    let rr = r1 + r2;
-
-    let bbox = Aabb::new(v3(-rr, -rr, -r1)).expanded(v3(rr, rr, r1));
-
-    let sdf = Sdf::from_fn(bbox, move |p| {
-        let q = v3(v3(p.x, p.y, 0.0).norm() - r2, p.z, 0.0);
-        q.norm2() - r1
-    });
-
-    scene.sdf(&sdf);
+    scene.sdf(&sdf::torus(20.0, 200.0));
 
     let triangles = render_outlines(&scene);
 
