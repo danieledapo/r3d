@@ -125,7 +125,6 @@ pub type Line = Vec<XY>;
 #[derive(Debug)]
 pub struct Scene {
     voxels: spatial_index::Index,
-    sdf_step: f64,
     add: bool,
 }
 
@@ -134,7 +133,6 @@ impl Scene {
     pub fn new() -> Self {
         Self {
             voxels: spatial_index::Index::new(),
-            sdf_step: 1.0,
             add: true,
         }
     }
@@ -150,7 +148,6 @@ impl Scene {
     pub fn with_bbox_hint(min: Voxel, max: Voxel) -> Self {
         Self {
             voxels: spatial_index::Index::with_bbox_hint(min, max),
-            sdf_step: 1.0,
             add: true,
         }
     }
@@ -257,9 +254,9 @@ impl Scene {
 
         let (s, e) = (tl.floor() + 0.5, br.ceil() - 0.5);
 
-        for (z, zi) in arange(s.z, e.z, self.sdf_step).zip(0..) {
-            for (y, yi) in arange(s.y, e.y, self.sdf_step).zip(0..) {
-                for (x, xi) in arange(s.x, e.x, self.sdf_step).zip(0..) {
+        for (z, zi) in arange(s.z, e.z, 1.0).zip(0..) {
+            for (y, yi) in arange(s.y, e.y, 1.0).zip(0..) {
+                for (x, xi) in arange(s.x, e.x, 1.0).zip(0..) {
                     let d = sdf.dist(&v3(x, y, z));
                     if d > 0.0 {
                         continue;
