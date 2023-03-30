@@ -1,8 +1,10 @@
 use crate::{Voxel, IJ, XY};
 
+mod obj;
 mod scene;
 mod svg;
 
+pub use obj::render_mesh;
 pub use scene::{render_outlines, render_triangles};
 pub use svg::{dump_outlines_svg, dump_triangles_svg, SvgSettings};
 
