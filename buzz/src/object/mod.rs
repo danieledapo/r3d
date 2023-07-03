@@ -1,5 +1,5 @@
-pub mod facet;
-pub mod simple_object;
+mod facet;
+mod simple_object;
 
 use std::ops::{Deref, DerefMut};
 

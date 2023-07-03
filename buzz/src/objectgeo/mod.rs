@@ -1,10 +1,10 @@
-pub mod csg;
-pub mod cube;
-pub mod cylinder;
-pub mod facet;
-pub mod plane;
-pub mod sphere;
-pub mod transformed;
+mod csg;
+mod cube;
+mod cylinder;
+mod facet;
+mod plane;
+mod sphere;
+mod transformed;
 
 pub use csg::SdfGeometry;
 pub use cube::CubeGeometry;

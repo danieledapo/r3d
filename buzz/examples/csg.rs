@@ -1,7 +1,7 @@
 use geo::{mat4::Mat4, sdf::*, v3, Vec3};
 use sketch_utils::opener;
 
-use buzz::{csg::SdfGeometry, *};
+use buzz::*;
 
 pub fn main() -> opener::Result<()> {
     let plane = SimpleObject::new(
