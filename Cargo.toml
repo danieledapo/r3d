@@ -6,3 +6,5 @@ members = [
     "l",
     "sketch-utils",
 ]
+
+resolver = "2"

@@ -1,4 +1,4 @@
-//! See <https://github.com/d-dorazio/dla> for an example on how to generate the particles.
+//! See <https://github.com/danieledapo/dla> for an example on how to generate the particles.
 
 use std::io;
 
