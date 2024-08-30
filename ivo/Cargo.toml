@@ -5,9 +5,9 @@ edition = "2021"
 
 [dependencies]
 geo = { path = "../geo" }
-rustc-hash = "1.1"
+rustc-hash = "2"
 
 [dev-dependencies]
-noise = "0.8"
+noise = "0.9"
 rand = "0.8"
 sketch_utils = { path = "../sketch-utils" }

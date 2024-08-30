@@ -6,7 +6,7 @@ edition = "2021"
 
 [dependencies]
 geo = { path = "../geo" }
-rayon = "1.7"
+rayon = "1.10"
 marching_squares = { git = "https://github.com/danieledapo/marching_squares" }
 
 [dev-dependencies]

@@ -5,8 +5,8 @@ authors = ["Daniele D'Orazio <d.dorazio96@gmail.com>"]
 edition = "2021"
 
 [dependencies]
-byteorder = "1.4"
+byteorder = "1.5"
 rand = "0.8"
 
 [dev-dependencies]
-proptest = "1.1"
+proptest = "1.5"
