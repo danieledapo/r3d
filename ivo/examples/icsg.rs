@@ -18,6 +18,6 @@ pub fn main() {
 
     let tris = render_outlines(&scene);
 
-    dump_outlines_svg("icsv.svg", &tris, &SvgSettings::new(1920.0, 1080.0)).unwrap();
-    opener::open("icsv.svg").unwrap();
+    dump_outlines_svg("icsg.svg", &tris, &SvgSettings::new(1920.0, 1080.0)).unwrap();
+    opener::open("icsg.svg").unwrap();
 }
