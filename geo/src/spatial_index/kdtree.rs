@@ -65,7 +65,7 @@ where
         &self,
         ray: &Ray,
     ) -> impl Iterator<Item = (&T, <T as Shape>::Intersection)> {
-        self.root.intersections(ray, 0.0, std::f64::INFINITY)
+        self.root.intersections(ray, 0.0, f64::INFINITY)
     }
 }
 

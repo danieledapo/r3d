@@ -3,10 +3,11 @@ use crate::{v3, Aabb, Vec3};
 
 /// Return the infinite bounding box of an infinite plane.
 pub fn bbox() -> Aabb {
-    use std::f64::{INFINITY, NEG_INFINITY};
-
-    Aabb::new(v3(NEG_INFINITY, NEG_INFINITY, NEG_INFINITY))
-        .expanded(v3(INFINITY, INFINITY, INFINITY))
+    Aabb::new(v3(f64::NEG_INFINITY, f64::NEG_INFINITY, f64::NEG_INFINITY)).expanded(v3(
+        f64::INFINITY,
+        f64::INFINITY,
+        f64::INFINITY,
+    ))
 }
 
 /// Calculate the intersection between an infinite plane defined by a point and

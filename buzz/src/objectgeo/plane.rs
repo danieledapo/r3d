@@ -28,7 +28,7 @@ impl Shape for PlaneGeometry {
     }
 
     fn bounding_sphere(&self) -> (Vec3, f64) {
-        (self.origin, std::f64::INFINITY)
+        (self.origin, f64::INFINITY)
     }
 
     fn intersection(&self, ray: &Ray) -> Option<Self::Intersection> {
