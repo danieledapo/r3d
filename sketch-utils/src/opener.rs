@@ -13,10 +13,10 @@ pub enum OpenError {
 #[cfg(target_os = "linux")]
 const OPENER: &str = "xdg-open";
 
-#[cfg(target_os = "darwin")]
+#[cfg(target_os = "macos")]
 const OPENER: &str = "open";
 
-#[cfg(any(target_os = "linux", target_os = "darwin"))]
+#[cfg(any(target_os = "linux", target_os = "macos"))]
 pub fn open(path: impl AsRef<OsStr>) -> Result<()> {
     let exit = Command::new(OPENER).arg(path.as_ref()).spawn()?.wait()?;
 
