@@ -1,4 +1,4 @@
-use rand::Rng;
+use rand::prelude::*;
 
 use geo::{ray::Ray, Vec3};
 
@@ -108,7 +108,7 @@ pub fn dielectric_bounce(
         Some(refracted) => {
             let reflect_prob = schlick(cos, ref_ix);
 
-            if rng.gen::<f64>() < reflect_prob {
+            if rng.random::<f64>() < reflect_prob {
                 Ray::new(ray.dir, n).reflect()
             } else {
                 refracted

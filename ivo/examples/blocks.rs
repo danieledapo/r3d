@@ -10,9 +10,9 @@ pub fn cube(rng: &mut impl Rng, n: usize, perfect_grid: bool) -> Vec<Blob> {
     let mut blobs = vec![];
 
     for _ in 0..n {
-        let x = rng.gen_range(6..=14);
-        let y = rng.gen_range(6..=14);
-        let z = rng.gen_range(6..=14);
+        let x = rng.random_range(6..=14);
+        let y = rng.random_range(6..=14);
+        let z = rng.random_range(6..=14);
 
         let mut dim = |c, s, e| {
             let d = if perfect_grid {
@@ -20,7 +20,7 @@ pub fn cube(rng: &mut impl Rng, n: usize, perfect_grid: bool) -> Vec<Blob> {
             } else {
                 i32::max(c - s, e - c)
             };
-            rng.gen_range(d / 2..=d)
+            rng.random_range(d / 2..=d)
         };
 
         let w = dim(x, 4, 16);
@@ -43,7 +43,7 @@ pub fn main() {
     let invert = next_arg(0) != 0;
     let size = next_arg(10) as i32;
 
-    let mut rng = rand::thread_rng();
+    let mut rng = rand::rng();
     for i in 0..size {
         let bx = i * 20;
 
@@ -51,7 +51,7 @@ pub fn main() {
         while j < size {
             let blobs = cube(&mut rng, n, perfect_grid);
 
-            let gg = rng.gen_range(2..=6);
+            let gg = rng.random_range(2..=6);
             for k in 0..gg {
                 if j + k >= size {
                     break;

@@ -19,13 +19,13 @@ fn thing(scene: &mut Scene, (cx, cy, cz): Voxel, h: i32, r: i32) {
 pub fn main() {
     let mut scene = Scene::new();
 
-    let mut rng = rand::thread_rng();
+    let mut rng = rand::rng();
     let step = 10_i32;
 
     for z in (0..=600).step_by(step as usize) {
-        let (dx, dy) = (rng.gen_range(-3..=3) * 5, rng.gen_range(-3..=3) * 5);
+        let (dx, dy) = (rng.random_range(-3..=3) * 5, rng.random_range(-3..=3) * 5);
 
-        thing(&mut scene, (dx, dy, z), step, rng.gen_range(3..=6) * step);
+        thing(&mut scene, (dx, dy, z), step, rng.random_range(3..=6) * step);
     }
 
     let triangles = render_outlines(&scene);

@@ -1,4 +1,4 @@
-use rand::Rng;
+use rand::prelude::*;
 
 use buzz::*;
 use geo::{v3, Vec3};
@@ -14,21 +14,21 @@ pub fn main() -> opener::Result<()> {
         Material::lambertian(v3(0.5, 0.5, 0.5)),
     ));
 
-    let mut rng = rand::thread_rng();
+    let mut rng = rand::rng();
     for a in -11..11 {
         for b in -11..11 {
             let center = v3(
-                f64::from(a) + 0.9 * rng.gen::<f64>(),
+                f64::from(a) + 0.9 * rng.random::<f64>(),
                 0.2,
-                f64::from(b) + 0.9 * rng.gen::<f64>(),
+                f64::from(b) + 0.9 * rng.random::<f64>(),
             );
 
             if (center - v3(4, 0.2, 0)).norm() > 0.9 {
-                let mp = rng.gen::<f64>();
+                let mp = rng.random::<f64>();
                 let mat = if mp < 0.8 {
-                    Material::lambertian(rng.gen::<Vec3>() * rng.gen::<Vec3>())
+                    Material::lambertian(rng.random::<Vec3>() * rng.random::<Vec3>())
                 } else if mp < 0.95 {
-                    Material::metal((rng.gen::<Vec3>() + 1.0) * 0.5, 0.5 * rng.gen::<f64>())
+                    Material::metal((rng.random::<Vec3>() + 1.0) * 0.5, 0.5 * rng.random::<f64>())
                 } else {
                     Material::dielectric(1.5)
                 };

@@ -6,7 +6,7 @@ edition = "2021"
 
 [dependencies]
 byteorder = "1.5"
-rand = "0.8"
+rand = "0.10"
 
 [dev-dependencies]
-proptest = "1.5"
+proptest = "1.11"

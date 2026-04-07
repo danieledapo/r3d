@@ -6,20 +6,20 @@ use rand::prelude::*;
 pub fn main() {
     let mut scene = Scene::new();
 
-    let mut rng = rand::thread_rng();
+    let mut rng = rand::rng();
 
     let side = 400;
 
     for i in 0..150 {
-        let x: i32 = rng.gen_range(-6..=6) * side / 10;
-        let y: i32 = rng.gen_range(-6..=6) * side / 10;
-        let z: i32 = rng.gen_range(-6..=6) * side / 10;
+        let x: i32 = rng.random_range(-6..=6) * side / 10;
+        let y: i32 = rng.random_range(-6..=6) * side / 10;
+        let z: i32 = rng.random_range(-6..=6) * side / 10;
 
-        let w = i32::min((side * 9 / 10 - x).abs(), rng.gen_range(1..=20) * side / 20);
-        let h = i32::min((side * 9 / 10 - y).abs(), rng.gen_range(1..=20) * side / 20);
-        let d = i32::min((side * 9 / 10 - z).abs(), rng.gen_range(1..=20) * side / 20);
+        let w = i32::min((side * 9 / 10 - x).abs(), rng.random_range(1..=20) * side / 20);
+        let h = i32::min((side * 9 / 10 - y).abs(), rng.random_range(1..=20) * side / 20);
+        let d = i32::min((side * 9 / 10 - z).abs(), rng.random_range(1..=20) * side / 20);
 
-        let thickness = rng.gen_range(1..=5) * 2;
+        let thickness = rng.random_range(1..=5) * 2;
 
         if i % 3 == 0 {
             scene.aabb((x + w / 2, y + h / 2, z), (w / 2, h / 2, thickness));

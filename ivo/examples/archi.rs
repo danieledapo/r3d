@@ -8,7 +8,7 @@ use rand::prelude::*;
 pub fn main() {
     let mut scene = Scene::new();
 
-    let mut rng = rand::thread_rng();
+    let mut rng = rand::rng();
 
     let mut bboxes = vec![Aabb::cuboid(Vec3::zero(), 5.0)];
     for _ in 0..100_000 {
@@ -17,32 +17,32 @@ pub fn main() {
         let c = b.center().round();
         let d = b.dimensions().round();
 
-        let t = rng.gen::<f64>();
+        let t = rng.random::<f64>();
         if t <= 0.3 {
             bboxes.push(Aabb::with_dimensions(
                 c + v3(d.x * [-1.0, 1.0].choose(&mut rng).unwrap(), 0.0, 0.0),
                 v3(
-                    2.0 + 50.0 * rng.gen::<f64>(),
-                    2.0 + 12.0 * rng.gen::<f64>(),
-                    2.0 + 12.0 * rng.gen::<f64>(),
+                    2.0 + 50.0 * rng.random::<f64>(),
+                    2.0 + 12.0 * rng.random::<f64>(),
+                    2.0 + 12.0 * rng.random::<f64>(),
                 ),
             ));
         } else if t <= 0.6 {
             bboxes.push(Aabb::with_dimensions(
                 c + v3(0.0, d.y * [-1.0, 1.0].choose(&mut rng).unwrap(), 0.0),
                 v3(
-                    2.0 + 12.0 * rng.gen::<f64>(),
-                    2.0 + 50.0 * rng.gen::<f64>(),
-                    2.0 + 12.0 * rng.gen::<f64>(),
+                    2.0 + 12.0 * rng.random::<f64>(),
+                    2.0 + 50.0 * rng.random::<f64>(),
+                    2.0 + 12.0 * rng.random::<f64>(),
                 ),
             ));
         } else {
             bboxes.push(Aabb::with_dimensions(
                 c + v3(0.0, 0.0, d.z * [-1.0, 1.0].choose(&mut rng).unwrap()),
                 v3(
-                    2.0 + 12.0 * rng.gen::<f64>(),
-                    2.0 + 12.0 * rng.gen::<f64>(),
-                    2.0 + 50.0 * rng.gen::<f64>(),
+                    2.0 + 12.0 * rng.random::<f64>(),
+                    2.0 + 12.0 * rng.random::<f64>(),
+                    2.0 + 50.0 * rng.random::<f64>(),
                 ),
             ));
         }

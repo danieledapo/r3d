@@ -33,20 +33,20 @@ pub fn main() {
 
     let fill = false;
 
-    let mut rng = thread_rng();
+    let mut rng = rand::rng();
 
-    let freq = rng.gen_range(0.3..=5.0);
-    let freq2 = rng.gen_range(0.3..=3.0);
-    let freq3 = rng.gen_range(0.3..=3.0);
+    let freq = rng.random_range(0.3..=5.0);
+    let freq2 = rng.random_range(0.3..=3.0);
+    let freq3 = rng.random_range(0.3..=3.0);
 
-    let nseeds = rng.gen_range(1..=20);
+    let nseeds = rng.random_range(1..=20);
     let radius = if mode == Mode::Noise {
-        rng.gen_range(30.0..=100.0)
+        rng.random_range(30.0..=100.0)
     } else {
-        rng.gen_range(30.0..=100.0)
+        rng.random_range(30.0..=100.0)
     };
 
-    let noise = Perlin::new(rng.gen());
+    let noise = Perlin::new(rng.random());
 
     let mut seeds = vec![];
     for i in 1..=nseeds {
@@ -77,8 +77,8 @@ pub fn main() {
                 }
                 Mode::Noise => {
                     let r = noise.get([a.cos() / freq2, a.sin() / freq2, zt * freq3]);
-                    x = a.cos() * radius * r * rng.gen_range(0.8..=1.0);
-                    y = a.sin() * radius * r * rng.gen_range(0.8..=1.0);
+                    x = a.cos() * radius * r * rng.random_range(0.8..=1.0);
+                    y = a.sin() * radius * r * rng.random_range(0.8..=1.0);
                 }
             }
 

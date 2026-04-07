@@ -14,7 +14,7 @@ pub fn main() {
 
     scene.invert();
 
-    let mut rng = thread_rng();
+    let mut rng = rand::rng();
     for octave in 0..=6 {
         let n = 2 << octave;
         let r = 100 / (1 << octave);
@@ -23,9 +23,9 @@ pub fn main() {
             scene.sdf(
                 &(sphere(r.into())
                     + v3(
-                        rng.gen_range(-100.0..=100.0),
-                        rng.gen_range(-100.0..=100.0),
-                        rng.gen_range(-100.0..=100.0),
+                        rng.random_range(-100.0..=100.0),
+                        rng.random_range(-100.0..=100.0),
+                        rng.random_range(-100.0..=100.0),
                     )),
             );
         }

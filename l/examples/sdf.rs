@@ -99,6 +99,8 @@ pub fn poke_sdf() {
 }
 
 pub fn main() -> opener::Result<()> {
+    poke_sdf();
+    glitch_sdf();
     let mut objects = vec![];
 
     let position = v3(0, -200, 100);

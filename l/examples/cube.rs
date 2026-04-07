@@ -10,11 +10,11 @@ use l::*;
 pub fn main() -> opener::Result<()> {
     let mut objects = vec![];
 
-    let mut rng = thread_rng();
+    let mut rng = rand::rng();
     for z in -10..=10 {
         for y in -10..=10 {
             for x in -10..=10 {
-                if rng.gen::<f64>() <= 0.9 {
+                if rng.random::<f64>() <= 0.9 {
                     continue;
                 }
 

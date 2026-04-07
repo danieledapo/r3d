@@ -9,5 +9,5 @@ rustc-hash = "2"
 
 [dev-dependencies]
 noise = "0.9"
-rand = "0.8"
+rand = "0.10"
 sketch_utils = { path = "../sketch-utils" }

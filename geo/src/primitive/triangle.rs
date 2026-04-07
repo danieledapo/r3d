@@ -1,4 +1,4 @@
-use rand::Rng;
+use rand::prelude::*;
 
 use crate::v3;
 use crate::{primitive::polyline::Polyline, spatial_index::Shape, Vec3};
@@ -86,8 +86,8 @@ impl Triangle {
 
     /// Generate a random point guaranteed to be inside the triangle.
     pub fn random_pt(&self, rng: &mut impl Rng) -> Vec3 {
-        let mut u = rng.gen::<f64>();
-        let mut v = rng.gen::<f64>();
+        let mut u = rng.random::<f64>();
+        let mut v = rng.random::<f64>();
         if u + v >= 1.0 {
             u = 1.0 - u;
             v = 1.0 - v;

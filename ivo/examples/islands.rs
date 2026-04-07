@@ -56,7 +56,7 @@ fn landscape(scene: &mut Scene, noise: impl NoiseFn<f64, 2>) {
 pub fn main() {
     let mut scene = Scene::new();
 
-    let seed = rand::thread_rng().gen();
+    let seed = rand::rng().random();
 
     let noise = HybridMulti::<Perlin>::new(seed)
         .set_frequency(0.5)

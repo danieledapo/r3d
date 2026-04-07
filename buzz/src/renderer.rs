@@ -47,7 +47,7 @@ pub fn render(camera: &Camera, scene: &Scene, config: &RenderConfig) -> Image<3>
         vec![]
     };
 
-    let mut rng = XorShiftRng::seed_from_u64(thread_rng().gen());
+    let mut rng = XorShiftRng::seed_from_u64(rand::rng().random());
     let mut img = Image::rgb(config.width, config.height);
 
     for (x, y, pix) in img.pixels_mut() {
@@ -79,7 +79,7 @@ pub fn parallel_render(camera: &Camera, scene: &Scene, config: &RenderConfig) ->
         .par_chunks_mut(3 * usize::try_from(config.width).unwrap())
         .zip((0_u32..config.height).into_par_iter())
         .for_each(|(row, y)| {
-            let mut rng = XorShiftRng::seed_from_u64(thread_rng().gen());
+            let mut rng = XorShiftRng::seed_from_u64(rand::rng().random());
 
             for (pix, x) in row.chunks_mut(3).zip(0..) {
                 pix.copy_from_slice(&render_pixel(
@@ -203,8 +203,8 @@ fn sample_light(
 
     if config.soft_shadows {
         light_pos = loop {
-            let x = rng.gen::<f64>() * 2.0 - 1.0;
-            let y = rng.gen::<f64>() * 2.0 - 1.0;
+            let x = rng.random::<f64>() * 2.0 - 1.0;
+            let y = rng.random::<f64>() * 2.0 - 1.0;
 
             if x.powi(2) + y.powi(2) <= 1.0 {
                 let l = (light_pos - ray.origin).normalized();

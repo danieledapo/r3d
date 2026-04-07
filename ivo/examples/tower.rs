@@ -11,25 +11,25 @@ pub fn main() {
     let mut next_arg = |def| args.next().map(|l| l.parse().unwrap()).unwrap_or(def);
     let n = next_arg(10);
 
-    let mut rng = rand::thread_rng();
+    let mut rng = rand::rng();
 
     let mut bz = 2;
 
     for _ in 0..n {
-        let x = rng.gen_range(2..=100);
-        let y = rng.gen_range(2..=100);
-        let z = rng.gen_range(2..=bz);
+        let x = rng.random_range(2..=100);
+        let y = rng.random_range(2..=100);
+        let z = rng.random_range(2..=bz);
 
         let w;
         let h;
-        if rng.gen_bool(0.5) {
-            w = rng.gen_range(10..=30);
+        if rng.random_bool(0.5) {
+            w = rng.random_range(10..=30);
             h = 1;
         } else {
-            h = rng.gen_range(10..=30);
+            h = rng.random_range(10..=30);
             w = 1;
         }
-        let d = rng.gen_range(4..=14);
+        let d = rng.random_range(4..=14);
 
         scene.zslab((x, y, z), (w, h, d));
         scene.invert();

@@ -4,11 +4,11 @@ use std::ops::{
     SubAssign,
 };
 
-use rand::distributions::{Distribution, Standard};
-use rand::Rng;
+use rand::distr::StandardUniform;
+use rand::prelude::*;
 
 #[cfg(test)]
-use proptest::prelude::*;
+use proptest::prelude::{self as pt, any, Strategy};
 
 use crate::Axis;
 
@@ -39,7 +39,7 @@ impl Vec3 {
     /// Generate a random unit `Vec3` inside the unit circle.
     pub fn random_unit(rng: &mut impl Rng) -> Self {
         loop {
-            let v = rng.gen::<Vec3>() * 2.0 - 1.0;
+            let v = rng.random::<Vec3>() * 2.0 - 1.0;
 
             if v.norm2() < 1.0 {
                 break v;
@@ -228,9 +228,9 @@ impl Product for Vec3 {
     }
 }
 
-impl Distribution<Vec3> for Standard {
+impl Distribution<Vec3> for StandardUniform {
     fn sample<R: Rng + ?Sized>(&self, rng: &mut R) -> Vec3 {
-        let (x, y, z) = rng.gen();
+        let (x, y, z) = rng.random();
         Vec3::new(x, y, z)
     }
 }
@@ -258,14 +258,14 @@ impl IndexMut<Axis> for Vec3 {
 }
 
 #[cfg(test)]
-pub fn vec3() -> impl Strategy<Value = Vec3> {
+pub fn vec3() -> impl pt::Strategy<Value = Vec3> {
     any::<(f64, f64, f64)>().prop_map(|(x, y, z)| v3(x, y, z))
 }
 
 #[cfg(test)]
 pub fn distinct_vec3(
     range: impl Into<proptest::collection::SizeRange>,
-) -> impl Strategy<Value = Vec<Vec3>> {
+) -> impl pt::Strategy<Value = Vec<Vec3>> {
     proptest::collection::hash_set(any::<(i16, i16, i16)>(), range).prop_map(|cs| {
         cs.into_iter()
             .map(|(x, y, z)| v3(f64::from(x), f64::from(y), f64::from(z)))

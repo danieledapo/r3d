@@ -6,9 +6,9 @@ edition = "2021"
 
 [dependencies]
 geo = { path = "../geo" }
-rand = "0.8"
-rand_xorshift = "0.3"
-rayon = "1.7"
+rand = "0.10"
+rand_xorshift = "0.5"
+rayon = "1.11"
 
 [dev-dependencies]
 sketch_utils = { path = "../sketch-utils" }

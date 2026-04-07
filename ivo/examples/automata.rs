@@ -9,13 +9,13 @@ use rand::prelude::*;
 pub fn main() {
     let mut scene = Scene::new();
 
-    let mut rng = rand::thread_rng();
+    let mut rng = rand::rng();
 
-    let n = rng.gen::<u8>();
+    let n = rng.random::<u8>();
 
     let mut cells: Vec<u8> = vec![0; 360];
-    for _ in 0..rng.gen_range(1..=10) {
-        let i = rng.gen_range(0..cells.len());
+    for _ in 0..rng.random_range(1..=10) {
+        let i = rng.random_range(0..cells.len());
         cells[i] = 1;
     }
 

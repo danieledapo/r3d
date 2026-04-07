@@ -2,7 +2,7 @@
 
 use std::f64::consts::PI;
 
-use rand::Rng;
+use rand::prelude::*;
 
 use geo::{ray::Ray, Vec3};
 
@@ -90,8 +90,8 @@ impl Camera {
         let width = f64::from(width);
         let height = f64::from(height);
 
-        let u: f64 = rng.gen();
-        let v: f64 = rng.gen();
+        let u: f64 = rng.random();
+        let v: f64 = rng.random();
 
         let aspect = width / height;
         let ndcx = (x + u - 0.5) / (width - 1.0) * 2.0 - 1.0;
@@ -109,8 +109,8 @@ impl Camera {
                 focal_distance,
             }) => {
                 let focal_point = self.position + rd * focal_distance;
-                let angle = rng.gen::<f64>() * 2.0 * PI;
-                let radius = rng.gen::<f64>() * aperture_radius;
+                let angle = rng.random::<f64>() * 2.0 * PI;
+                let radius = rng.random::<f64>() * aperture_radius;
 
                 let p = self.position
                     + self.u * (angle.cos() * radius)

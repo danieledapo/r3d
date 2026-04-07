@@ -80,14 +80,14 @@ impl Object for Building {
 pub fn main() -> opener::Result<()> {
     let mut objects = vec![];
 
-    let mut rng = thread_rng();
+    let mut rng = rand::rng();
     for y in -10..=10 {
         for x in -10..=10 {
-            if rng.gen::<f64>() >= 0.8 {
+            if rng.random::<f64>() >= 0.8 {
                 continue;
             }
 
-            let height = rng.gen_range(1..10_u8);
+            let height = rng.random_range(1..10_u8);
 
             let building = Building::new(
                 Aabb::with_dimensions(
