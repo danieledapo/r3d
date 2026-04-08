@@ -122,7 +122,7 @@ impl Grid {
         assert!(min <= max);
 
         let (w, h, d) = distance(min, max);
-        let size = (w * h * d + 63) / 64;
+        let size = (w * h * d).div_ceil(64);
 
         Self {
             min,

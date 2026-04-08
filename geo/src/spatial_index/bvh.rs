@@ -180,7 +180,7 @@ where
     }
 }
 
-impl<'s, T: 's> FromIterator<T> for Bvh<T>
+impl<T> FromIterator<T> for Bvh<T>
 where
     T: Shape,
 {
