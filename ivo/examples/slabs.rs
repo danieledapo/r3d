@@ -15,9 +15,18 @@ pub fn main() {
         let y: i32 = rng.random_range(-6..=6) * side / 10;
         let z: i32 = rng.random_range(-6..=6) * side / 10;
 
-        let w = i32::min((side * 9 / 10 - x).abs(), rng.random_range(1..=20) * side / 20);
-        let h = i32::min((side * 9 / 10 - y).abs(), rng.random_range(1..=20) * side / 20);
-        let d = i32::min((side * 9 / 10 - z).abs(), rng.random_range(1..=20) * side / 20);
+        let w = i32::min(
+            (side * 9 / 10 - x).abs(),
+            rng.random_range(1..=20) * side / 20,
+        );
+        let h = i32::min(
+            (side * 9 / 10 - y).abs(),
+            rng.random_range(1..=20) * side / 20,
+        );
+        let d = i32::min(
+            (side * 9 / 10 - z).abs(),
+            rng.random_range(1..=20) * side / 20,
+        );
 
         let thickness = rng.random_range(1..=5) * 2;
 

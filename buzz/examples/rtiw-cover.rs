@@ -28,7 +28,10 @@ pub fn main() -> opener::Result<()> {
                 let mat = if mp < 0.8 {
                     Material::lambertian(rng.random::<Vec3>() * rng.random::<Vec3>())
                 } else if mp < 0.95 {
-                    Material::metal((rng.random::<Vec3>() + 1.0) * 0.5, 0.5 * rng.random::<f64>())
+                    Material::metal(
+                        (rng.random::<Vec3>() + 1.0) * 0.5,
+                        0.5 * rng.random::<f64>(),
+                    )
                 } else {
                     Material::dielectric(1.5)
                 };
